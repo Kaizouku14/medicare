@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, HeartPulse, ChevronRight } from "lucide-react";
+import { Home, Plus, HeartPulse, ChevronRight, Bot } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: Home },
+  { href: "/dashboard/chat", label: "Caregiver Chat", icon: Bot },
   { href: "/dashboard/patients/new", label: "Add patient", icon: Plus },
 ];
 
@@ -80,7 +81,8 @@ export function Sidebar({
           <div className="space-y-0.5">
             {recentPatients.map((p) => {
               const isActive =
-                isPatientPage && pathname.includes(`/dashboard/patients/${p.id}`);
+                isPatientPage &&
+                pathname.includes(`/dashboard/patients/${p.id}`);
               return (
                 <Link
                   key={p.id}

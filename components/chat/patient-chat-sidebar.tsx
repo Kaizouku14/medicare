@@ -1,0 +1,60 @@
+"use client";
+
+import { useState } from "react";
+import { X, Bot } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { ChatPanel } from "@/components/chat/chat-panel";
+import type { ChatMessage } from "@/types/domain";
+
+export function PatientChatSidebar({
+  sessionId,
+  initialMessages,
+}: {
+  sessionId: string;
+  initialMessages: ChatMessage[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* floating bubble */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="fixed bottom-5 right-5 z-50 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:scale-105 active:scale-95"
+      >
+        {open ? <X className="size-5" /> : <Bot className="size-5" />}
+      </button>
+
+      {/* chat panel popup */}
+      {open && (
+        <div className="fixed bottom-20 right-5 z-50 flex w-90 max-h-[calc(100vh-8rem)] flex-col rounded-xl border border-border/60 bg-card shadow-2xl">
+          <div className="flex shrink-0 items-center justify-between rounded-t-xl border-b border-border/60 bg-muted/30 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <div className="flex size-7 items-center justify-center rounded-full bg-primary/10">
+                <Bot className="size-3.5 text-primary" />
+              </div>
+              <p className="text-sm font-semibold text-foreground">
+                Caregiver Chat
+              </p>
+            </div>
+            <Button
+              onClick={() => setOpen(false)}
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+          <ChatPanel
+            sessionId={sessionId}
+            initialMessages={initialMessages}
+            className="h-96"
+            patientPanel={true}
+          />
+        </div>
+      )}
+    </>
+  );
+}

@@ -6,4 +6,10 @@ export const DIAGNOSIS_OPTIONS = [
   "high-cholesterol",
 ] as const;
 
-export const FEEDING_METHOD_OPTIONS = ["oral", "ngt-soft", "ngt-pureed"] as const;
+export type Diagnosis = (typeof DIAGNOSIS_OPTIONS)[number];
+
+export const FEEDING_METHOD_OPTIONS = [
+  "oral",
+  "ngt-soft",
+  "ngt-pureed",
+] as const;

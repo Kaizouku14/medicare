@@ -71,6 +71,23 @@ export type PatientDocument = {
   createdAt: string;
 };
 
+export type ChatMessage = {
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+};
+
+export type ChatSession = {
+  id: string;
+  userId: string;
+  patientId: string | null;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type MealPlan = {
   id: string;
   patientId: string;

@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { DIAGNOSIS_OPTIONS, FEEDING_METHOD_OPTIONS } from "@/data/diagnoses";
+import {
+  Diagnosis,
+  DIAGNOSIS_OPTIONS,
+  FEEDING_METHOD_OPTIONS,
+} from "@/data/diagnoses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -191,7 +195,10 @@ export function PatientForm({
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                const trimmed = customDiagnosis.trim().toLowerCase().replace(/\s+/g, "-");
+                const trimmed = customDiagnosis
+                  .trim()
+                  .toLowerCase()
+                  .replace(/\s+/g, "-");
                 if (trimmed && !diagnoses.includes(trimmed)) {
                   setDiagnoses((prev) => [...prev, trimmed]);
                 }
@@ -206,7 +213,10 @@ export function PatientForm({
             size="sm"
             className="h-9 shrink-0 text-xs"
             onClick={() => {
-              const trimmed = customDiagnosis.trim().toLowerCase().replace(/\s+/g, "-");
+              const trimmed = customDiagnosis
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, "-");
               if (trimmed && !diagnoses.includes(trimmed)) {
                 setDiagnoses((prev) => [...prev, trimmed]);
               }
@@ -217,7 +227,7 @@ export function PatientForm({
           </Button>
         </div>
         {diagnoses
-          .filter((d) => !DIAGNOSIS_OPTIONS.includes(d as any))
+          .filter((d) => !DIAGNOSIS_OPTIONS.includes(d as Diagnosis))
           .map((d) => (
             <span
               key={d}
@@ -226,7 +236,9 @@ export function PatientForm({
               {d.replace(/-/g, " ")}
               <button
                 type="button"
-                onClick={() => setDiagnoses((prev) => prev.filter((x) => x !== d))}
+                onClick={() =>
+                  setDiagnoses((prev) => prev.filter((x) => x !== d))
+                }
                 className="ml-0.5 text-primary/60 hover:text-primary"
               >
                 &times;
