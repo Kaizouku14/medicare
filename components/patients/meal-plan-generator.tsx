@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   Sparkles,
-  UtensilsCrossed,
   Sun,
   Coffee,
   Apple,
@@ -17,22 +16,9 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type {
-  MealPlan,
-  FoodRecommendation,
-  DayMeal,
-  Patient,
-  PatientDocument,
-} from "@/types/domain";
+import type { MealPlan, Patient, PatientDocument } from "@/types/domain";
 
 function formatCurrency(n: number) {
   return `₱${n.toLocaleString()}`;
@@ -131,7 +117,10 @@ export function MealPlanGenerator({
       </div>
 
       {error && (
-        <Alert variant="destructive" className="rounded-xl border-red-200 bg-red-50">
+        <Alert
+          variant="destructive"
+          className="rounded-xl border-red-200 bg-red-50"
+        >
           <AlertCircle className="size-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -213,7 +202,7 @@ export function MealPlanGenerator({
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 lg:grid-cols-2">
               {plan.meals.map((day, i) => {
                 const DayIconName = dayIcons[i] ?? Sun;
                 return (

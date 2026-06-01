@@ -48,6 +48,17 @@ export async function getLatestMealPlan(patientId: string) {
   return row ? toMealPlan(row) : null;
 }
 
+export async function listMealPlansByPatient(patientId: string, limit = 20) {
+  const rows = await db
+    .select()
+    .from(mealPlans)
+    .where(eq(mealPlans.patientId, patientId))
+    .orderBy(desc(mealPlans.createdAt))
+    .limit(limit);
+
+  return rows.map(toMealPlan);
+}
+
 export async function getMealPlanById(patientId: string, planId: string) {
   const [row] = await db
     .select()

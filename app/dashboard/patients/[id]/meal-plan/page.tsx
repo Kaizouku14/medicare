@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, CalendarDays } from "lucide-react";
 
 import { MealPlanGenerator } from "@/components/patients/meal-plan-generator";
+import { MealPlanHistory } from "@/components/patients/meal-plan-history";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
 import { getLatestAnalyzedDocument } from "@/lib/db/patient-documents";
-import { getLatestMealPlan } from "@/lib/db/meal-plans";
+import { getLatestMealPlan, listMealPlansByPatient } from "@/lib/db/meal-plans";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -28,6 +29,8 @@ export default async function MealPlanPage({ params }: Props) {
 
   const latestDoc = await getLatestAnalyzedDocument(patient.id);
   const existingPlan = await getLatestMealPlan(patient.id);
+  const allPlans = await listMealPlansByPatient(patient.id);
+  const pastPlans = allPlans.filter((p) => p.id !== existingPlan?.id);
 
   return (
     <div className="animate-fade-in">
@@ -88,11 +91,28 @@ export default async function MealPlanPage({ params }: Props) {
               </span>
             </>
           )}
+          {pastPlans.length > 0 && (
+            <>
+              <span className="hidden text-muted-foreground/30 sm:inline">|</span>
+              <span className="text-xs text-muted-foreground">
+                <CalendarDays className="mr-1 inline size-3" />
+                {pastPlans.length} past {pastPlans.length === 1 ? "plan" : "plans"}
+              </span>
+            </>
+          )}
         </div>
 
-        {/* Generator */}
-        <div className="mt-8">
-          <MealPlanGenerator patient={patient} latestDoc={latestDoc} existingPlan={existingPlan} />
+        {/* Two-column layout */}
+        <div className="mt-8 grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <MealPlanGenerator patient={patient} latestDoc={latestDoc} existingPlan={existingPlan} />
+          </div>
+
+          {pastPlans.length > 0 && (
+            <div className="lg:col-span-1">
+              <MealPlanHistory pastPlans={pastPlans} />
+            </div>
+          )}
         </div>
       </div>
     </div>
