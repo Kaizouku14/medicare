@@ -12,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ShoppingBasket,
+  RotateCcw,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { MealPlan, FoodRecommendation, DayMeal } from "@/types/domain";
+import type {
+  MealPlan,
+  FoodRecommendation,
+  DayMeal,
+  Patient,
+  PatientDocument,
+} from "@/types/domain";
 
 function formatCurrency(n: number) {
   return `₱${n.toLocaleString()}`;
@@ -34,13 +41,13 @@ function formatCurrency(n: number) {
 const dayIcons = [Sun, Coffee, Apple, Moon, Sun, Coffee, Apple] as const;
 
 export function MealPlanGenerator({
-  patientId,
-  initialPlan,
+  patient,
+  latestDoc,
 }: {
-  patientId: string;
-  initialPlan: MealPlan | null;
+  patient: Patient;
+  latestDoc: PatientDocument | null;
 }) {
-  const [plan, setPlan] = useState<MealPlan | null>(initialPlan);
+  const [plan, setPlan] = useState<MealPlan | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +55,7 @@ export function MealPlanGenerator({
     setGenerating(true);
     setError(null);
 
-    const res = await fetch(`/api/patients/${patientId}/meal-plan`, {
+    const res = await fetch(`/api/patients/${patient.id}/meal-plan`, {
       method: "POST",
     });
 
@@ -64,33 +71,65 @@ export function MealPlanGenerator({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button
-          onClick={generate}
-          disabled={generating}
-          className="rounded-full"
-        >
-          {generating ? (
-            <Loader2 className="mr-1.5 size-4 animate-spin" />
-          ) : (
-            <Sparkles className="mr-1.5 size-4" />
-          )}
-          {generating
-            ? "Generating..."
-            : plan
-              ? "Regenerate meal plan"
-              : "Generate meal plan"}
-        </Button>
+    <div className="space-y-8">
+      {/* Generate button area */}
+      <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/70 bg-gradient-to-br from-card via-card to-secondary/10 p-8">
+        <div className="absolute -right-12 -top-12 size-40 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-8 -left-8 size-24 rounded-full bg-secondary/20 blur-2xl" />
+
+        <div className="relative flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 ring-1 ring-primary/20">
+            <Sparkles className="size-6 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              {plan ? "Meal plan generated" : "Ready to generate"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {plan
+                ? "Regenerate to get updated recommendations based on the latest profile"
+                : `AI will analyze ${patient.name}'s clinical profile${latestDoc ? " and latest lab results" : ""} to create a personalized weekly plan`}
+            </p>
+          </div>
+          <Button
+            onClick={generate}
+            disabled={generating}
+            size="lg"
+            className="h-10 w-full shrink-0 rounded-xl px-6 text-sm font-semibold shadow-xs sm:w-auto"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Generating...
+              </>
+            ) : plan ? (
+              <>
+                <RotateCcw className="mr-2 size-4" />
+                Regenerate
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 size-4" />
+                Generate Plan
+              </>
+            )}
+          </Button>
+        </div>
+
         {generating && (
-          <p className="text-xs text-muted-foreground animate-pulse">
-            Analyzing patient profile and creating recommendations...
-          </p>
+          <div className="relative mt-5 flex items-center gap-2.5">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/10">
+              <div className="h-full w-1/2 animate-shimmer rounded-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+            </div>
+            <span className="shrink-0 text-xs font-medium text-muted-foreground animate-pulse">
+              Analyzing profile...
+            </span>
+          </div>
         )}
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="rounded-xl border-red-200 bg-red-50">
           <AlertCircle className="size-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -98,134 +137,164 @@ export function MealPlanGenerator({
 
       {plan && !generating && (
         <>
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2 font-serif text-xl font-medium">
-                    <ShoppingBasket className="size-5 text-primary" />
-                    Recommended Foods
-                  </CardTitle>
-                  <CardDescription>
-                    Nutritionist-approved suggestions for {plan.weekStart} week
-                  </CardDescription>
-                </div>
-                {plan.totalDailyCost && (
-                  <Badge variant="outline" className="text-xs">
-                    ~{formatCurrency(plan.totalDailyCost)} / day
-                  </Badge>
-                )}
+          {/* Recommended Foods */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-serif text-xl font-medium text-foreground">
+                  Recommended Foods
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Nutritionist-approved suggestions for {plan.weekStart} week
+                </p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {plan.recommendations.map((food, i) => (
-                  <div
-                    key={i}
-                    className="animate-fade-in-up rounded-lg border border-border bg-card p-3"
-                    style={{ animationDelay: `${i * 0.03}s` }}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="text-sm font-semibold">{food.name}</h4>
-                      <Badge variant="secondary" className="shrink-0 text-[11px]">
-                        {formatCurrency(food.estimatedCost)}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {food.description}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      <Badge variant="outline" className="text-[10px]">
-                        {food.nutrients}
-                      </Badge>
-                    </div>
-                    <p className="mt-1.5 text-[11px] italic text-muted-foreground/80">
-                      {food.reason}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+              {plan.totalDailyCost && (
+                <Badge
+                  variant="outline"
+                  className="rounded-full px-3 py-1 text-xs font-semibold"
+                >
+                  ~{formatCurrency(plan.totalDailyCost)} / day
+                </Badge>
+              )}
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-serif text-xl font-medium">
-                <UtensilsCrossed className="size-5 text-primary" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {plan.recommendations.map((food, i) => (
+                <div
+                  key={i}
+                  className="group animate-fade-in-up rounded-xl border border-border/60 bg-card p-4 transition-all hover:border-primary/20 hover:shadow-sm"
+                  style={{ animationDelay: `${i * 0.03}s` }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <ShoppingBasket className="size-3.5" />
+                      </div>
+                      <h4 className="text-sm font-semibold text-foreground">
+                        {food.name}
+                      </h4>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="shrink-0 rounded-full text-[11px] font-semibold"
+                    >
+                      {formatCurrency(food.estimatedCost)}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    {food.description}
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-1">
+                    <Badge
+                      variant="outline"
+                      className="rounded-full text-[10px] font-medium"
+                    >
+                      {food.nutrients}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-[11px] italic leading-relaxed text-muted-foreground/70">
+                    {food.reason}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Weekly Meal Plan */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-serif text-xl font-medium text-foreground">
                 Weekly Meal Plan
-              </CardTitle>
-              <CardDescription>
+              </h2>
+              <p className="text-xs text-muted-foreground">
                 7-day meal schedule starting {plan.weekStart}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {plan.meals.map((day, i) => {
                 const DayIconName = dayIcons[i] ?? Sun;
                 return (
                   <div
                     key={day.day}
-                    className="animate-fade-in-up rounded-lg border border-border p-4"
-                    style={{ animationDelay: `${i * 0.05}s` }}
+                    className="group animate-fade-in-up rounded-xl border border-border/60 bg-card p-4 transition-all hover:border-secondary/20 hover:shadow-sm"
+                    style={{ animationDelay: `${i * 0.04}s` }}
                   >
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <DayIconName className="size-4 text-primary" />
-                        <h3 className="text-sm font-semibold">{day.day}</h3>
+                        <DayIconName className="size-3.5 text-primary" />
+                        <h3 className="text-sm font-semibold text-foreground">
+                          {day.day}
+                        </h3>
                       </div>
-                      <Badge variant="outline" className="text-[11px]">
+                      <Badge
+                        variant="outline"
+                        className="rounded-full text-[11px] font-medium"
+                      >
                         {formatCurrency(day.totalCost)}
                       </Badge>
                     </div>
-                    <Separator className="mb-3" />
-                    <div className="grid gap-2 sm:grid-cols-3">
+                    <Separator className="my-3" />
+                    <div className="space-y-2.5">
                       <div>
-                        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          <Coffee className="size-3" />
+                        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          <Coffee className="size-2.5" />
                           Breakfast
                         </p>
-                        <p className="mt-0.5 text-sm">{day.breakfast}</p>
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {day.breakfast}
+                        </p>
                       </div>
                       <div>
-                        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          <Sun className="size-3" />
+                        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          <Sun className="size-2.5" />
                           Lunch
                         </p>
-                        <p className="mt-0.5 text-sm">{day.lunch}</p>
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {day.lunch}
+                        </p>
                       </div>
                       <div>
-                        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          <Moon className="size-3" />
+                        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          <Moon className="size-2.5" />
                           Dinner
                         </p>
-                        <p className="mt-0.5 text-sm">{day.dinner}</p>
-                      </div>
-                    </div>
-                    {day.snacks.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Snacks
+                        <p className="mt-0.5 text-sm text-foreground">
+                          {day.dinner}
                         </p>
-                        <div className="mt-0.5 flex flex-wrap gap-1">
-                          {day.snacks.map((snack, j) => (
-                            <Badge key={j} variant="secondary" className="text-[11px]">
-                              {snack}
-                            </Badge>
-                          ))}
-                        </div>
                       </div>
-                    )}
+                      {day.snacks.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                            Snacks
+                          </p>
+                          <div className="mt-0.5 flex flex-wrap gap-1">
+                            {day.snacks.map((snack, j) => (
+                              <Badge
+                                key={j}
+                                variant="secondary"
+                                className="rounded-full text-[10px] font-medium"
+                              >
+                                {snack}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <div className="flex items-center gap-2 rounded-lg bg-secondary/30 px-4 py-3">
-            <CheckCircle2 className="size-4 text-secondary-foreground" />
-            <p className="text-xs text-secondary-foreground">
-              This meal plan was generated by AI based on the patient&apos;s medical
-              profile and budget. Always consult with a healthcare professional
-              before making dietary changes.
+          {/* Disclaimer */}
+          <div className="flex items-start gap-3 rounded-2xl border border-border/40 bg-secondary/15 px-5 py-4">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-secondary-foreground" />
+            <p className="text-xs leading-relaxed text-secondary-foreground/80">
+              This meal plan was generated by AI based on the patient&apos;s
+              medical profile and budget. Always consult with a healthcare
+              professional before making dietary changes.
             </p>
           </div>
         </>

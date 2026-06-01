@@ -1,17 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit3, Syringe, Weight, DollarSign, Tag, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Syringe,
+  Weight,
+  DollarSign,
+  UtensilsCrossed,
+  FileText,
+  HeartPulse,
+} from "lucide-react";
 
 import { DeletePatientButton } from "@/components/patients/delete-patient-button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/server";
@@ -45,152 +45,206 @@ export default async function PatientDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in">
+      {/* Back link */}
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" />
+        <ArrowLeft className="size-3 transition-transform group-hover:-translate-x-0.5" />
         Back to patients
       </Link>
 
-      <Card>
-        <CardHeader className="pb-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="size-12 rounded-xl">
-                <AvatarFallback className="rounded-xl text-base font-bold bg-primary/10 text-primary">
+      {/* Hero */}
+      <div className="relative mt-6 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-card to-card border border-border/60">
+        <div className="absolute -right-16 -top-16 size-48 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-8 -left-8 size-32 rounded-full bg-secondary/30 blur-2xl" />
+
+        <div className="relative flex items-start justify-between gap-6 p-6 sm:p-8">
+          <div className="flex items-start gap-5">
+            <div className="relative">
+              <Avatar className="size-16 rounded-2xl ring-2 ring-border/40 shadow-lg">
+                <AvatarFallback className="rounded-2xl text-lg font-bold bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
                   {getInitials(patient.name)}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <CardTitle className="font-serif text-2xl font-medium">
-                  {patient.name}
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  Profile details and clinical constraints
-                </CardDescription>
+              <div className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground shadow-xs">
+                <HeartPulse className="size-3" />
               </div>
             </div>
-            <div className="flex shrink-0 gap-2">
-              <Button asChild variant="outline" size="sm" className="h-8 rounded-full px-3 text-xs">
-                <Link href={`/dashboard/patients/${patient.id}/edit`}>
-                  <Edit3 data-icon="inline-start" />
-                  Edit
-                </Link>
-              </Button>
-              <DeletePatientButton patientId={patient.id} />
-            </div>
-          </div>
-        </CardHeader>
-
-        <Separator />
-
-        <CardContent className="pt-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-              <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Syringe className="size-4" />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Age
-                </p>
-                <p className="text-sm font-semibold">{patient.age} years</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-              <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Weight className="size-4" />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Weight
-                </p>
-                <p className="text-sm font-semibold">
-                  {patient.weightKg ? `${patient.weightKg} kg` : "Not set"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-              <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Tag className="size-4" />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Feeding Method
-                </p>
-                <p className="text-sm font-semibold capitalize">{patient.feedingMethod}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-              <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <DollarSign className="size-4" />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Monthly Budget
-                </p>
-                <p className="text-sm font-semibold">
-                  ₱{patient.monthlyBudgetPhp.toLocaleString()}
-                </p>
+            <div className="pt-1">
+              <h1 className="font-serif text-3xl font-medium tracking-tight text-foreground">
+                {patient.name}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Clinical profile and care plan
+              </p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {patient.diagnoses.map((d) => (
+                  <Badge
+                    key={d}
+                    variant="secondary"
+                    className="rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide uppercase bg-primary/10 text-primary hover:bg-primary/15"
+                  >
+                    {d.replace(/-/g, " ")}
+                  </Badge>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="mt-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Diagnoses
-            </p>
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {patient.diagnoses.map((d) => (
-                <Badge key={d} variant="secondary">
-                  {d.replace(/-/g, " ")}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <Separator className="my-6" />
-
-          <div className="mb-6">
-            <Button asChild variant="default" className="w-full rounded-full sm:w-auto">
-              <Link href={`/dashboard/patients/${patient.id}/meal-plan`}>
-                <Sparkles data-icon="inline-start" />
-                Generate meal plan
+          <div className="flex shrink-0 gap-2 pt-1">
+            <Button asChild variant="outline" size="sm" className="h-8 rounded-full px-3 text-xs">
+              <Link href={`/dashboard/patients/${patient.id}/edit`}>
+                Edit
               </Link>
             </Button>
+            <DeletePatientButton patientId={patient.id} />
           </div>
+        </div>
 
-          <Separator className="mb-6" />
-
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Allergies
-              </p>
-              <p className="mt-2 text-sm text-foreground">
-                {patient.allergies.length > 0
-                  ? patient.allergies.join(", ")
-                  : <span className="text-muted-foreground italic">None</span>}
-              </p>
+        {/* Stats grid */}
+        <div className="grid border-t border-border/60 sm:grid-cols-4">
+          <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Syringe className="size-4" />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Intolerances
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Age
               </p>
-              <p className="mt-2 text-sm text-foreground">
-                {patient.intolerances.length > 0
-                  ? patient.intolerances.join(", ")
-                  : <span className="text-muted-foreground italic">None</span>}
+              <p className="text-sm font-bold text-foreground">
+                {patient.age} <span className="font-normal text-muted-foreground">years</span>
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-secondary/30 text-secondary-foreground">
+              <Weight className="size-4" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Weight
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {patient.weightKg ? `${patient.weightKg} kg` : "—"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <UtensilsCrossed className="size-4" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Feeding
+              </p>
+              <p className="text-sm font-bold capitalize text-foreground">
+                {patient.feedingMethod.replace("-", " + ")}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <DollarSign className="size-4" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Budget
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                ₱{patient.monthlyBudgetPhp.toLocaleString()}/<span className="font-normal text-muted-foreground">mo</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions + Details */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-5">
+        {/* Side details */}
+        <div className="space-y-4 lg:col-span-2">
+          <div className="rounded-xl border border-border/60 bg-card p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Allergies
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground">
+              {patient.allergies.length > 0
+                ? patient.allergies.join(", ")
+                : <span className="italic text-muted-foreground">None reported</span>}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border/60 bg-card p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Intolerances
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground">
+              {patient.intolerances.length > 0
+                ? patient.intolerances.join(", ")
+                : <span className="italic text-muted-foreground">None reported</span>}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border/60 bg-card p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Created
+            </p>
+            <p className="mt-1 text-sm text-foreground">
+              {new Date(patient.createdAt).toLocaleDateString("en-PH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          </div>
+        </div>
+
+        {/* Main actions */}
+        <div className="flex flex-col gap-3 lg:col-span-3">
+          <Link
+            href={`/dashboard/patients/${patient.id}/meal-plan`}
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 to-card p-5 transition-all hover:border-primary/30 hover:shadow-md"
+          >
+            <div className="absolute -right-6 -top-6 size-20 rounded-full bg-primary/5 blur-xl transition-all group-hover:scale-150" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <UtensilsCrossed className="size-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Meal Plan</p>
+                <p className="text-xs text-muted-foreground">
+                  Generate AI-powered weekly meal plans
+                </p>
+              </div>
+              <span className="text-xs font-medium text-primary transition-transform group-hover:translate-x-0.5">
+                View →
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href={`/dashboard/patients/${patient.id}/documents`}
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-secondary/10 to-card p-5 transition-all hover:border-secondary/30 hover:shadow-md"
+          >
+            <div className="absolute -right-6 -top-6 size-20 rounded-full bg-secondary/10 blur-xl transition-all group-hover:scale-150" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-secondary text-secondary-foreground shadow-sm">
+                <FileText className="size-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Medical Documents</p>
+                <p className="text-xs text-muted-foreground">
+                  Upload lab results and scan reports for AI analysis
+                </p>
+              </div>
+              <span className="text-xs font-medium text-secondary-foreground transition-transform group-hover:translate-x-0.5">
+                View →
+              </span>
+            </div>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

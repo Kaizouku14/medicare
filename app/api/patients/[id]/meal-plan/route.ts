@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
 import { getLatestMealPlan, saveMealPlan } from "@/lib/db/meal-plans";
+import { getLatestAnalyzedDocument } from "@/lib/db/patient-documents";
 import {
   generateRecommendations,
   generateMealPlan,
@@ -49,7 +50,16 @@ export async function POST(_: Request, { params }: Params) {
   }
 
   try {
-    const recommendations = await generateRecommendations(patient);
+    const latestDoc = await getLatestAnalyzedDocument(patient.id);
+    const labData = latestDoc?.analysis
+      ? {
+          extractedValues: latestDoc.analysis.extractedValues,
+          concerns: latestDoc.analysis.concerns,
+          dietaryConsiderations: latestDoc.analysis.dietaryConsiderations,
+        }
+      : undefined;
+
+    const recommendations = await generateRecommendations(patient, labData);
     const meals = await generateMealPlan(patient, recommendations);
 
     const now = new Date();

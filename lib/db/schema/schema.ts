@@ -51,6 +51,21 @@ export const patients = pgTable("patients", {
     .notNull(),
 });
 
+export const patientDocuments = pgTable("patient_documents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  patientId: uuid("patient_id")
+    .notNull()
+    .references(() => patients.id, { onDelete: "cascade" }),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  storagePath: text("storage_path").notNull(),
+  analysis: jsonb("analysis"),
+  analyzedAt: timestamp("analyzed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export const mealPlans = pgTable("meal_plans", {
   id: uuid("id").primaryKey().defaultRandom(),
   patientId: uuid("patient_id")

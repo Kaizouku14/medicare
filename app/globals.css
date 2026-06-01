@@ -65,6 +65,11 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -106,6 +111,9 @@ body::after {
   }
   .animate-slide-in-right {
     animation: slide-in-right 0.5s ease-out both;
+  }
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
   }
 }
 

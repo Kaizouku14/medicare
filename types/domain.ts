@@ -43,6 +43,34 @@ export type DayMeal = {
   totalCost: number;
 };
 
+export type DocumentAnalysis = {
+  documentType: "lab-results" | "ct-scan" | "ecg" | "other";
+  summary: string;
+  findings: string;
+  extractedValues: Array<{
+    name: string;
+    value: string;
+    unit: string;
+    referenceRange: string;
+    isAbnormal: boolean;
+    interpretation: string;
+  }>;
+  concerns: string[];
+  relevantDiagnoses: string[];
+  dietaryConsiderations: string;
+};
+
+export type PatientDocument = {
+  id: string;
+  patientId: string;
+  fileName: string;
+  fileType: string;
+  storagePath: string;
+  analysis: DocumentAnalysis | null;
+  analyzedAt: string | null;
+  createdAt: string;
+};
+
 export type MealPlan = {
   id: string;
   patientId: string;
