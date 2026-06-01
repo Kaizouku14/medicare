@@ -25,3 +25,30 @@ export type CreatePatientInput = {
   intolerances?: string[];
   monthlyBudgetPhp: number;
 };
+
+export type FoodRecommendation = {
+  name: string;
+  description: string;
+  estimatedCost: number;
+  nutrients: string;
+  reason: string;
+};
+
+export type DayMeal = {
+  day: string;
+  breakfast: string;
+  lunch: string;
+  dinner: string;
+  snacks: string[];
+  totalCost: number;
+};
+
+export type MealPlan = {
+  id: string;
+  patientId: string;
+  weekStart: string;
+  recommendations: FoodRecommendation[];
+  meals: DayMeal[];
+  totalDailyCost: number | null;
+  createdAt: string;
+};

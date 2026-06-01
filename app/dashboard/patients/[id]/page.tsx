@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit3, Syringe, Weight, DollarSign, Tag } from "lucide-react";
+import { ArrowLeft, Edit3, Syringe, Weight, DollarSign, Tag, Sparkles } from "lucide-react";
 
 import { DeletePatientButton } from "@/components/patients/delete-patient-button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Card,
   CardContent,
@@ -11,12 +13,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export default async function PatientDetailPage({ params }: Props) {
   const supabase = await createClient();
@@ -43,20 +55,27 @@ export default async function PatientDetailPage({ params }: Props) {
       </Link>
 
       <Card>
-        <CardHeader className="border-b border-border/50 pb-5">
+        <CardHeader className="pb-5">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle className="font-serif text-2xl font-medium">
-                {patient.name}
-              </CardTitle>
-              <CardDescription className="mt-1">
-                Profile details and clinical constraints
-              </CardDescription>
+            <div className="flex items-center gap-4">
+              <Avatar className="size-12 rounded-xl">
+                <AvatarFallback className="rounded-xl text-base font-bold bg-primary/10 text-primary">
+                  {getInitials(patient.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <CardTitle className="font-serif text-2xl font-medium">
+                  {patient.name}
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Profile details and clinical constraints
+                </CardDescription>
+              </div>
             </div>
             <div className="flex shrink-0 gap-2">
               <Button asChild variant="outline" size="sm" className="h-8 rounded-full px-3 text-xs">
                 <Link href={`/dashboard/patients/${patient.id}/edit`}>
-                  <Edit3 className="mr-1 size-3.5" />
+                  <Edit3 data-icon="inline-start" />
                   Edit
                 </Link>
               </Button>
@@ -64,8 +83,11 @@ export default async function PatientDetailPage({ params }: Props) {
             </div>
           </div>
         </CardHeader>
+
+        <Separator />
+
         <CardContent className="pt-5">
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
               <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Syringe className="size-4" />
@@ -120,45 +142,53 @@ export default async function PatientDetailPage({ params }: Props) {
           </div>
 
           <div className="mt-6">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Diagnoses
-            </h3>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
               {patient.diagnoses.map((d) => (
-                <span
-                  key={d}
-                  className="inline-block rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
-                >
+                <Badge key={d} variant="secondary">
                   {d.replace(/-/g, " ")}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
 
-          {(patient.allergies.length > 0 || patient.intolerances.length > 0) && (
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
-              {patient.allergies.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Allergies
-                  </h3>
-                  <p className="mt-1.5 text-sm text-foreground">
-                    {patient.allergies.join(", ")}
-                  </p>
-                </div>
-              )}
-              {patient.intolerances.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Intolerances
-                  </h3>
-                  <p className="mt-1.5 text-sm text-foreground">
-                    {patient.intolerances.join(", ")}
-                  </p>
-                </div>
-              )}
+          <Separator className="my-6" />
+
+          <div className="mb-6">
+            <Button asChild variant="default" className="w-full rounded-full sm:w-auto">
+              <Link href={`/dashboard/patients/${patient.id}/meal-plan`}>
+                <Sparkles data-icon="inline-start" />
+                Generate meal plan
+              </Link>
+            </Button>
+          </div>
+
+          <Separator className="mb-6" />
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Allergies
+              </p>
+              <p className="mt-2 text-sm text-foreground">
+                {patient.allergies.length > 0
+                  ? patient.allergies.join(", ")
+                  : <span className="text-muted-foreground italic">None</span>}
+              </p>
             </div>
-          )}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Intolerances
+              </p>
+              <p className="mt-2 text-sm text-foreground">
+                {patient.intolerances.length > 0
+                  ? patient.intolerances.join(", ")
+                  : <span className="text-muted-foreground italic">None</span>}
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

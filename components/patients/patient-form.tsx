@@ -7,6 +7,14 @@ import { DIAGNOSIS_OPTIONS, FEEDING_METHOD_OPTIONS } from "@/data/diagnoses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { type CreatePatientInput } from "@/types/domain";
 
 function splitCsvValues(value: string) {
@@ -88,7 +96,7 @@ export function PatientForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="name">Patient name</Label>
         <Input
@@ -138,18 +146,17 @@ export function PatientForm({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label>Diagnoses</Label>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {DIAGNOSIS_OPTIONS.map((item) => (
             <label
               key={item}
-              className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+              className="flex items-center gap-2.5 rounded-lg border border-border px-3 py-2.5 text-sm transition-colors hover:bg-muted/50 has-data-[state=checked]:border-primary/50 has-data-[state=checked]:bg-primary/5"
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={diagnoses.includes(item)}
-                onChange={() => toggleDiagnosis(item)}
+                onCheckedChange={() => toggleDiagnosis(item)}
               />
               <span className="capitalize">{item.replace("-", " ")}</span>
             </label>
@@ -159,20 +166,23 @@ export function PatientForm({
 
       <div className="space-y-2">
         <Label htmlFor="feedingMethod">Feeding method</Label>
-        <select
-          id="feedingMethod"
+        <Select
           value={feedingMethod}
-          onChange={(e) =>
-            setFeedingMethod(e.target.value as CreatePatientInput["feedingMethod"])
+          onValueChange={(val) =>
+            setFeedingMethod(val as CreatePatientInput["feedingMethod"])
           }
-          className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm"
         >
-          {FEEDING_METHOD_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="feedingMethod" className="w-full">
+            <SelectValue placeholder="Select feeding method" />
+          </SelectTrigger>
+          <SelectContent>
+            {FEEDING_METHOD_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
@@ -195,7 +205,11 @@ export function PatientForm({
         />
       </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
 
       <Button type="submit" disabled={loading}>
         {loading ? "Saving..." : patientId ? "Update patient" : "Create patient"}

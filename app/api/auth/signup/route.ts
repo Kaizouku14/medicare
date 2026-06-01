@@ -36,7 +36,11 @@ export async function POST(req: Request) {
   if (error) {
     const message = error.message.includes("already")
       ? "Email already in use."
-      : "Unable to create account.";
+      : error.message.includes("rate limit")
+        ? "Too many attempts. Please wait a moment and try again."
+        : "Unable to create account.";
+
+    console.log(error);
 
     return NextResponse.json({ error: message }, { status: 400 });
   }

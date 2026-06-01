@@ -1,5 +1,6 @@
 import {
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -46,6 +47,20 @@ export const patients = pgTable("patients", {
     .defaultNow()
     .notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const mealPlans = pgTable("meal_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  patientId: uuid("patient_id")
+    .notNull()
+    .references(() => patients.id, { onDelete: "cascade" }),
+  weekStart: text("week_start").notNull(),
+  recommendations: jsonb("recommendations").notNull(),
+  meals: jsonb("meals").notNull(),
+  totalDailyCost: numeric("total_daily_cost", { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });

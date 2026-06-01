@@ -1,16 +1,20 @@
 import Link from "next/link";
-import { Plus, User as UserIcon } from "lucide-react";
+import { Plus, Heart } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { listPatientsByUser } from "@/lib/db/patients";
 import { createClient } from "@/lib/supabase/server";
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -27,60 +31,79 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-2xl font-medium tracking-tight">
-            Patients
+            Your patients
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Manage profiles before generating meal plans.
+            {patients.length} {patients.length === 1 ? "profile" : "profiles"} on file
           </p>
         </div>
         <Button asChild size="sm" className="h-9 rounded-full px-4">
           <Link href="/dashboard/patients/new">
-            <Plus className="mr-1 size-4" />
+            <Plus data-icon="inline-start" />
             Add patient
           </Link>
         </Button>
       </div>
 
       {patients.length === 0 ? (
-        <Card className="border-dashed border-border/60 bg-muted/30">
-          <CardContent className="flex flex-col items-center gap-3 py-16">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <UserIcon className="size-5 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              No patients yet. Add your first patient to begin.
+        <div className="animate-scale-in flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-border/60 bg-muted/20 py-20">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+            <Heart className="size-6 text-primary" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-foreground">No patients yet</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Add your first patient profile to begin.
             </p>
-            <Button asChild variant="outline" size="sm" className="mt-1 rounded-full">
-              <Link href="/dashboard/patients/new">Add your first patient</Link>
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+          <Button asChild variant="default" size="sm" className="mt-2 rounded-full">
+            <Link href="/dashboard/patients/new">
+              <Plus data-icon="inline-start" />
+              Add your first patient
+            </Link>
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {patients.map((patient, i) => (
             <Link
               key={patient.id}
               href={`/dashboard/patients/${patient.id}`}
-              className="animate-fade-in-up group block rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="animate-fade-in-up group rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
               style={{ animationDelay: `${i * 0.05}s` }}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <Avatar className="size-10 rounded-xl">
+                  <AvatarFallback className="rounded-xl text-xs font-bold bg-primary/10 text-primary">
+                    {getInitials(patient.name)}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-semibold text-card-foreground">
-                    {patient.name}
-                  </h3>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {patient.age} yrs &middot; {patient.diagnoses.slice(0, 2).join(", ")}
-                    {patient.diagnoses.length > 2 && " + more"}
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="truncate text-sm font-semibold text-card-foreground group-hover:text-primary transition-colors">
+                      {patient.name}
+                    </h3>
+                    <Badge variant="outline" className="shrink-0 text-[11px]">
+                      ₱{patient.monthlyBudgetPhp.toLocaleString()}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {patient.age} years &middot; {patient.feedingMethod.replace("-", " · ")}
+                    {patient.weightKg && ` &middot; ${patient.weightKg} kg`}
                   </p>
+                  <div className="mt-2.5 flex flex-wrap gap-1">
+                    {patient.diagnoses.slice(0, 2).map((d) => (
+                      <Badge key={d} variant="secondary" className="text-[11px]">
+                        {d.replace(/-/g, " ")}
+                      </Badge>
+                    ))}
+                    {patient.diagnoses.length > 2 && (
+                      <Badge variant="outline" className="text-[11px]">
+                        +{patient.diagnoses.length - 2}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                <div className="shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  ₱{patient.monthlyBudgetPhp.toLocaleString()}
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span>{patient.feedingMethod}</span>
-                {patient.weightKg && <span>{patient.weightKg} kg</span>}
               </div>
             </Link>
           ))}

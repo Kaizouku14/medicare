@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AlertCircle } from "lucide-react";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -93,9 +95,10 @@ export default function SignupPage() {
         </div>
 
         {error && (
-          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
-            {error}
-          </p>
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         <Button className="w-full h-10 rounded-full" type="submit" disabled={loading}>
