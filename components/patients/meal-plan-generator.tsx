@@ -43,11 +43,13 @@ const dayIcons = [Sun, Coffee, Apple, Moon, Sun, Coffee, Apple] as const;
 export function MealPlanGenerator({
   patient,
   latestDoc,
+  existingPlan,
 }: {
   patient: Patient;
   latestDoc: PatientDocument | null;
+  existingPlan: MealPlan | null;
 }) {
-  const [plan, setPlan] = useState<MealPlan | null>(null);
+  const [plan, setPlan] = useState<MealPlan | null>(existingPlan);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

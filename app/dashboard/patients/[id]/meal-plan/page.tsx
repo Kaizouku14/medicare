@@ -6,6 +6,7 @@ import { MealPlanGenerator } from "@/components/patients/meal-plan-generator";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
 import { getLatestAnalyzedDocument } from "@/lib/db/patient-documents";
+import { getLatestMealPlan } from "@/lib/db/meal-plans";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -26,6 +27,7 @@ export default async function MealPlanPage({ params }: Props) {
   }
 
   const latestDoc = await getLatestAnalyzedDocument(patient.id);
+  const existingPlan = await getLatestMealPlan(patient.id);
 
   return (
     <div className="animate-fade-in">
@@ -90,7 +92,7 @@ export default async function MealPlanPage({ params }: Props) {
 
         {/* Generator */}
         <div className="mt-8">
-          <MealPlanGenerator patient={patient} latestDoc={latestDoc} />
+          <MealPlanGenerator patient={patient} latestDoc={latestDoc} existingPlan={existingPlan} />
         </div>
       </div>
     </div>
