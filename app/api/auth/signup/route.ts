@@ -3,8 +3,16 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema/schema";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  const { allowed } = rateLimit(rateLimitKey(req, "signup"), 3, 60000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please wait a moment." },
+      { status: 429 },
+    );
+  }
   const body = (await req.json()) as {
     email?: string;
     password?: string;

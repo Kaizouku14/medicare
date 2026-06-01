@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { getPatientById } from "@/lib/db/patients";
 import {
   createDocument,
@@ -44,6 +45,14 @@ export async function GET(_: Request, { params }: Params) {
 }
 
 export async function POST(req: Request, { params }: Params) {
+  const { allowed } = rateLimit(rateLimitKey(req, "document-upload"), 5, 60000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment." },
+      { status: 429 },
+    );
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

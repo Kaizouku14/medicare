@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { getPatientById } from "@/lib/db/patients";
 import { getLatestMealPlan, saveMealPlan } from "@/lib/db/meal-plans";
 import { getLatestAnalyzedDocument } from "@/lib/db/patient-documents";
@@ -33,7 +34,15 @@ export async function GET(_: Request, { params }: Params) {
   return NextResponse.json({ plan });
 }
 
-export async function POST(_: Request, { params }: Params) {
+export async function POST(request: Request, { params }: Params) {
+  const { allowed } = rateLimit(rateLimitKey(request, "meal-plan"), 5, 60000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment." },
+      { status: 429 },
+    );
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
