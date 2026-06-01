@@ -8,6 +8,8 @@ import {
   AlertCircle,
   FileImage,
   Eye,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +39,10 @@ export function DocumentList({
   const [viewing, setViewing] = useState<PatientDocument | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
+  const totalPages = Math.max(1, Math.ceil(documents.length / PAGE_SIZE));
+  const paginated = documents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleDelete(doc: PatientDocument) {
     setDeleting(doc.id);
@@ -94,7 +100,7 @@ export function DocumentList({
       )}
 
       <div className="space-y-2">
-        {documents.map((doc, i) => (
+        {paginated.map((doc, i) => (
           <div
             key={doc.id}
             className="group animate-fade-in-up rounded-xl border border-border/60 bg-card p-4 transition-all hover:border-border hover:shadow-sm"
@@ -204,6 +210,41 @@ export function DocumentList({
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="h-8 w-8 rounded-lg p-0"
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <Button
+              key={p}
+              variant={p === page ? "default" : "outline"}
+              size="sm"
+              onClick={() => setPage(p)}
+              className="h-8 min-w-8 rounded-lg px-2 text-xs font-medium"
+            >
+              {p}
+            </Button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className="h-8 w-8 rounded-lg p-0"
+          >
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

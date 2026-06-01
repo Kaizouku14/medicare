@@ -5,6 +5,7 @@ import { Upload, Loader2, AlertCircle, FileImage } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { AnalysisDisplay } from "@/components/documents/analysis-display";
 import type { DocumentAnalysis } from "@/types/domain";
 
@@ -49,15 +50,19 @@ export function DocumentUploader({
       const data = await res.json();
 
       if (!res.ok) {
+        toast.error(data.error ?? "Upload failed.");
         setError(data.error ?? "Upload failed.");
         return;
       }
+
+      toast.success("Document uploaded and analyzed successfully");
 
       if (data.document?.analysis) {
         setAnalysis(data.document.analysis);
       }
       onUploaded?.();
     } catch {
+      toast.error("Network error. Please try again.");
       setError("Network error. Please try again.");
     } finally {
       setUploading(false);

@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export function DeletePatientButton({ patientId }: { patientId: string }) {
   const router = useRouter();
@@ -24,11 +25,14 @@ export function DeletePatientButton({ patientId }: { patientId: string }) {
     const res = await fetch(`/api/patients/${patientId}`, { method: "DELETE" });
     if (res.ok) {
       setOpen(false);
+      toast.success("Patient deleted successfully");
       router.replace("/dashboard");
       router.refresh();
       return;
     }
 
+    const data = await res.json();
+    toast.error(data.error ?? "Failed to delete patient");
     setLoading(false);
   }
 

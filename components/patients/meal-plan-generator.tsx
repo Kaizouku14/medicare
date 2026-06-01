@@ -17,7 +17,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import type { MealPlan, Patient, PatientDocument } from "@/types/domain";
 
 function formatCurrency(n: number) {
@@ -38,10 +47,12 @@ export function MealPlanGenerator({
   const [plan, setPlan] = useState<MealPlan | null>(existingPlan);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function generate() {
     setGenerating(true);
     setError(null);
+    setConfirmOpen(false);
 
     const res = await fetch(`/api/patients/${patient.id}/meal-plan`, {
       method: "POST",
@@ -49,11 +60,13 @@ export function MealPlanGenerator({
 
     const data = (await res.json()) as { plan?: MealPlan; error?: string };
     if (!res.ok) {
+      toast.error(data.error ?? "Failed to generate meal plan.");
       setError(data.error ?? "Failed to generate meal plan.");
       setGenerating(false);
       return;
     }
 
+    toast.success("Meal plan generated successfully");
     setPlan(data.plan ?? null);
     setGenerating(false);
   }
@@ -61,12 +74,12 @@ export function MealPlanGenerator({
   return (
     <div className="space-y-8">
       {/* Generate button area */}
-      <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/70 bg-gradient-to-br from-card via-card to-secondary/10 p-8">
+      <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/70 bg-linear-to-br from-card via-card to-secondary/10 p-8">
         <div className="absolute -right-12 -top-12 size-40 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-8 -left-8 size-24 rounded-full bg-secondary/20 blur-2xl" />
 
         <div className="relative flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 ring-1 ring-primary/20">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-primary/15 to-primary/5 ring-1 ring-primary/20">
             <Sparkles className="size-6 text-primary" />
           </div>
           <div className="flex-1">
@@ -80,7 +93,10 @@ export function MealPlanGenerator({
             </p>
           </div>
           <Button
-            onClick={generate}
+            onClick={() => {
+              if (plan) setConfirmOpen(true);
+              else generate();
+            }}
             disabled={generating}
             size="lg"
             className="h-10 w-full shrink-0 rounded-xl px-6 text-sm font-semibold shadow-xs sm:w-auto"
@@ -107,7 +123,7 @@ export function MealPlanGenerator({
         {generating && (
           <div className="relative mt-5 flex items-center gap-2.5">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/10">
-              <div className="h-full w-1/2 animate-shimmer rounded-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+              <div className="h-full w-1/2 animate-shimmer rounded-full bg-linear-to-r from-transparent via-primary/40 to-transparent" />
             </div>
             <span className="shrink-0 text-xs font-medium text-muted-foreground animate-pulse">
               Analyzing profile...
@@ -290,6 +306,27 @@ export function MealPlanGenerator({
           </div>
         </>
       )}
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Regenerate meal plan?</DialogTitle>
+            <DialogDescription>
+              This will replace the current meal plan with a new one based on
+              the latest patient profile. The previous plan will be saved in
+              past plans.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={generate} disabled={generating}>
+              {generating ? "Generating..." : "Yes, regenerate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

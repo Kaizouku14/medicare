@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 import { type CreatePatientInput } from "@/types/domain";
 
 function splitCsvValues(value: string) {
@@ -35,29 +36,32 @@ export function PatientForm({
   const [name, setName] = useState(defaultValue?.name ?? "");
   const [age, setAge] = useState(defaultValue?.age?.toString() ?? "");
   const [weightKg, setWeightKg] = useState(
-    defaultValue?.weightKg?.toString() ?? ""
+    defaultValue?.weightKg?.toString() ?? "",
   );
   const [diagnoses, setDiagnoses] = useState<string[]>(
-    defaultValue?.diagnoses ?? []
+    defaultValue?.diagnoses ?? [],
   );
   const [feedingMethod, setFeedingMethod] = useState(
-    (defaultValue?.feedingMethod ?? "oral") as CreatePatientInput["feedingMethod"]
+    (defaultValue?.feedingMethod ??
+      "oral") as CreatePatientInput["feedingMethod"],
   );
   const [allergies, setAllergies] = useState(
-    defaultValue?.allergies?.join(", ") ?? ""
+    defaultValue?.allergies?.join(", ") ?? "",
   );
   const [intolerances, setIntolerances] = useState(
-    defaultValue?.intolerances?.join(", ") ?? ""
+    defaultValue?.intolerances?.join(", ") ?? "",
   );
   const [monthlyBudgetPhp, setMonthlyBudgetPhp] = useState(
-    defaultValue?.monthlyBudgetPhp?.toString() ?? ""
+    defaultValue?.monthlyBudgetPhp?.toString() ?? "",
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   function toggleDiagnosis(value: string) {
     setDiagnoses((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value],
     );
   }
 
@@ -77,20 +81,32 @@ export function PatientForm({
       monthlyBudgetPhp: Number(monthlyBudgetPhp),
     };
 
-    const res = await fetch(patientId ? `/api/patients/${patientId}` : "/api/patients", {
-      method: patientId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const res = await fetch(
+      patientId ? `/api/patients/${patientId}` : "/api/patients",
+      {
+        method: patientId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
 
-    const data = (await res.json()) as { error?: string; patient?: { id: string } };
+    const data = (await res.json()) as {
+      error?: string;
+      patient?: { id: string };
+    };
 
     if (!res.ok) {
+      toast.error(data.error ?? "Unable to save patient.");
       setError(data.error ?? "Unable to save patient.");
       setLoading(false);
       return;
     }
 
+    toast.success(
+      patientId
+        ? "Patient updated successfully"
+        : "Patient created successfully",
+    );
     router.replace(`/dashboard/patients/${data.patient?.id ?? patientId}`);
     router.refresh();
   }
@@ -101,6 +117,7 @@ export function PatientForm({
         <Label htmlFor="name">Patient name</Label>
         <Input
           id="name"
+          placeholder="i.e John Doe"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -113,6 +130,7 @@ export function PatientForm({
           <Input
             id="age"
             type="number"
+            placeholder="i.e 30"
             min={1}
             max={120}
             value={age}
@@ -125,6 +143,7 @@ export function PatientForm({
           <Label htmlFor="weightKg">Weight (kg)</Label>
           <Input
             id="weightKg"
+            placeholder="i.e 70.5"
             type="number"
             step="0.1"
             value={weightKg}
@@ -136,6 +155,7 @@ export function PatientForm({
           <Label htmlFor="monthlyBudgetPhp">Monthly budget (PHP)</Label>
           <Input
             id="monthlyBudgetPhp"
+            placeholder="i.e 500.00"
             type="number"
             min={500}
             step="0.01"
@@ -212,7 +232,11 @@ export function PatientForm({
       ) : null}
 
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : patientId ? "Update patient" : "Create patient"}
+        {loading
+          ? "Saving..."
+          : patientId
+            ? "Update patient"
+            : "Create patient"}
       </Button>
     </form>
   );
