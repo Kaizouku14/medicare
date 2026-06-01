@@ -40,6 +40,25 @@ export async function createPatient(userId: string, input: CreatePatientInput) {
   return toPatient(row);
 }
 
+export async function listRecentPatientsByUser(userId: string, limit = 5) {
+  const rows = await db
+    .select({
+      id: patients.id,
+      name: patients.name,
+      updatedAt: patients.updatedAt,
+    })
+    .from(patients)
+    .where(eq(patients.userId, userId))
+    .orderBy(patients.updatedAt)
+    .limit(limit);
+
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    updatedAt: r.updatedAt.toISOString(),
+  }));
+}
+
 export async function listPatientsByUser(userId: string) {
   const rows = await db
     .select()

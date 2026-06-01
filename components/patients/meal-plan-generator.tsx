@@ -155,14 +155,16 @@ export function MealPlanGenerator({
                   Nutritionist-approved suggestions for {plan.weekStart} week
                 </p>
               </div>
-              {plan.totalDailyCost && (
-                <Badge
-                  variant="outline"
-                  className="rounded-full px-3 py-1 text-xs font-semibold"
-                >
-                  ~{formatCurrency(plan.totalDailyCost)} / day
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {plan.totalDailyCost && (
+                  <Badge
+                    variant="outline"
+                    className="rounded-full px-3 py-1 text-xs font-semibold"
+                  >
+                    ~{formatCurrency(plan.totalDailyCost)} / day
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">

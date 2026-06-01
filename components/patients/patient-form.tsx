@@ -54,6 +54,7 @@ export function PatientForm({
   const [monthlyBudgetPhp, setMonthlyBudgetPhp] = useState(
     defaultValue?.monthlyBudgetPhp?.toString() ?? "",
   );
+  const [customDiagnosis, setCustomDiagnosis] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -182,6 +183,56 @@ export function PatientForm({
             </label>
           ))}
         </div>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add custom diagnosis..."
+            value={customDiagnosis}
+            onChange={(e) => setCustomDiagnosis(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const trimmed = customDiagnosis.trim().toLowerCase().replace(/\s+/g, "-");
+                if (trimmed && !diagnoses.includes(trimmed)) {
+                  setDiagnoses((prev) => [...prev, trimmed]);
+                }
+                setCustomDiagnosis("");
+              }
+            }}
+            className="h-9 text-sm"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-9 shrink-0 text-xs"
+            onClick={() => {
+              const trimmed = customDiagnosis.trim().toLowerCase().replace(/\s+/g, "-");
+              if (trimmed && !diagnoses.includes(trimmed)) {
+                setDiagnoses((prev) => [...prev, trimmed]);
+              }
+              setCustomDiagnosis("");
+            }}
+          >
+            Add
+          </Button>
+        </div>
+        {diagnoses
+          .filter((d) => !DIAGNOSIS_OPTIONS.includes(d as any))
+          .map((d) => (
+            <span
+              key={d}
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary"
+            >
+              {d.replace(/-/g, " ")}
+              <button
+                type="button"
+                onClick={() => setDiagnoses((prev) => prev.filter((x) => x !== d))}
+                className="ml-0.5 text-primary/60 hover:text-primary"
+              >
+                &times;
+              </button>
+            </span>
+          ))}
       </div>
 
       <div className="space-y-2">

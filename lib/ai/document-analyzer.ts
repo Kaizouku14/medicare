@@ -102,11 +102,19 @@ Return ONLY valid JSON. No markdown, no explanation.`,
   return content;
 }
 
+const GROQ_BASE64_LIMIT = 4 * 1024 * 1024;
+
 export async function analyzeDocument(
   imageBuffer: ArrayBuffer,
   mimeType: string,
 ): Promise<DocumentAnalysis> {
   const base64 = Buffer.from(imageBuffer).toString("base64");
+
+  if (base64.length > GROQ_BASE64_LIMIT) {
+    throw new Error(
+      "Image too large for Groq vision analysis. Please upload a smaller or compressed image (under 3 MB).",
+    );
+  }
 
   let lastError: Error | null = null;
 

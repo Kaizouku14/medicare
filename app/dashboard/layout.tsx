@@ -5,6 +5,7 @@ import { LogoutButton } from "@/components/common/logout-button";
 import { Sidebar } from "@/components/common/sidebar";
 import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
+import { listRecentPatientsByUser } from "@/lib/db/patients";
 
 export default async function DashboardLayout({
   children,
@@ -53,7 +54,7 @@ export default async function DashboardLayout({
 
       <div className="mx-auto flex w-full max-w-6xl flex-1 gap-0 px-4 sm:px-6">
         <aside className="hidden w-56 shrink-0 border-r border-border/60 pt-8 md:block">
-          <Sidebar />
+          <Sidebar recentPatients={await listRecentPatientsByUser(user.id)} />
         </aside>
 
         <section className="min-w-0 flex-1 py-8 pl-0 md:pl-8">
