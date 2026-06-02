@@ -18,11 +18,13 @@ function formatCurrency(n: number) {
 export function MealPlanEditor({
   plan,
   onSaved,
+  onCancel,
 }: {
   plan: MealPlan;
   onSaved: (updated: MealPlan) => void;
+  onCancel?: () => void;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(true);
   const [saving, setSaving] = useState(false);
   const [meals, setMeals] = useState<DayMeal[]>(
     JSON.parse(JSON.stringify(plan.meals)),
@@ -125,6 +127,7 @@ export function MealPlanEditor({
     setMeals(JSON.parse(JSON.stringify(plan.meals)));
     setRecommendations(JSON.parse(JSON.stringify(plan.recommendations)));
     setEditing(false);
+    onCancel?.();
   }
 
   return (

@@ -15,13 +15,13 @@ export async function PUT(req: Request, { params }: Params) {
     const { id } = await params;
     const patient = await requirePatientAccess(user.id, id);
 
-  const body = (await req.json()) as {
-    planId: string;
-    recommendations: FoodRecommendation[];
-    meals: DayMeal[];
-  };
+    const body = (await req.json()) as {
+      planId: string;
+      recommendations: FoodRecommendation[];
+      meals: DayMeal[];
+    };
 
-  if (!body.planId || !body.recommendations || !body.meals) {
+    if (!body.planId || !body.recommendations || !body.meals) {
       return NextResponse.json(
         { error: "planId, recommendations, and meals are required." },
         { status: 400 },

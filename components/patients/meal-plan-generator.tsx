@@ -175,6 +175,7 @@ export function MealPlanGenerator({
                 setPlan(updated);
                 setEditingPlan(false);
               }}
+              onCancel={() => setEditingPlan(false)}
             />
           ) : (
             <>
