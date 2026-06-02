@@ -11,6 +11,8 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  ZoomIn,
+  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +43,7 @@ export function DocumentList({
 }) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [viewing, setViewing] = useState<PatientDocument | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<PatientDocument | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [reanalyzing, setReanalyzing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -145,18 +148,24 @@ export function DocumentList({
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
-                {signedUrls?.has(doc.id) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={signedUrls.get(doc.id)}
-                    alt={doc.fileName}
-                    className="size-10 shrink-0 rounded-xl border border-border/40 object-cover"
-                  />
-                ) : (
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/10 to-primary/5 text-primary">
-                    <FileImage className="size-4" />
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setPreviewDoc(doc)}
+                  className="shrink-0"
+                >
+                  {signedUrls?.has(doc.id) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={signedUrls.get(doc.id)}
+                      alt={doc.fileName}
+                      className="size-10 shrink-0 rounded-xl border border-border/40 object-cover transition-transform hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/10 to-primary/5 text-primary">
+                      <FileImage className="size-4" />
+                    </div>
+                  )}
+                </button>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
                     {doc.fileName}
@@ -180,6 +189,16 @@ export function DocumentList({
               </div>
 
               <div className="flex shrink-0 items-center gap-1">
+                {signedUrls?.has(doc.id) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 rounded-lg p-0 opacity-0 transition-all group-hover:opacity-100"
+                    onClick={() => setPreviewDoc(doc)}
+                  >
+                    <ZoomIn className="size-3.5" />
+                  </Button>
+                )}
                 {doc.analysis && (
                   <Dialog
                     open={viewing?.id === doc.id}
@@ -227,7 +246,6 @@ export function DocumentList({
                     Re-analyze
                   </Button>
                 )}
-
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button
@@ -307,6 +325,33 @@ export function DocumentList({
           </Button>
         </div>
       )}
+
+      {/* Full image preview dialog */}
+      <Dialog
+        open={!!previewDoc}
+        onOpenChange={(open) => { if (!open) setPreviewDoc(null); }}
+      >
+        <DialogContent className="max-h-[90vh] max-w-4xl sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-lg font-medium flex items-center gap-2">
+              <FileImage className="size-4 text-primary" />
+              {previewDoc?.fileName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center overflow-auto rounded-xl bg-muted/30 p-2">
+            {previewDoc && signedUrls?.has(previewDoc.id) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={signedUrls.get(previewDoc.id)}
+                alt={previewDoc.fileName}
+                className="max-h-[65vh] w-auto rounded-lg object-contain shadow-sm"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground py-12">Preview not available</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

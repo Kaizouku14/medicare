@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, UtensilsCrossed, Activity, Pill, DollarSign, ArrowLeftToLine } from "lucide-react";
+import { FileText, UtensilsCrossed, Activity, Pill, DollarSign, Clock, ArrowLeftToLine } from "lucide-react";
 
 const tabs = [
   { href: "", label: "Overview", icon: ArrowLeftToLine },
   { href: "/care", label: "Care", icon: Pill },
+  { href: "/medications", label: "Schedule", icon: Clock },
   { href: "/meal-plan", label: "Meal Plan", icon: UtensilsCrossed },
   { href: "/documents", label: "Documents", icon: FileText },
   { href: "/lab-trends", label: "Lab Trends", icon: Activity },

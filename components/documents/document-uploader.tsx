@@ -1,14 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, Loader2, AlertCircle, FileImage } from "lucide-react";
+import { Upload, Loader2, AlertCircle, FileImage, Files } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AnalysisDisplay } from "@/components/documents/analysis-display";
 import type { DocumentAnalysis } from "@/types/domain";
 
 const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
+const MAX_FILES = 10;
 const ACCEPTED = "image/png,image/jpeg,image/webp";
 
 export function DocumentUploader({
@@ -22,14 +24,26 @@ export function DocumentUploader({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<DocumentAnalysis | null>(null);
+  const [uploadedCount, setUploadedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
-  async function handleFile(file: File) {
-    if (!ACCEPTED.split(",").includes(file.type)) {
-      setError("Only PNG, JPEG, and WebP images are accepted.");
-      return;
+  async function handleFiles(fileList: FileList) {
+    const files = Array.from(fileList).slice(0, MAX_FILES);
+    setTotalCount(files.length);
+    setUploadedCount(0);
+
+    const invalid: string[] = [];
+    for (const file of files) {
+      if (!ACCEPTED.split(",").includes(file.type)) {
+        invalid.push(`${file.name} (unsupported type)`);
+      }
+      if (file.size > MAX_SIZE) {
+        invalid.push(`${file.name} (over 3 MB)`);
+      }
     }
-    if (file.size > MAX_SIZE) {
-      setError("File must be under 3 MB.");
+
+    if (invalid.length > 0) {
+      setError(`Skipped ${invalid.length} file(s): ${invalid.join(", ")}`);
       return;
     }
 
@@ -37,35 +51,49 @@ export function DocumentUploader({
     setError(null);
     setAnalysis(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
+    let lastAnalysis: DocumentAnalysis | null = null;
+    let hasError = false;
 
-    try {
-      const res = await fetch(`/api/patients/${patientId}/documents`, {
-        method: "POST",
-        body: formData,
-      });
+    for (let i = 0; i < files.length; i++) {
+      const formData = new FormData();
+      formData.append("file", files[i]);
 
-      const data = await res.json();
+      try {
+        const res = await fetch(`/api/patients/${patientId}/documents`, {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!res.ok) {
-        toast.error(data.error ?? "Upload failed.");
-        setError(data.error ?? "Upload failed.");
-        return;
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.error(`${files[i].name}: ${data.error ?? "Upload failed."}`);
+          hasError = true;
+          continue;
+        }
+
+        if (data.document?.analysis) {
+          lastAnalysis = data.document.analysis;
+        }
+
+        setUploadedCount(i + 1);
+        toast.success(`${files[i].name} uploaded and analyzed`);
+      } catch {
+        toast.error(`${files[i].name}: Network error.`);
+        hasError = true;
       }
-
-      toast.success("Document uploaded and analyzed successfully");
-
-      if (data.document?.analysis) {
-        setAnalysis(data.document.analysis);
-      }
-      onUploaded?.();
-    } catch {
-      toast.error("Network error. Please try again.");
-      setError("Network error. Please try again.");
-    } finally {
-      setUploading(false);
     }
+
+    if (lastAnalysis) {
+      setAnalysis(lastAnalysis);
+    }
+
+    if (!hasError && files.length > 0) {
+      toast.success(`All ${files.length} file(s) uploaded successfully`);
+    }
+
+    onUploaded?.();
+    setUploading(false);
   }
 
   return (
@@ -86,14 +114,19 @@ export function DocumentUploader({
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">
-                  Uploading and analyzing...
+                  Uploading and analyzing{totalCount > 1 ? ` (${uploadedCount}/${totalCount})` : "..."}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  This may take 10–30 seconds
+                  This may take 10–30 seconds per file
                 </p>
               </div>
               <div className="mt-1 h-1 w-48 overflow-hidden rounded-full bg-primary/10">
-                <div className="h-full w-1/2 animate-shimmer rounded-full bg-linear-to-r from-transparent via-primary/40 to-transparent" />
+                <div
+                  className="h-full rounded-full bg-linear-to-r from-transparent via-primary/40 to-transparent transition-all"
+                  style={{
+                    width: totalCount > 0 ? `${(uploadedCount / totalCount) * 100}%` : "50%",
+                  }}
+                />
               </div>
             </>
           ) : (
@@ -103,16 +136,16 @@ export function DocumentUploader({
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">
-                  Upload a medical document
+                  Upload medical documents
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Lab results, CT scans, or ECG reports
                 </p>
               </div>
               <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-2">
-                <FileImage className="size-3.5 text-muted-foreground" />
+                <Files className="size-3.5 text-muted-foreground" />
                 <span className="text-[11px] text-muted-foreground">
-                  PNG, JPEG, WebP &middot; Max 3 MB
+                  PNG, JPEG, WebP &middot; Max 3 MB &middot; Up to {MAX_FILES} files
                 </span>
               </div>
             </>
@@ -122,11 +155,14 @@ export function DocumentUploader({
           ref={inputRef}
           type="file"
           accept={ACCEPTED}
+          multiple
           className="hidden"
           disabled={uploading}
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleFile(file);
+            const files = e.target.files;
+            if (files && files.length > 0) {
+              handleFiles(files);
+            }
             e.target.value = "";
           }}
         />
