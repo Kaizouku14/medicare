@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { renderNutrients } from "@/lib/nutrients";
 import {
   CalendarDays,
   Clock,
@@ -117,7 +118,7 @@ function PlanDetailDialog({
                         variant="outline"
                         className="rounded-full text-[10px] font-medium"
                       >
-                        {food.nutrients}
+                        {renderNutrients(food.nutrients)}
                       </Badge>
                     </div>
                     <p className="mt-2 text-xs italic leading-relaxed text-muted-foreground/70">

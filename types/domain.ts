@@ -28,12 +28,20 @@ export type CreatePatientInput = {
   monthlyBudgetPhp: number;
 };
 
+export type Nutrients = Record<string, string>;
+
 export type FoodRecommendation = {
   name: string;
   description: string;
   estimatedCost: number;
-  nutrients: string;
+  nutrients: string | Nutrients;
   reason: string;
+};
+
+export type MealRecipe = {
+  ingredients: string[];
+  instructions: string;
+  prepTime: string;
 };
 
 export type DayMeal = {
@@ -43,6 +51,7 @@ export type DayMeal = {
   dinner: string;
   snacks: string[];
   totalCost: number;
+  recipes?: Record<string, MealRecipe>;
 };
 
 export type DocumentAnalysis = {
@@ -88,6 +97,37 @@ export type ChatSession = {
   title: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type Medication = {
+  id: string;
+  patientId: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  route: string;
+  startDate: string;
+  endDate: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+export type VisitNote = {
+  id: string;
+  patientId: string;
+  date: string;
+  type: "checkup" | "follow-up" | "emergency";
+  notes: string;
+  createdAt: string;
+};
+
+export type Expense = {
+  id: string;
+  patientId: string;
+  date: string;
+  amount: number;
+  note: string | null;
+  createdAt: string;
 };
 
 export type MealPlan = {

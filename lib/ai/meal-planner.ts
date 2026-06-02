@@ -22,7 +22,7 @@ function isFoodRecArray(v: unknown): v is FoodRecommendation[] {
     typeof v[0]?.name === "string" &&
     typeof v[0]?.description === "string" &&
     typeof v[0]?.estimatedCost === "number" &&
-    typeof v[0]?.nutrients === "string" &&
+    (typeof v[0]?.nutrients === "string" || typeof v[0]?.nutrients === "object") &&
     typeof v[0]?.reason === "string"
   );
 }
@@ -112,7 +112,9 @@ ${labData.dietaryConsiderations}
 
 - Name: ${patient.name}
 - Age: ${patient.age}
+- Height: ${patient.heightCm}
 - Weight: ${patient.weightKg ? `${patient.weightKg} kg` : "Not specified"}
+- BMI: ${patient.heightCm && patient.weightKg ? `${patient.weightKg / (patient.heightCm / 100) ** 2}` : "Not specified"}
 - Diagnoses: ${patient.diagnoses.join(", ")}
 - Feeding method: ${patient.feedingMethod}
 - Allergies: ${patient.allergies.join(", ") || "None"}
@@ -204,9 +206,13 @@ Return a JSON object with a single key "meals" whose value is an array of exactl
 - "dinner": Meal name
 - "snacks": Array of 1-2 snack names
 - "totalCost": Estimated total cost for the day in PHP (number)
+- "recipes": Object where keys are meal identifiers ("breakfast", "lunch", "dinner", "snack-0", etc.) and values are recipe objects with:
+  - "ingredients": Array of ingredient strings with amounts
+  - "instructions": Step-by-step cooking instructions as a single string
+  - "prepTime": Estimated prep time (e.g. "15 mins", "30 mins")
 
 Example format:
-{"meals": [{"day": "Monday", "breakfast": "...", "lunch": "...", "dinner": "...", "snacks": ["..."], "totalCost": 120}]}
+{"meals": [{"day": "Monday", "breakfast": "Chicken Adobo", "lunch": "Sinigang na Hipon", "dinner": "Tinolang Manok", "snacks": ["Banana", "Saging"], "totalCost": 120, "recipes": {"breakfast": {"ingredients": ["1 cup rice", "2 eggs"], "instructions": "Cook rice. Fry eggs. Serve together.", "prepTime": "15 mins"}}}]}
 
 Return ONLY valid JSON. No markdown, no code fences, no explanation.`;
 

@@ -9,14 +9,18 @@ import {
   UtensilsCrossed,
   FileText,
   HeartPulse,
+  Activity,
+  Pill,
 } from "lucide-react";
 
 import { DeletePatientButton } from "@/components/patients/delete-patient-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ExpenseTracker } from "@/components/patients/expense-tracker";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
+import { listExpensesByPatient } from "@/lib/db/expenses";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -73,7 +77,7 @@ export default async function PatientDetailPage({ params }: Props) {
       </Link>
 
       {/* Hero */}
-      <div className="relative mt-6 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-card to-card border border-border/60">
+      <div className="relative mt-6 overflow-hidden rounded-2xl bg-linear-to-br from-primary/5 via-card to-card border border-border/60">
         <div className="absolute -right-16 -top-16 size-48 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-8 -left-8 size-32 rounded-full bg-secondary/30 blur-2xl" />
 
@@ -81,7 +85,7 @@ export default async function PatientDetailPage({ params }: Props) {
           <div className="flex items-start gap-5">
             <div className="relative">
               <Avatar className="size-16 rounded-2xl ring-2 ring-border/40 shadow-lg">
-                <AvatarFallback className="rounded-2xl text-lg font-bold bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
+                <AvatarFallback className="rounded-2xl text-lg font-bold bg-linear-to-br from-primary/15 to-primary/5 text-primary">
                   {getInitials(patient.name)}
                 </AvatarFallback>
               </Avatar>
@@ -199,46 +203,20 @@ export default async function PatientDetailPage({ params }: Props) {
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         {/* Side details */}
         <div className="space-y-4 lg:col-span-2">
-          {(() => {
-            const bmi =
-              patient.heightCm && patient.weightKg
-                ? calculateBmi(patient.heightCm, patient.weightKg)
-                : null;
-            const category = bmi ? bmiCategory(bmi) : null;
-
-            if (!bmi) return null;
-
-            return (
-              <div className="rounded-xl border border-border/60 bg-card p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  BMI
-                </p>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <p className="text-2xl font-bold text-foreground">{bmi}</p>
-                  {category && (
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${category.color}`}
-                    >
-                      {category.label}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
+          <ExpenseTracker
+            patientId={patient.id}
+            monthlyBudgetPhp={patient.monthlyBudgetPhp}
+            initialExpenses={await listExpensesByPatient(patient.id)}
+          />
 
           <div className="rounded-xl border border-border/60 bg-card p-5">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               Allergies
             </p>
             <p className="mt-2 text-sm leading-relaxed text-foreground">
-              {patient.allergies.length > 0 ? (
-                patient.allergies.join(", ")
-              ) : (
-                <span className="italic text-muted-foreground">
-                  None reported
-                </span>
-              )}
+              {patient.allergies.length > 0
+                ? patient.allergies.join(", ")
+                : <span className="italic text-muted-foreground">None reported</span>}
             </p>
           </div>
 
@@ -247,22 +225,39 @@ export default async function PatientDetailPage({ params }: Props) {
               Intolerances
             </p>
             <p className="mt-2 text-sm leading-relaxed text-foreground">
-              {patient.intolerances.length > 0 ? (
-                patient.intolerances.join(", ")
-              ) : (
-                <span className="italic text-muted-foreground">
-                  None reported
-                </span>
-              )}
+              {patient.intolerances.length > 0
+                ? patient.intolerances.join(", ")
+                : <span className="italic text-muted-foreground">None reported</span>}
             </p>
           </div>
+
+          {patient.heightCm && patient.weightKg && (() => {
+            const bmi = calculateBmi(patient.heightCm, patient.weightKg);
+            if (!bmi) return null;
+            const category = bmiCategory(bmi);
+            return (
+              <div className="rounded-xl border border-border/60 bg-card p-5">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  BMI
+                </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <p className="text-2xl font-bold text-foreground">{bmi}</p>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${category.color}`}
+                  >
+                    {category.label}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Main actions */}
         <div className="flex flex-col gap-3 lg:col-span-3">
           <Link
             href={`/dashboard/patients/${patient.id}/meal-plan`}
-            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 to-card p-5 transition-all hover:border-primary/30 hover:shadow-md"
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-linear-to-br from-primary/5 to-card p-5 transition-all hover:border-primary/30 hover:shadow-md"
           >
             <div className="absolute -right-6 -top-6 size-20 rounded-full bg-primary/5 blur-xl transition-all group-hover:scale-150" />
             <div className="relative flex items-center gap-4">
@@ -284,6 +279,26 @@ export default async function PatientDetailPage({ params }: Props) {
           </Link>
 
           <Link
+            href={`/dashboard/patients/${patient.id}/care`}
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-rose-50/50 to-card p-5 transition-all hover:border-rose-300/30 hover:shadow-md"
+          >
+            <div className="relative flex items-center gap-4">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-sm">
+                <Pill className="size-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Care</p>
+                <p className="text-xs text-muted-foreground">
+                  Track medications and log visit notes
+                </p>
+              </div>
+              <span className="text-xs font-medium text-rose-600 transition-transform group-hover:translate-x-0.5">
+                View →
+              </span>
+            </div>
+          </Link>
+
+          <Link
             href={`/dashboard/patients/${patient.id}/documents`}
             className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-secondary/10 to-card p-5 transition-all hover:border-secondary/30 hover:shadow-md"
           >
@@ -293,14 +308,32 @@ export default async function PatientDetailPage({ params }: Props) {
                 <FileText className="size-5" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">
-                  Medical Documents
-                </p>
+                <p className="text-sm font-semibold text-foreground">Medical Documents</p>
                 <p className="text-xs text-muted-foreground">
                   Upload lab results and scan reports for AI analysis
                 </p>
               </div>
               <span className="text-xs font-medium text-secondary-foreground transition-transform group-hover:translate-x-0.5">
+                View →
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href={`/dashboard/patients/${patient.id}/lab-trends`}
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-violet-50/50 to-card p-5 transition-all hover:border-violet-300/30 hover:shadow-md"
+          >
+            <div className="relative flex items-center gap-4">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600 shadow-sm">
+                <Activity className="size-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Lab Trends</p>
+                <p className="text-xs text-muted-foreground">
+                  Track lab results over time across all documents
+                </p>
+              </div>
+              <span className="text-xs font-medium text-violet-600 transition-transform group-hover:translate-x-0.5">
                 View →
               </span>
             </div>

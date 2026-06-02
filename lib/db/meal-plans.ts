@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { mealPlans } from "@/lib/db/schema/schema";
 import { type FoodRecommendation, type DayMeal, type MealPlan } from "@/types/domain";
 
-function toMealPlan(row: typeof mealPlans.$inferSelect): MealPlan {
+export function toMealPlan(row: typeof mealPlans.$inferSelect): MealPlan {
   return {
     id: row.id,
     patientId: row.patientId,

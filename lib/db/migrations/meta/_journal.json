@@ -36,6 +36,20 @@
       "when": 1780377431141,
       "tag": "0004_peaceful_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780381233605,
+      "tag": "0005_wakeful_lady_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780382111241,
+      "tag": "0006_smart_zarek",
+      "breakpoints": true
     }
   ]
 }
