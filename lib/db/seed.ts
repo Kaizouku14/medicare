@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { users, patients, patientDocuments, mealPlans } from "@/lib/db/schema/schema";
-import type { DocumentAnalysis, FoodRecommendation, DayMeal } from "@/types/domain";
+import { FEEDING_METHODS, type DocumentAnalysis, type FoodRecommendation, type DayMeal } from "@/types/domain";
 
 const TEST_USER_ID = "00000000-0000-0000-0000-000000000001";
 const TEST_PATIENT_1 = "00000000-0000-0000-0000-000000000010";
@@ -27,7 +27,7 @@ async function seed() {
       heightCm: "165.0",
       weightKg: "72.5",
       diagnoses: ["diabetes", "hypertension"],
-      feedingMethod: "oral",
+      feedingMethod: FEEDING_METHODS[0],
       allergies: [],
       intolerances: ["lactose"],
       monthlyBudgetPhp: "5000",
@@ -40,7 +40,7 @@ async function seed() {
       heightCm: "155.0",
       weightKg: "58.0",
       diagnoses: ["stroke", "ckd"],
-      feedingMethod: "ngt-pureed",
+      feedingMethod: FEEDING_METHODS[2],
       allergies: ["peanuts"],
       intolerances: [],
       monthlyBudgetPhp: "8000",
@@ -53,7 +53,7 @@ async function seed() {
       heightCm: "172.0",
       weightKg: "90.0",
       diagnoses: ["high-cholesterol"],
-      feedingMethod: "oral",
+      feedingMethod: FEEDING_METHODS[0],
       allergies: [],
       intolerances: [],
       monthlyBudgetPhp: "4000",

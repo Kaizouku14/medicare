@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
-import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
-  const { allowed } = rateLimit(rateLimitKey(req, "login"), 5, 60000);
+  const { allowed } = await rateLimit("login", { request: req, limit: 5, windowMs: 60000 });
   if (!allowed) {
     return NextResponse.json(
       { error: "Too many attempts. Please wait a moment." },

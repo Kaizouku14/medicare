@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
-import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   getDocumentById,
   deleteDocument,
@@ -29,16 +29,15 @@ export async function GET(_: Request, { params }: Params) {
   }
 }
 
-export async function POST(_: Request, { params }: Params) {
-  const { allowed } = rateLimit(rateLimitKey(_, "document-upload"), 5, 60000);
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Too many requests. Please wait a moment." },
-      { status: 429 },
-    );
-  }
-
+export async function POST(request: Request, { params }: Params) {
   try {
+    const { allowed } = await rateLimit("document-upload", { request, limit: 5, windowMs: 60000 });
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment." },
+        { status: 429 },
+      );
+    }
     const { user } = await requireAuth();
     const { id, docId } = await params;
     const patient = await requirePatientAccess(user.id, id);

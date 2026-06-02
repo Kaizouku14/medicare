@@ -3,7 +3,7 @@ import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 
 import { requireAuth, handleApiError } from "@/lib/auth";
-import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   createSession,
   deleteSessions,
@@ -15,7 +15,7 @@ import {
 import { buildSystemPrompt } from "@/lib/ai/chat-prompt";
 
 export async function POST(req: Request) {
-  const { allowed } = rateLimit(rateLimitKey(req, "chat"), 10, 60000);
+  const { allowed } = await rateLimit("chat", { request: req, limit: 10, windowMs: 60000 });
   if (!allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a moment." },

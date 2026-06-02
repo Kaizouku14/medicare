@@ -45,6 +45,27 @@
   --radius: 0.75rem;
 }
 
+.dark {
+  --background: oklch(0.13 0.008 60);
+  --foreground: oklch(0.92 0.01 80);
+  --card: oklch(0.16 0.01 60);
+  --card-foreground: oklch(0.92 0.01 80);
+  --primary: oklch(0.62 0.185 38);
+  --primary-foreground: oklch(0.13 0.008 60);
+  --secondary: oklch(0.25 0.025 140);
+  --secondary-foreground: oklch(0.85 0.03 140);
+  --muted: oklch(0.2 0.01 60);
+  --muted-foreground: oklch(0.65 0.015 60);
+  --border: oklch(0.27 0.015 60);
+  --input: oklch(0.27 0.015 60);
+  --ring: oklch(0.62 0.185 38);
+  --destructive: oklch(0.6 0.22 28);
+  --popover: oklch(0.14 0.01 60);
+  --popover-foreground: oklch(0.92 0.01 80);
+  --accent: oklch(0.32 0.06 80);
+  --accent-foreground: oklch(0.92 0.01 80);
+}
+
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -80,13 +101,26 @@
   50% { opacity: 0.7; }
 }
 
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-dm-sans), sans-serif;
   position: relative;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Light mode ambient background */
 body::before {
   content: "";
   position: fixed;
@@ -99,14 +133,103 @@ body::before {
     radial-gradient(ellipse 30% 40% at 10% 80%, oklch(0.9 0.03 45 / 0.15) 0%, transparent 60%);
 }
 
+/* Dark mode ambient background */
+.dark body::before {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.52 0.175 32 / 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 20%, oklch(0.35 0.06 80 / 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 50% at 10% 80%, oklch(0.6 0.15 28 / 0.05) 0%, transparent 60%);
+}
+
+/* Grain texture overlay - light mode */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: -1;
-  opacity: 0.35;
+  opacity: 0.3;
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c84c3e' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  transition: opacity 0.3s ease;
+}
+
+/* Grain texture overlay - dark mode */
+.dark body::after {
+  opacity: 0.15;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0a050' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Dark mode dialog card backgrounds */
+.dark .doc-card {
+  background: oklch(0.19 0.01 60);
+  border-color: oklch(0.32 0.015 60);
+}
+
+.dark .doc-card-hover:hover {
+  background: oklch(0.22 0.01 60);
+}
+
+.dark .doc-alert-abnormal {
+  background: oklch(0.2 0.06 28 / 0.3);
+  border-color: oklch(0.4 0.12 28 / 0.5);
+}
+
+.dark .doc-alert-normal {
+  background: oklch(0.2 0.05 145 / 0.3);
+  border-color: oklch(0.35 0.08 145 / 0.5);
+}
+
+.dark .doc-badge-abnormal {
+  border-color: oklch(0.5 0.12 28);
+  color: oklch(0.7 0.1 28);
+}
+
+.dark .doc-badge-normal {
+  border-color: oklch(0.5 0.08 145);
+  color: oklch(0.7 0.08 145);
+}
+
+.dark .doc-concern {
+  background: oklch(0.22 0.05 75 / 0.4);
+}
+
+.dark .doc-concern-icon {
+  color: oklch(0.7 0.1 75);
+}
+
+.dark .doc-text-soft {
+  color: oklch(0.85 0.01 80);
+}
+
+.dark .doc-icon-positive {
+  color: oklch(0.7 0.1 145);
+}
+
+.dark .doc-text-positive {
+  color: oklch(0.7 0.08 145);
+}
+
+.dark .doc-delete-btn:hover {
+  background: oklch(0.2 0.06 28 / 0.4);
+  color: oklch(0.7 0.1 28);
+}
+
+.dark .doc-alert-error {
+  background: oklch(0.2 0.06 28 / 0.3);
+  border-color: oklch(0.4 0.12 28 / 0.5);
+}
+
+.dark .doc-preview-bg {
+  background: oklch(0.17 0.01 60);
+}
+
+/* Smooth transitions for theme-aware elements */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -132,7 +255,6 @@ body::after {
     animation: pulse-subtle 3s ease-in-out infinite;
   }
 }
-
 
 .animate-stagger-1 { animation-delay: 0.05s; }
 .animate-stagger-2 { animation-delay: 0.1s; }

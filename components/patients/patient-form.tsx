@@ -47,7 +47,7 @@ const patientFormSchema = z.object({
     ),
   weightKg: z.string().optional(),
   diagnoses: z.array(z.string()).min(1, "At least one diagnosis is required."),
-  feedingMethod: z.enum(["oral", "ngt-soft", "ngt-pureed"]),
+  feedingMethod: z.enum(FEEDING_METHODS),
   allergies: z.string().optional(),
   intolerances: z.string().optional(),
   monthlyBudgetPhp: z
@@ -76,7 +76,7 @@ function toFormDefaults(
     heightCm: value?.heightCm?.toString() ?? "",
     weightKg: value?.weightKg?.toString() ?? "",
     diagnoses: value?.diagnoses ?? [],
-    feedingMethod: value?.feedingMethod ?? "oral",
+    feedingMethod: value?.feedingMethod ?? FEEDING_METHODS[0],
     allergies: value?.allergies?.join(", ") ?? "",
     intolerances: value?.intolerances?.join(", ") ?? "",
     monthlyBudgetPhp: value?.monthlyBudgetPhp?.toString() ?? "",

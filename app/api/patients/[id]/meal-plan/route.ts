@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
-import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { rateLimit } from "@/lib/rate-limit";
 import { getLatestMealPlan, saveMealPlan, deleteMealPlan } from "@/lib/db/meal-plans";
 import { buildPatientContext } from "@/lib/db/patient-context";
 import {
@@ -26,15 +26,14 @@ export async function GET(_: Request, { params }: Params) {
 }
 
 export async function POST(request: Request, { params }: Params) {
-  const { allowed } = rateLimit(rateLimitKey(request, "meal-plan"), 5, 60000);
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Too many requests. Please wait a moment." },
-      { status: 429 },
-    );
-  }
-
   try {
+    const { allowed } = await rateLimit("meal-plan", { request, limit: 5, windowMs: 60000 });
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment." },
+        { status: 429 },
+      );
+    }
     const { user } = await requireAuth();
     const { id } = await params;
     const patient = await requirePatientAccess(user.id, id);

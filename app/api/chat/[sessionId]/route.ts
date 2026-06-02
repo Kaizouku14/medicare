@@ -3,7 +3,7 @@ import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 
 import { requireAuth, handleApiError } from "@/lib/auth";
-import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   deleteSession,
   getSessionById,
@@ -51,15 +51,14 @@ export async function DELETE(_: Request, { params }: Params) {
 }
 
 export async function POST(req: Request, { params }: Params) {
-  const { allowed } = rateLimit(rateLimitKey(req, "chat"), 10, 60000);
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Too many requests. Please wait a moment." },
-      { status: 429 },
-    );
-  }
-
   try {
+    const { allowed } = await rateLimit("chat", { request: req, limit: 10, windowMs: 60000 });
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment." },
+        { status: 429 },
+      );
+    }
     const { user } = await requireAuth();
     const { sessionId } = await params;
     const session = await getSessionById(sessionId);

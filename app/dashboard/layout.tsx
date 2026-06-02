@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/common/logout-button";
 import { Sidebar } from "@/components/common/sidebar";
 import { MobileNav } from "@/components/common/mobile-nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
 import { listRecentPatientsByUser } from "@/lib/db/patients";
@@ -36,7 +37,7 @@ export default async function DashboardLayout({
           <div className="flex items-center gap-2">
             <MobileNav recentPatients={await listRecentPatientsByUser(user.id)} />
             <Link href="/dashboard" className="flex items-center gap-3.5">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-primary to-primary/80 text-base font-bold text-primary-foreground shadow-xs transition-transform hover:scale-105">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-primary to-primary/80 text-base font-bold text-primary-foreground shadow-xs transition-all hover:scale-105 hover:shadow-md">
                 M
               </span>
               <div className="hidden sm:block">
@@ -52,7 +53,10 @@ export default async function DashboardLayout({
               </div>
             </Link>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <LogoutButton />
+          </div>
         </div>
       </header>
 
@@ -68,8 +72,9 @@ export default async function DashboardLayout({
             toastOptions={{
               style: {
                 borderRadius: "0.75rem",
-                border: "1px solid oklch(0.88 0.015 75)",
-                background: "oklch(0.998 0.004 80)",
+                border: "1px solid var(--border)",
+                background: "var(--card)",
+                color: "var(--card-foreground)",
               },
             }}
           />

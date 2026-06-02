@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, DM_Serif_Display } from "next/font/google";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -28,8 +29,18 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${dmSans.variable} ${dmSerif.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

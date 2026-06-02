@@ -1,5 +1,6 @@
-const rateMap = new Map<string, { count: number; resetAt: number }>();
+import { checkRateLimit } from "@vercel/firewall";
 
+const localRateMap = new Map<string, { count: number; resetAt: number }>();
 const CLEANUP_INTERVAL_MS = 60_000;
 
 let cleanupTimer: ReturnType<typeof setInterval> | null = null;
@@ -8,12 +9,12 @@ function startCleanup(): void {
   if (cleanupTimer !== null) return;
   cleanupTimer = setInterval(() => {
     const now = Date.now();
-    for (const [key, entry] of rateMap) {
+    for (const [key, entry] of localRateMap) {
       if (now > entry.resetAt) {
-        rateMap.delete(key);
+        localRateMap.delete(key);
       }
     }
-    if (rateMap.size === 0 && cleanupTimer !== null) {
+    if (localRateMap.size === 0 && cleanupTimer !== null) {
       clearInterval(cleanupTimer);
       cleanupTimer = null;
     }
@@ -23,16 +24,40 @@ function startCleanup(): void {
   }
 }
 
-export function rateLimit(
-  key: string,
-  limit: number = 10,
-  windowMs: number = 60000,
-): { allowed: boolean; remaining: number } {
+type RateLimitOptions = {
+  request: Request;
+  limit?: number;
+  windowMs?: number;
+  rateLimitKey?: string;
+};
+
+export async function rateLimit(
+  rateLimitId: string,
+  options: RateLimitOptions,
+): Promise<{ allowed: boolean; remaining: number }> {
+  try {
+    const result = await checkRateLimit(rateLimitId, {
+      request: options.request,
+      rateLimitKey: options.rateLimitKey,
+    });
+    if (result && "rateLimited" in result) {
+      return { allowed: !result.rateLimited, remaining: result.rateLimited ? 0 : 999 };
+    }
+  } catch {
+    // checkRateLimit not available (local dev) — fall through to in-memory fallback
+  }
+
+  const limit = options.limit ?? 10;
+  const windowMs = options.windowMs ?? 60_000;
+  const forwarded = options.request.headers.get("x-forwarded-for");
+  const ip = forwarded?.split(",")[0]?.trim() ?? "unknown";
+  const key = `${ip}:${rateLimitId}`;
+
   const now = Date.now();
-  const entry = rateMap.get(key);
+  const entry = localRateMap.get(key);
 
   if (!entry || now > entry.resetAt) {
-    rateMap.set(key, { count: 1, resetAt: now + windowMs });
+    localRateMap.set(key, { count: 1, resetAt: now + windowMs });
     startCleanup();
     return { allowed: true, remaining: limit - 1 };
   }
@@ -43,10 +68,4 @@ export function rateLimit(
   }
 
   return { allowed: true, remaining: limit - entry.count };
-}
-
-export function rateLimitKey(req: Request, suffix?: string): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() ?? "unknown";
-  return `${ip}:${suffix ?? "global"}`;
 }

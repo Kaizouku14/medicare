@@ -22,7 +22,7 @@ export function AnalysisDisplay({
       {abnormalValues.length > 0 ? (
         <Alert
           variant="destructive"
-          className="rounded-xl border-red-200 bg-red-50/80"
+          className="rounded-xl border-red-200 bg-red-50/80 doc-alert-abnormal"
         >
           <AlertCircle className="size-4" />
           <AlertDescription className="text-sm font-medium">
@@ -32,16 +32,16 @@ export function AnalysisDisplay({
           </AlertDescription>
         </Alert>
       ) : analysis.extractedValues.length > 0 ? (
-        <Alert className="rounded-xl border-emerald-200 bg-emerald-50/80">
-          <CheckCircle2 className="size-4 text-emerald-600" />
-          <AlertDescription className="text-sm font-medium text-emerald-800">
+        <Alert className="rounded-xl border-emerald-200 bg-emerald-50/80 doc-alert-normal">
+          <CheckCircle2 className="size-4 text-emerald-600 doc-icon-positive" />
+          <AlertDescription className="text-sm font-medium text-emerald-800 doc-text-positive">
             All values within normal range
           </AlertDescription>
         </Alert>
       ) : null}
 
       {/* Summary card */}
-      <div className="rounded-xl border border-border/60 bg-card p-5">
+      <div className="rounded-xl border border-border/60 bg-card doc-card p-5">
         <div className="flex items-center gap-2.5">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <FileText className="size-4" />
@@ -61,17 +61,17 @@ export function AnalysisDisplay({
             </p>
           </div>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-foreground/85">
+        <p className="mt-3 text-sm leading-relaxed text-foreground/85 doc-text-soft">
           {analysis.summary}
         </p>
       </div>
 
       {/* Findings (expandable) */}
       {analysis.findings && (
-        <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+        <div className="overflow-hidden rounded-xl border border-border/60 bg-card doc-card">
           <button
             onClick={() => setShowFindings(!showFindings)}
-            className="flex w-full items-center gap-2 px-5 py-3 text-left transition-colors hover:bg-muted/30"
+            className="flex w-full items-center gap-2 px-5 py-3 text-left transition-colors hover:bg-muted/30 doc-card-hover"
           >
             {showFindings ? (
               <ChevronDown className="size-4 text-muted-foreground" />
@@ -84,7 +84,7 @@ export function AnalysisDisplay({
           </button>
           {showFindings && (
             <div className="border-t border-border/60 px-5 py-4">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85 doc-text-soft">
                 {analysis.findings}
               </p>
             </div>
@@ -107,8 +107,8 @@ export function AnalysisDisplay({
                 key={i}
                 className={`animate-fade-in-up rounded-xl border p-3.5 ${
                   v.isAbnormal
-                    ? "border-red-200/80 bg-red-50/50"
-                    : "border-emerald-200/80 bg-emerald-50/50"
+                    ? "border-red-200/80 bg-red-50/50 doc-alert-abnormal"
+                    : "border-emerald-200/80 bg-emerald-50/50 doc-alert-normal"
                 }`}
                 style={{ animationDelay: `${i * 0.03}s` }}
               >
@@ -120,8 +120,8 @@ export function AnalysisDisplay({
                     variant="outline"
                     className={`rounded-full text-[10px] font-medium ${
                       v.isAbnormal
-                        ? "border-red-300 text-red-700"
-                        : "border-emerald-300 text-emerald-700"
+                        ? "border-red-300 text-red-700 doc-badge-abnormal"
+                        : "border-emerald-300 text-emerald-700 doc-badge-normal"
                     }`}
                   >
                     {v.isAbnormal ? "Abnormal" : "Normal"}
@@ -157,9 +157,9 @@ export function AnalysisDisplay({
               {analysis.concerns.map((c, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 rounded-lg bg-amber-50/60 px-3.5 py-2.5 text-sm text-foreground/85"
+                  className="flex items-start gap-2.5 rounded-lg bg-amber-50/60 px-3.5 py-2.5 text-sm text-foreground/85 doc-concern"
                 >
-                  <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
+                  <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-amber-500 doc-concern-icon" />
                   {c}
                 </li>
               ))}
@@ -175,7 +175,7 @@ export function AnalysisDisplay({
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Dietary Considerations
           </p>
-          <p className="text-sm leading-relaxed text-foreground/85">
+          <p className="text-sm leading-relaxed text-foreground/85 doc-text-soft">
             {analysis.dietaryConsiderations}
           </p>
         </div>

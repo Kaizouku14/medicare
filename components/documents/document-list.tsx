@@ -132,7 +132,7 @@ export function DocumentList({
       {error && (
         <Alert
           variant="destructive"
-          className="rounded-xl border-red-200 bg-red-50"
+          className="rounded-xl border-red-200 bg-red-50 doc-alert-error"
         >
           <AlertCircle className="size-4" />
           <AlertDescription>{error}</AlertDescription>
@@ -251,7 +251,7 @@ export function DocumentList({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 rounded-lg p-0 text-muted-foreground opacity-0 transition-all hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
+                      className="h-8 w-8 rounded-lg p-0 text-muted-foreground opacity-0 transition-all hover:bg-red-50 hover:text-red-600 doc-delete-btn group-hover:opacity-100"
                       disabled={deleting === doc.id}
                     >
                       {deleting === doc.id ? (
@@ -338,7 +338,7 @@ export function DocumentList({
               {previewDoc?.fileName}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center overflow-auto rounded-xl bg-muted/30 p-2">
+          <div className="flex items-center justify-center overflow-auto rounded-xl bg-muted/30 doc-preview-bg p-2">
             {previewDoc && signedUrls?.has(previewDoc.id) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

@@ -123,9 +123,9 @@ export function MobileNav({
                 }`}
               >
                 {isActive && (
-                  <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
+                  <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_0_var(--primary)]" />
                 )}
-                <Icon className="size-4" />
+                <Icon className="size-4 shrink-0" />
                 {link.label}
               </Link>
             );
@@ -134,6 +134,9 @@ export function MobileNav({
           {recentPatients.length > 0 && (
             <>
               <div className="mt-6 mb-3 flex items-center gap-2 px-3">
+                <div className="flex size-5 items-center justify-center rounded-md bg-primary/10">
+                  <HeartPulse className="size-3 text-primary" />
+                </div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
                   Recent Patients
                 </p>
@@ -155,12 +158,12 @@ export function MobileNav({
                       }`}
                     >
                       <Avatar className="size-6 rounded-md">
-                        <AvatarFallback className="rounded-md text-[9px] font-bold bg-muted/50 text-muted-foreground">
+                        <AvatarFallback className="rounded-md text-[9px] font-bold bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
                           {getInitials(p.name)}
                         </AvatarFallback>
                       </Avatar>
                       <span className="flex-1 truncate">{p.name}</span>
-                      <ChevronRight className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                      <ChevronRight className="size-3 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0" />
                     </Link>
                   );
                 })}
