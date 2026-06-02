@@ -67,6 +67,7 @@ export async function PUT(req: Request, { params }: Params) {
   const patient = await updatePatient(user.id, id, {
     name: body.name!.trim(),
     age: body.age!,
+    heightCm: body.heightCm ?? null,
     weightKg: body.weightKg ?? null,
     diagnoses: body.diagnoses!,
     feedingMethod: body.feedingMethod!,

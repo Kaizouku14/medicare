@@ -5,6 +5,7 @@ export type Patient = {
   userId: string;
   name: string;
   age: number;
+  heightCm: number | null;
   weightKg: number | null;
   diagnoses: string[];
   feedingMethod: FeedingMethod;
@@ -18,6 +19,7 @@ export type Patient = {
 export type CreatePatientInput = {
   name: string;
   age: number;
+  heightCm?: number | null;
   weightKg?: number | null;
   diagnoses: string[];
   feedingMethod: FeedingMethod;

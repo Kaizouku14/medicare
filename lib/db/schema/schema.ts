@@ -35,6 +35,7 @@ export const patients = pgTable("patients", {
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   age: integer("age").notNull(),
+  heightCm: numeric("height_cm", { precision: 5, scale: 1 }),
   weightKg: numeric("weight_kg", { precision: 5, scale: 2 }),
   diagnoses: text("diagnoses").array().notNull().default([]),
   feedingMethod: feedingMethodEnum("feeding_method").notNull(),

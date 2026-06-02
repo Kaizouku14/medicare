@@ -10,6 +10,7 @@ function toPatient(row: typeof patients.$inferSelect): Patient {
     userId: row.userId,
     name: row.name,
     age: row.age,
+    heightCm: row.heightCm ? Number(row.heightCm) : null,
     weightKg: row.weightKg ? Number(row.weightKg) : null,
     diagnoses: row.diagnoses,
     feedingMethod: row.feedingMethod,
@@ -28,6 +29,7 @@ export async function createPatient(userId: string, input: CreatePatientInput) {
       userId,
       name: input.name,
       age: input.age,
+      heightCm: input.heightCm?.toString() ?? null,
       weightKg: input.weightKg?.toString() ?? null,
       diagnoses: input.diagnoses,
       feedingMethod: input.feedingMethod,
@@ -89,6 +91,7 @@ export async function updatePatient(
     .set({
       name: input.name,
       age: input.age,
+      heightCm: input.heightCm?.toString() ?? null,
       weightKg: input.weightKg?.toString() ?? null,
       diagnoses: input.diagnoses,
       feedingMethod: input.feedingMethod,

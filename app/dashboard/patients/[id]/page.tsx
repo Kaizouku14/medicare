@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   Syringe,
+  Ruler,
   Weight,
   DollarSign,
   UtensilsCrossed,
@@ -104,7 +105,7 @@ export default async function PatientDetailPage({ params }: Props) {
         </div>
 
         {/* Stats grid */}
-        <div className="grid border-t border-border/60 sm:grid-cols-4">
+        <div className="grid border-t border-border/60 sm:grid-cols-5">
           <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Syringe className="size-4" />
@@ -115,6 +116,19 @@ export default async function PatientDetailPage({ params }: Props) {
               </p>
               <p className="text-sm font-bold text-foreground">
                 {patient.age} <span className="font-normal text-muted-foreground">years</span>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <Ruler className="size-4" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Height
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {patient.heightCm ? `${patient.heightCm} cm` : "\u2014"}
               </p>
             </div>
           </div>

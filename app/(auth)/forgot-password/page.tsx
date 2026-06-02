@@ -2,39 +2,56 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AlertCircle, ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ArrowLeft, Mail } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+
+const forgotSchema = z.object({
+  email: z.string().email("Enter a valid email address."),
+});
+
+type ForgotValues = z.infer<typeof forgotSchema>;
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<ForgotValues>({
+    resolver: zodResolver(forgotSchema),
+    defaultValues: { email: "" },
+    mode: "onBlur",
+  });
+
+  async function onSubmit(values: ForgotValues) {
     setError(null);
-    setLoading(true);
 
     const res = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(values),
     });
 
     const data = (await res.json()) as { error?: string };
     if (!res.ok) {
       setError(data.error ?? "Unable to send reset email.");
-      setLoading(false);
       return;
     }
 
     setSent(true);
-    setLoading(false);
   }
 
   if (sent) {
@@ -45,7 +62,7 @@ export default function ForgotPasswordPage() {
         </div>
         <h1 className="mt-4 font-serif text-2xl font-medium tracking-tight">Check your email</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          We sent a password reset link to <strong className="text-foreground">{email}</strong>
+          We sent a password reset link to <strong className="text-foreground">{control._formValues.email}</strong>
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Click the link in the email to reset your password. It expires in 1 hour.
@@ -80,37 +97,46 @@ export default function ForgotPasswordPage() {
         Enter your email and we&apos;ll send you a recovery link.
       </p>
 
-      <form className="mt-8 space-y-5" onSubmit={onSubmit}>
-        <div className="space-y-2">
-          <Label
-            htmlFor="email"
-            className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-          >
-            Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="maria@example.com"
+      <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+        <FieldGroup>
+          <Controller
+            name="email"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel
+                  htmlFor={field.name}
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Email
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  type="email"
+                  placeholder="maria@example.com"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
           />
-        </div>
+        </FieldGroup>
 
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
         )}
 
         <Button
           className="w-full h-10 rounded-full"
           type="submit"
-          disabled={loading}
+          disabled={isSubmitting}
         >
-          {loading ? "Sending..." : "Send reset link"}
+          {isSubmitting ? "Sending..." : "Send reset link"}
         </Button>
       </form>
     </div>

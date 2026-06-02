@@ -2,21 +2,44 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Loader2, CheckCircle2 } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { createClient } from "@/lib/supabase/client";
+
+const updateSchema = z.object({
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters."),
+});
+
+type UpdateValues = z.infer<typeof updateSchema>;
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [ready, setReady] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<UpdateValues>({
+    resolver: zodResolver(updateSchema),
+    defaultValues: { password: "" },
+    mode: "onBlur",
+  });
 
   useEffect(() => {
     const supabase = createClient();
@@ -35,32 +58,22 @@ export default function UpdatePasswordPage() {
     }
   }, []);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function onSubmit(values: UpdateValues) {
     setError(null);
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-
-    setLoading(true);
 
     const res = await fetch("/api/auth/update-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify(values),
     });
 
     const data = (await res.json()) as { error?: string };
     if (!res.ok) {
       setError(data.error ?? "Unable to update password.");
-      setLoading(false);
       return;
     }
 
     setDone(true);
-    setLoading(false);
 
     setTimeout(() => {
       router.replace("/login");
@@ -97,37 +110,45 @@ export default function UpdatePasswordPage() {
         Choose a strong password for your account.
       </p>
 
-      <form className="mt-8 space-y-5" onSubmit={onSubmit}>
-        <div className="space-y-2">
-          <Label
-            htmlFor="password"
-            className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-          >
-            New password
-          </Label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            placeholder="Min. 8 characters"
+      <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+        <FieldGroup>
+          <Controller
+            name="password"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel
+                  htmlFor={field.name}
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  New password
+                </FieldLabel>
+                <PasswordInput
+                  {...field}
+                  id={field.name}
+                  placeholder="Min. 8 characters"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
           />
-        </div>
+        </FieldGroup>
 
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
         )}
 
         <Button
           className="w-full h-10 rounded-full"
           type="submit"
-          disabled={loading}
+          disabled={isSubmitting}
         >
-          {loading ? "Updating..." : "Update password"}
+          {isSubmitting ? "Updating..." : "Update password"}
         </Button>
       </form>
     </div>

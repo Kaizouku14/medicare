@@ -57,6 +57,7 @@ export async function POST(req: Request) {
     const patient = await createPatient(user.id, {
       name: body.name!.trim(),
       age: body.age!,
+      heightCm: body.heightCm ?? null,
       weightKg: body.weightKg ?? null,
       diagnoses: body.diagnoses!,
       feedingMethod: body.feedingMethod!,
