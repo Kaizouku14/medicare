@@ -4,7 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { getPatientById } from "@/lib/db/patients";
 import { getLatestMealPlan, saveMealPlan } from "@/lib/db/meal-plans";
-import { getLatestAnalyzedDocument } from "@/lib/db/patient-documents";
+import {
+  getLatestAnalyzedDocument,
+  listDocumentsByPatient,
+} from "@/lib/db/patient-documents";
+import { listMedicationsByPatient } from "@/lib/db/medications";
 import {
   generateRecommendations,
   generateMealPlan,
@@ -59,7 +63,12 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   try {
-    const latestDoc = await getLatestAnalyzedDocument(patient.id);
+    const [latestDoc, allMeds, allDocuments] = await Promise.all([
+      getLatestAnalyzedDocument(patient.id),
+      listMedicationsByPatient(patient.id),
+      listDocumentsByPatient(patient.id),
+    ]);
+
     const labData = latestDoc?.analysis
       ? {
           extractedValues: latestDoc.analysis.extractedValues,
@@ -68,8 +77,36 @@ export async function POST(request: Request, { params }: Params) {
         }
       : undefined;
 
-    const recommendations = await generateRecommendations(patient, labData);
-    const meals = await generateMealPlan(patient, recommendations);
+    const activeMeds = allMeds.filter(
+      (m) => !m.endDate || new Date(m.endDate) >= new Date(),
+    ).map((m) => ({
+      name: m.name,
+      dosage: m.dosage,
+      frequency: m.frequency,
+      route: m.route,
+    }));
+
+    const analyzedDocs = allDocuments.filter((d) => d.analysis);
+    const allAbnormalValues = analyzedDocs
+      .map((doc) => {
+        const abnormal = (doc.analysis?.extractedValues ?? []).filter(
+          (v) => v.isAbnormal,
+        );
+        return abnormal.length > 0
+          ? { fileName: doc.fileName, values: abnormal }
+          : null;
+      })
+      .filter(Boolean) as { fileName: string; values: { name: string; value: string; unit: string; referenceRange: string; interpretation: string }[] }[];
+
+    const medsOrUndefined = activeMeds.length > 0 ? activeMeds : undefined;
+    const abnormalOrUndefined = allAbnormalValues.length > 0 ? allAbnormalValues : undefined;
+
+    const recommendations = await generateRecommendations(
+      patient, labData, medsOrUndefined, abnormalOrUndefined,
+    );
+    const meals = await generateMealPlan(
+      patient, recommendations, medsOrUndefined, abnormalOrUndefined,
+    );
 
     const now = new Date();
     const dayOfWeek = now.getDay();

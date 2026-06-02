@@ -5,6 +5,18 @@ import {
   type DocumentAnalysis,
 } from "@/types/domain";
 
+type MedicationBrief = {
+  name: string;
+  dosage: string;
+  frequency: string;
+  route: string;
+};
+
+type DocAbnormal = {
+  fileName: string;
+  values: { name: string; value: string; unit: string; referenceRange: string; interpretation: string }[];
+};
+
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -93,6 +105,8 @@ export async function generateRecommendations(
     concerns: DocumentAnalysis["concerns"];
     dietaryConsiderations: DocumentAnalysis["dietaryConsiderations"];
   },
+  medications?: MedicationBrief[],
+  allAbnormalValues?: DocAbnormal[],
 ): Promise<FoodRecommendation[]> {
   let labSection = "";
   if (labData) {
@@ -108,6 +122,25 @@ ${labData.dietaryConsiderations}
 `;
   }
 
+  let medSection = "";
+  if (medications && medications.length > 0) {
+    medSection = `\n\nActive Medications:\n${medications.map((m) => `- ${m.name} ${m.dosage} — ${m.frequency}`).join("\n")}`;
+  }
+
+  let abnormalSection = "";
+  if (allAbnormalValues && allAbnormalValues.length > 0) {
+    abnormalSection = `\n\nAll Lab Results — Abnormal Values:\n${allAbnormalValues.map((doc) => `- ${doc.fileName}:\n${doc.values.map((v) => `  - ${v.name}: ${v.value} ${v.unit} (ref: ${v.referenceRange}) — ${v.interpretation}`).join("\n")}`).join("\n")}`;
+  }
+
+  const considerations = [
+    "The patient's medical conditions — recommend foods that help manage them",
+    "Their feeding method — texture-appropriate foods",
+    "Budget constraints — affordable, locally available Filipino ingredients",
+    "Allergies and intolerances — strictly avoid these",
+    "High nutritional density — maximize nutrition per peso",
+    "Active medications and lab abnormalities — recommend foods that don't interfere with medications and help address abnormal values",
+  ];
+
   const prompt = `You are a Filipino clinical nutritionist. Recommend affordable, nutritious foods for a patient with the following profile:
 
 - Name: ${patient.name}
@@ -120,13 +153,9 @@ ${labData.dietaryConsiderations}
 - Allergies: ${patient.allergies.join(", ") || "None"}
 - Intolerances: ${patient.intolerances.join(", ") || "None"}
 - Daily budget: ₱${Math.round(patient.monthlyBudgetPhp / 30)} (monthly: ₱${patient.monthlyBudgetPhp})
-${labSection}
+${labSection}${medSection}${abnormalSection}
 Consider:
-1. The patient's medical conditions — recommend foods that help manage them
-2. Their feeding method — texture-appropriate foods
-3. Budget constraints — affordable, locally available Filipino ingredients
-4. Allergies and intolerances — strictly avoid these
-5. High nutritional density — maximize nutrition per peso
+${considerations.map((c, i) => `${i + 1}. ${c}`).join("\n")}
 
 Return a JSON object with a single key "recommendations" whose value is an array of exactly 8 food recommendation objects. Each object must have:
 - "name": Food name in English or Tagalog
@@ -174,9 +203,21 @@ Return ONLY valid JSON. No markdown, no code fences, no explanation.`;
 export async function generateMealPlan(
   patient: Patient,
   recommendations: FoodRecommendation[],
+  medications?: MedicationBrief[],
+  allAbnormalValues?: DocAbnormal[],
 ): Promise<DayMeal[]> {
   const foodsJson = JSON.stringify(recommendations, null, 2);
   const dailyBudget = Math.round(patient.monthlyBudgetPhp / 30);
+
+  let medSection = "";
+  if (medications && medications.length > 0) {
+    medSection = `\n\nActive Medications:\n${medications.map((m) => `- ${m.name} ${m.dosage} — ${m.frequency}`).join("\n")}`;
+  }
+
+  let abnormalSection = "";
+  if (allAbnormalValues && allAbnormalValues.length > 0) {
+    abnormalSection = `\n\nAll Lab Results — Abnormal Values:\n${allAbnormalValues.map((doc) => `- ${doc.fileName}:\n${doc.values.map((v) => `  - ${v.name}: ${v.value} ${v.unit} (ref: ${v.referenceRange}) — ${v.interpretation}`).join("\n")}`).join("\n")}`;
+  }
 
   const prompt = `You are a Filipino meal planner. Create a 7-day meal plan for this patient:
 
@@ -187,7 +228,7 @@ export async function generateMealPlan(
 - Allergies: ${patient.allergies.join(", ") || "None"}
 - Intolerances: ${patient.intolerances.join(", ") || "None"}
 - Daily budget: ₱${dailyBudget}
-
+${medSection}${abnormalSection}
 Approved foods to use:
 ${foodsJson}
 
@@ -198,6 +239,7 @@ Rules:
 4. Use Filipino dishes and ingredients that are familiar and affordable
 5. Vary the meals across the week — don't repeat the same dish
 6. Avoid all listed allergies and intolerances
+7. Meal timing and portion sizes should account for the patient's medication schedule and lab abnormalities listed above
 
 Return a JSON object with a single key "meals" whose value is an array of exactly 7 objects (one per day, Monday to Sunday). Each object must have:
 - "day": Day of week (e.g. "Monday")
