@@ -1,7 +1,5 @@
 import { type DocumentAnalysis } from "@/types/domain";
-
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+import { groqVision } from "@/lib/ai/groq-client";
 
 const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 const FALLBACK_MODEL = "meta-llama/llama-4-maverick-17b-128e-instruct";
@@ -21,35 +19,10 @@ function isDocumentAnalysis(v: unknown): v is DocumentAnalysis {
   );
 }
 
-async function groqVision(
-  imageBase64: string,
-  mimeType: string,
-  model: string,
-): Promise<string> {
-  if (!GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY is not configured.");
-  }
+const SYSTEM_PROMPT =
+  "You are MediCare AI, a medical document analyst for Filipino patients. Analyze the uploaded medical document (lab result, CT scan report, ECG, or other clinical document). Return ONLY valid JSON matching the requested structure. No markdown, no code fences, no explanation.";
 
-  const res = await fetch(GROQ_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are MediCare AI, a medical document analyst for Filipino patients. Analyze the uploaded medical document (lab result, CT scan report, ECG, or other clinical document). Return ONLY valid JSON matching the requested structure. No markdown, no code fences, no explanation.",
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analyze this medical document. Return a JSON object with this exact structure:
+const USER_PROMPT = `Analyze this medical document. Return a JSON object with this exact structure:
 {
   "documentType": "lab-results" | "ct-scan" | "ecg" | "other",
   "summary": "2-3 sentence plain-English summary of what this document shows",
@@ -70,37 +43,7 @@ async function groqVision(
 }
 
 For non-lab documents (CT scans, ECGs), extractedValues may be empty.
-Return ONLY valid JSON. No markdown, no explanation.`,
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${imageBase64}`,
-              },
-            },
-          ],
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 4096,
-      response_format: { type: "json_object" },
-    }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Groq vision API error (${res.status}): ${text}`);
-  }
-
-  const data = await res.json();
-  const content: string = data.choices?.[0]?.message?.content ?? "";
-
-  if (!content) {
-    throw new Error("Groq vision returned an empty response.");
-  }
-
-  return content;
-}
+Return ONLY valid JSON. No markdown, no explanation.`;
 
 const GROQ_BASE64_LIMIT = 4 * 1024 * 1024;
 
@@ -120,7 +63,7 @@ export async function analyzeDocument(
 
   for (const model of [VISION_MODEL, FALLBACK_MODEL]) {
     try {
-      const content = await groqVision(base64, mimeType, model);
+      const content = await groqVision(SYSTEM_PROMPT, USER_PROMPT, base64, mimeType, model);
       const parsed = JSON.parse(content);
       if (isDocumentAnalysis(parsed)) {
         return parsed;

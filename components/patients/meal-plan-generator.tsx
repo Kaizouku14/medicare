@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { renderNutrients } from "@/lib/nutrients";
+import { renderNutrients } from "@/types/domain";
 import {
   Sparkles,
   Sun,
@@ -34,7 +34,13 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import type { MealPlan, Patient, PatientDocument, FoodRecommendation, MealRecipe } from "@/types/domain";
+import type {
+  MealPlan,
+  Patient,
+  PatientDocument,
+  FoodRecommendation,
+  MealRecipe,
+} from "@/types/domain";
 
 function formatCurrency(n: number) {
   return `₱${n.toLocaleString()}`;
@@ -56,10 +62,15 @@ export function MealPlanGenerator({
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(false);
-  const [recipeOpen, setRecipeOpen] = useState<{ name: string; recipe: MealRecipe } | null>(null);
+  const [recipeOpen, setRecipeOpen] = useState<{
+    name: string;
+    recipe: MealRecipe;
+  } | null>(null);
   const [substituting, setSubstituting] = useState<string | null>(null);
   const [subsLoading, setSubsLoading] = useState(false);
-  const [substitutes, setSubstitutes] = useState<FoodRecommendation[] | null>(null);
+  const [substitutes, setSubstitutes] = useState<FoodRecommendation[] | null>(
+    null,
+  );
   const [manualSub, setManualSub] = useState("");
 
   async function generate() {
@@ -175,7 +186,8 @@ export function MealPlanGenerator({
                       Recommended Foods
                     </h2>
                     <p className="text-xs text-muted-foreground">
-                      Nutritionist-approved suggestions for {plan.weekStart} week
+                      Nutritionist-approved suggestions for {plan.weekStart}{" "}
+                      week
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -225,46 +237,49 @@ export function MealPlanGenerator({
                       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                         {food.description}
                       </p>
-                      <div className="mt-2.5 flex flex-wrap gap-1">
+                      <div className="mt-2.5 flex flex-wrap gap-1 ">
                         <Badge
                           variant="outline"
-                          className="rounded-full text-[10px] font-medium"
+                          className="rounded-full text-[10px] h-auto font-medium whitespace-normal wrap-break-word"
                         >
                           {renderNutrients(food.nutrients)}
                         </Badge>
                       </div>
-                  <p className="mt-2 text-[11px] italic leading-relaxed text-muted-foreground/70">
-                    {food.reason}
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2 h-7 gap-1 rounded-lg text-[10px] text-muted-foreground opacity-0 transition-all hover:text-foreground group-hover:opacity-100"
-                    onClick={async () => {
-                      setSubstituting(food.name);
-                      setSubsLoading(true);
-                      setSubstitutes(null);
-                      try {
-                        const res = await fetch(`/api/patients/${patient.id}/meal-plan/substitute`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ foodName: food.name }),
-                        });
-                        const data = await res.json();
-                        setSubstitutes(data.substitutes ?? []);
-                      } catch {
-                        toast.error("Failed to find substitutes.");
-                      } finally {
-                        setSubsLoading(false);
-                      }
-                    }}
-                  >
-                    <RefreshCw className="size-3" />
-                    Substitute
-                  </Button>
+                      <p className="mt-2 text-[11px] italic leading-relaxed text-muted-foreground/70">
+                        {food.reason}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 h-7 gap-1 rounded-lg text-[10px] text-muted-foreground opacity-0 transition-all hover:text-foreground group-hover:opacity-100"
+                        onClick={async () => {
+                          setSubstituting(food.name);
+                          setSubsLoading(true);
+                          setSubstitutes(null);
+                          try {
+                            const res = await fetch(
+                              `/api/patients/${patient.id}/meal-plan/substitute`,
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ foodName: food.name }),
+                              },
+                            );
+                            const data = await res.json();
+                            setSubstitutes(data.substitutes ?? []);
+                          } catch {
+                            toast.error("Failed to find substitutes.");
+                          } finally {
+                            setSubsLoading(false);
+                          }
+                        }}
+                      >
+                        <RefreshCw className="size-3" />
+                        Substitute
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-          </div>
               </div>
 
               {/* Weekly Meal Plan */}
@@ -308,90 +323,114 @@ export function MealPlanGenerator({
                               <Coffee className="size-2.5" />
                               Breakfast
                             </p>
-                        <p className="mt-0.5 text-sm text-foreground">
-                          {day.breakfast}
-                        </p>
-                        {day.recipes?.breakfast && (
-                          <button
-                            type="button"
-                            onClick={() => setRecipeOpen({ name: day.breakfast, recipe: day.recipes!.breakfast })}
-                            className="mt-0.5 flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
-                          >
-                            <ChefHat className="size-2.5" /> View recipe
-                          </button>
-                        )}
-                      </div>
-                      <div>
-                        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                          <Sun className="size-2.5" />
-                          Lunch
-                        </p>
-                        <p className="mt-0.5 text-sm text-foreground">
-                          {day.lunch}
-                        </p>
-                        {day.recipes?.lunch && (
-                          <button
-                            type="button"
-                            onClick={() => setRecipeOpen({ name: day.lunch, recipe: day.recipes!.lunch })}
-                            className="mt-0.5 flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
-                          >
-                            <ChefHat className="size-2.5" /> View recipe
-                          </button>
-                        )}
-                      </div>
-                      <div>
-                        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                          <Moon className="size-2.5" />
-                          Dinner
-                        </p>
-                        <p className="mt-0.5 text-sm text-foreground">
-                          {day.dinner}
-                        </p>
-                        {day.recipes?.dinner && (
-                          <button
-                            type="button"
-                            onClick={() => setRecipeOpen({ name: day.dinner, recipe: day.recipes!.dinner })}
-                            className="mt-0.5 flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
-                          >
-                            <ChefHat className="size-2.5" /> View recipe
-                          </button>
-                        )}
-                      </div>
-                      {day.snacks.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                            Snacks
-                          </p>
-                          <div className="mt-0.5 flex flex-wrap gap-1">
-                            {day.snacks.map((snack, j) => (
-                              <Badge
-                                key={j}
-                                variant="secondary"
-                                className="rounded-full text-[10px] font-medium"
+                            <p className="mt-0.5 text-sm text-foreground">
+                              {day.breakfast}
+                            </p>
+                            {day.recipes?.breakfast && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setRecipeOpen({
+                                    name: day.breakfast,
+                                    recipe: day.recipes!.breakfast,
+                                  })
+                                }
+                                className="mt-0.5 flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
                               >
-                                {snack}
-                              </Badge>
-                            ))}
+                                <ChefHat className="size-2.5" /> View recipe
+                              </button>
+                            )}
                           </div>
-                          {day.recipes && day.snacks.some((_, j) => day.recipes![`snack-${j}`]) && (
-                            <div className="mt-1 flex flex-wrap gap-2">
-                              {day.snacks.map((snack, j) => {
-                                const key = `snack-${j}`;
-                                return day.recipes?.[key] ? (
-                                  <button
+                          <div>
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                              <Sun className="size-2.5" />
+                              Lunch
+                            </p>
+                            <p className="mt-0.5 text-sm text-foreground">
+                              {day.lunch}
+                            </p>
+                            {day.recipes?.lunch && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setRecipeOpen({
+                                    name: day.lunch,
+                                    recipe: day.recipes!.lunch,
+                                  })
+                                }
+                                className="mt-0.5 flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
+                              >
+                                <ChefHat className="size-2.5" /> View recipe
+                              </button>
+                            )}
+                          </div>
+                          <div>
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                              <Moon className="size-2.5" />
+                              Dinner
+                            </p>
+                            <p className="mt-0.5 text-sm text-foreground">
+                              {day.dinner}
+                            </p>
+                            {day.recipes?.dinner && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setRecipeOpen({
+                                    name: day.dinner,
+                                    recipe: day.recipes!.dinner,
+                                  })
+                                }
+                                className="mt-0.5 flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
+                              >
+                                <ChefHat className="size-2.5" /> View recipe
+                              </button>
+                            )}
+                          </div>
+                          {day.snacks.length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                                Snacks
+                              </p>
+                              <div className="mt-0.5 flex flex-wrap gap-1">
+                                {day.snacks.map((snack, j) => (
+                                  <Badge
                                     key={j}
-                                    type="button"
-                                    onClick={() => setRecipeOpen({ name: snack, recipe: day.recipes![key] })}
-                                    className="flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
+                                    variant="secondary"
+                                    className="rounded-full text-[10px] font-medium"
                                   >
-                                    <ChefHat className="size-2.5" /> {snack} recipe
-                                  </button>
-                                ) : null;
-                              })}
+                                    {snack}
+                                  </Badge>
+                                ))}
+                              </div>
+                              {day.recipes &&
+                                day.snacks.some(
+                                  (_, j) => day.recipes![`snack-${j}`],
+                                ) && (
+                                  <div className="mt-1 flex flex-wrap gap-2">
+                                    {day.snacks.map((snack, j) => {
+                                      const key = `snack-${j}`;
+                                      return day.recipes?.[key] ? (
+                                        <button
+                                          key={j}
+                                          type="button"
+                                          onClick={() =>
+                                            setRecipeOpen({
+                                              name: snack,
+                                              recipe: day.recipes![key],
+                                            })
+                                          }
+                                          className="flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
+                                        >
+                                          <ChefHat className="size-2.5" />{" "}
+                                          {snack} recipe
+                                        </button>
+                                      ) : null;
+                                    })}
+                                  </div>
+                                )}
                             </div>
                           )}
-                        </div>
-                      )}
                         </div>
                       </div>
                     );
@@ -445,10 +484,21 @@ export function MealPlanGenerator({
       )}
 
       {/* Substitute dialog */}
-      <Dialog open={!!substituting} onOpenChange={(o) => { if (!o) { setSubstituting(null); setSubstitutes(null); setManualSub(""); } }}>
+      <Dialog
+        open={!!substituting}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSubstituting(null);
+            setSubstitutes(null);
+            setManualSub("");
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif text-lg font-medium">Substitute: {substituting}</DialogTitle>
+            <DialogTitle className="font-serif text-lg font-medium">
+              Substitute: {substituting}
+            </DialogTitle>
             <DialogDescription>
               Choose an AI-suggested alternative or type your own
             </DialogDescription>
@@ -458,7 +508,9 @@ export function MealPlanGenerator({
             {subsLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="size-5 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">Finding alternatives...</span>
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Finding alternatives...
+                </span>
               </div>
             ) : substitutes ? (
               <div className="space-y-2">
@@ -472,32 +524,48 @@ export function MealPlanGenerator({
                       const updated = {
                         ...plan,
                         recommendations: plan.recommendations.map((r) =>
-                          r.name === substituting ? { ...sub, name: sub.name } : r,
+                          r.name === substituting
+                            ? { ...sub, name: sub.name }
+                            : r,
                         ),
                       };
                       setPlan(updated);
                       setSubstituting(null);
                       setSubstitutes(null);
                       try {
-                        await fetch(`/api/patients/${patient.id}/meal-plan/edit`, {
-                          method: "PUT",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            planId: plan.id,
-                            recommendations: updated.recommendations,
-                            meals: updated.meals,
-                          }),
-                        });
+                        await fetch(
+                          `/api/patients/${patient.id}/meal-plan/edit`,
+                          {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              planId: plan.id,
+                              recommendations: updated.recommendations,
+                              meals: updated.meals,
+                            }),
+                          },
+                        );
                       } catch {}
                       toast.success(`Replaced with ${sub.name}`);
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-foreground">{sub.name}</p>
-                      <Badge variant="secondary" className="rounded-full text-[10px] font-medium">₱{sub.estimatedCost}</Badge>
+                      <p className="text-sm font-semibold text-foreground">
+                        {sub.name}
+                      </p>
+                      <Badge
+                        variant="secondary"
+                        className="rounded-full text-[10px] font-medium"
+                      >
+                        ₱{sub.estimatedCost}
+                      </Badge>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{sub.description}</p>
-                    <p className="mt-0.5 text-[10px] italic text-muted-foreground/70">{sub.reason}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {sub.description}
+                    </p>
+                    <p className="mt-0.5 text-[10px] italic text-muted-foreground/70">
+                      {sub.reason}
+                    </p>
                   </button>
                 ))}
               </div>

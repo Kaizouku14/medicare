@@ -9,8 +9,8 @@ import { z } from "zod";
 import {
   Diagnosis,
   DIAGNOSIS_OPTIONS,
-  FEEDING_METHOD_OPTIONS,
 } from "@/data/diagnoses";
+import { FEEDING_METHODS } from "@/types/domain";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -386,7 +386,7 @@ export function PatientForm({
                   <SelectValue placeholder="Select feeding method" />
                 </SelectTrigger>
                 <SelectContent>
-                  {FEEDING_METHOD_OPTIONS.map((option) => (
+                  {FEEDING_METHODS.map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
                     </SelectItem>

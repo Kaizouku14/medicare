@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Plus, Heart, Users } from "lucide-react";
+import { Plus, Heart } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PatientList } from "@/components/patients/patient-list";
 import { listPatientsByUser } from "@/lib/db/patients";
@@ -25,9 +24,9 @@ export default async function DashboardPage() {
   return (
     <div className="animate-fade-in space-y-8">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-card to-card border border-border/60 p-6 sm:p-8">
-        <div className="absolute -right-20 -top-20 size-56 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 size-36 rounded-full bg-secondary/20 blur-2xl" />
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-primary/[0.04] via-card to-card border border-border/60 p-6 sm:p-8">
+        <div className="absolute -right-20 -top-20 size-56 rounded-full bg-primary/[0.06] blur-3xl" />
+        <div className="absolute -bottom-10 -left-10 size-36 rounded-full bg-primary/[0.03] blur-2xl" />
 
         <div className="relative flex items-start justify-between gap-6">
           <div>
@@ -92,7 +91,7 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {/* Patient list with search, filter, and pagination */}
+      {/* Patient list */}
       <div className="space-y-4">
         <PatientList patients={patients} />
       </div>

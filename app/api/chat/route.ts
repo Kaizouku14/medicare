@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAuth, handleApiError } from "@/lib/auth";
 import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import {
   createSession,
@@ -23,13 +23,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let user;
+  try {
+    ({ user } = await requireAuth());
+  } catch (err) {
+    return handleApiError(err);
   }
 
   const body = (await req.json().catch(() => ({}))) as {
@@ -81,48 +79,37 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const { user } = await requireAuth();
+    const sessions = await listGlobalSessions(user.id);
+    return NextResponse.json({ sessions });
+  } catch (err) {
+    return handleApiError(err);
   }
-
-  const sessions = await listGlobalSessions(user.id);
-  return NextResponse.json({ sessions });
 }
 
 export async function DELETE(req: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const { user } = await requireAuth();
+    const body = (await req.json().catch(() => ({}))) as {
+      ids?: string[];
+    };
+    const ids = body.ids ?? [];
+    if (ids.length === 0) {
+      return NextResponse.json({ error: "No session IDs provided." }, { status: 400 });
+    }
+    const allSessions = await listGlobalSessions(user.id);
+    const ownedIds = new Set(allSessions.map((s) => s.id));
+    const invalid = ids.filter((id) => !ownedIds.has(id));
+    if (invalid.length > 0) {
+      return NextResponse.json(
+        { error: "Some sessions not found or unauthorized." },
+        { status: 403 },
+      );
+    }
+    await deleteSessions(ids);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleApiError(err);
   }
-
-  const body = (await req.json().catch(() => ({}))) as {
-    ids?: string[];
-  };
-
-  const ids = body.ids ?? [];
-  if (ids.length === 0) {
-    return NextResponse.json({ error: "No session IDs provided." }, { status: 400 });
-  }
-
-  const allSessions = await listGlobalSessions(user.id);
-  const ownedIds = new Set(allSessions.map((s) => s.id));
-  const invalid = ids.filter((id) => !ownedIds.has(id));
-  if (invalid.length > 0) {
-    return NextResponse.json(
-      { error: "Some sessions not found or unauthorized." },
-      { status: 403 },
-    );
-  }
-
-  await deleteSessions(ids);
-  return NextResponse.json({ ok: true });
 }

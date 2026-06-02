@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Activity } from "lucide-react";
 
+import { PageHeader } from "@/components/common/page-header";
 import { LabTrends } from "@/components/patients/lab-trends";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
@@ -39,29 +40,20 @@ export default async function LabTrendsPage({ params }: Props) {
       </Link>
 
       <div className="mt-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-secondary/20">
-                <Activity className="size-3.5 text-secondary-foreground" />
-              </div>
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-secondary-foreground">
-                Trends
-              </span>
-            </div>
-            <h1 className="mt-2 font-serif text-3xl font-medium tracking-tight text-foreground">
-              Lab Value Trends
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Track lab results over time across all uploaded documents
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          icon={Activity}
+          label="Trends"
+          title="Lab Value Trends"
+          description="Track lab results over time across all uploaded documents"
+        />
 
-        <div className="mt-6 rounded-xl border border-border/60 bg-card px-5 py-3.5">
-          <span className="text-xs text-muted-foreground">
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border/60 bg-card px-5 py-3.5">
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Patient:</span>{" "}
-            {patient.name} &middot;{" "}
+            {patient.name}
+          </span>
+          <span className="hidden size-1 rounded-full bg-border sm:inline" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Analyzed documents:</span>{" "}
             {analyzedDocs.length}
           </span>

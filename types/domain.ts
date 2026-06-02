@@ -1,4 +1,6 @@
-export type FeedingMethod = "oral" | "ngt-soft" | "ngt-pureed";
+export const FEEDING_METHODS = ["oral", "ngt-soft", "ngt-pureed"] as const;
+
+export type FeedingMethod = (typeof FEEDING_METHODS)[number];
 
 export type Patient = {
   id: string;
@@ -139,3 +141,14 @@ export type MealPlan = {
   totalDailyCost: number | null;
   createdAt: string;
 };
+
+export function renderNutrients(
+  nutrients: string | Record<string, string>,
+): string {
+  if (typeof nutrients === "string") {
+    return nutrients;
+  }
+  return Object.entries(nutrients)
+    .map(([key, val]) => `${key}: ${val}`)
+    .join(" | ");
+}

@@ -127,7 +127,7 @@ export default async function PatientDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Stats grid */}
+        {/* Stats grid — warm editorial palette */}
         <div className="grid border-t border-border/60 sm:grid-cols-5">
           <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -144,7 +144,7 @@ export default async function PatientDetailPage({ params }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/8 text-primary">
               <Ruler className="size-4" />
             </div>
             <div>
@@ -157,7 +157,7 @@ export default async function PatientDetailPage({ params }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-secondary/30 text-secondary-foreground">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/6 text-primary">
               <Weight className="size-4" />
             </div>
             <div>
@@ -170,7 +170,7 @@ export default async function PatientDetailPage({ params }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-3 border-b border-border/40 p-4 sm:border-b-0 sm:border-r">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/8 text-primary">
               <UtensilsCrossed className="size-4" />
             </div>
             <div>
@@ -183,7 +183,7 @@ export default async function PatientDetailPage({ params }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-3 p-4">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <DollarSign className="size-4" />
             </div>
             <div>
@@ -209,22 +209,32 @@ export default async function PatientDetailPage({ params }: Props) {
             initialExpenses={await listExpensesByPatient(patient.id)}
           />
 
-          <div className="rounded-xl border border-border/60 bg-card p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Allergies
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-foreground">
+          <div className="rounded-xl border border-border/60 bg-linear-to-br from-card to-card/80 p-5">
+            <div className="flex items-center gap-2">
+              <div className="flex size-5 items-center justify-center rounded-md bg-primary/8 text-primary">
+                <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M8 15h8"/><path d="M12 9v4"/></svg>
+              </div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Allergies
+              </p>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-foreground">
               {patient.allergies.length > 0
                 ? patient.allergies.join(", ")
                 : <span className="italic text-muted-foreground">None reported</span>}
             </p>
           </div>
 
-          <div className="rounded-xl border border-border/60 bg-card p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Intolerances
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-foreground">
+          <div className="rounded-xl border border-border/60 bg-linear-to-br from-card to-card/80 p-5">
+            <div className="flex items-center gap-2">
+              <div className="flex size-5 items-center justify-center rounded-md bg-primary/6 text-primary">
+                <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              </div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Intolerances
+              </p>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-foreground">
               {patient.intolerances.length > 0
                 ? patient.intolerances.join(", ")
                 : <span className="italic text-muted-foreground">None reported</span>}
@@ -236,14 +246,19 @@ export default async function PatientDetailPage({ params }: Props) {
             if (!bmi) return null;
             const category = bmiCategory(bmi);
             return (
-              <div className="rounded-xl border border-border/60 bg-card p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  BMI
-                </p>
+              <div className="rounded-xl border border-border/60 bg-linear-to-br from-card to-card/80 p-5">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-5 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l18 18"/><path d="M21 3l-18 18"/></svg>
+                  </div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    BMI
+                  </p>
+                </div>
                 <div className="mt-2 flex items-baseline gap-2">
                   <p className="text-2xl font-bold text-foreground">{bmi}</p>
                   <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${category.color}`}
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${category.color}`}
                   >
                     {category.label}
                   </span>
@@ -253,15 +268,15 @@ export default async function PatientDetailPage({ params }: Props) {
           })()}
         </div>
 
-        {/* Main actions */}
+        {/* Main actions — warm cohesive card set */}
         <div className="flex flex-col gap-3 lg:col-span-3">
           <Link
             href={`/dashboard/patients/${patient.id}/meal-plan`}
-            className="group relative overflow-hidden rounded-xl border border-border/60 bg-linear-to-br from-primary/5 to-card p-5 transition-all hover:border-primary/30 hover:shadow-md"
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
           >
-            <div className="absolute -right-6 -top-6 size-20 rounded-full bg-primary/5 blur-xl transition-all group-hover:scale-150" />
+            <div className="absolute -right-6 -top-6 size-20 rounded-full bg-primary/5 blur-xl transition-all duration-500 group-hover:scale-[3] group-hover:bg-primary/10" />
             <div className="relative flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-110">
                 <UtensilsCrossed className="size-5" />
               </div>
               <div className="flex-1">
@@ -272,18 +287,19 @@ export default async function PatientDetailPage({ params }: Props) {
                   Generate AI-powered weekly meal plans
                 </p>
               </div>
-              <span className="text-xs font-medium text-primary transition-transform group-hover:translate-x-0.5">
-                View →
+              <span className="flex items-center gap-1 text-xs font-medium text-primary transition-all group-hover:gap-1.5">
+                View <span className="transition-transform group-hover:translate-x-0.5">→</span>
               </span>
             </div>
           </Link>
 
           <Link
             href={`/dashboard/patients/${patient.id}/care`}
-            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-rose-50/50 to-card p-5 transition-all hover:border-rose-300/30 hover:shadow-md"
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
           >
+            <div className="absolute -right-6 -top-6 size-20 rounded-full bg-primary/5 blur-xl transition-all duration-500 group-hover:scale-[3] group-hover:bg-primary/10" />
             <div className="relative flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-sm">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm transition-transform group-hover:scale-110">
                 <Pill className="size-5" />
               </div>
               <div className="flex-1">
@@ -292,19 +308,19 @@ export default async function PatientDetailPage({ params }: Props) {
                   Track medications and log visit notes
                 </p>
               </div>
-              <span className="text-xs font-medium text-rose-600 transition-transform group-hover:translate-x-0.5">
-                View →
+              <span className="flex items-center gap-1 text-xs font-medium text-primary transition-all group-hover:gap-1.5">
+                View <span className="transition-transform group-hover:translate-x-0.5">→</span>
               </span>
             </div>
           </Link>
 
           <Link
             href={`/dashboard/patients/${patient.id}/documents`}
-            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-secondary/10 to-card p-5 transition-all hover:border-secondary/30 hover:shadow-md"
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
           >
-            <div className="absolute -right-6 -top-6 size-20 rounded-full bg-secondary/10 blur-xl transition-all group-hover:scale-150" />
+            <div className="absolute -right-6 -top-6 size-20 rounded-full bg-primary/5 blur-xl transition-all duration-500 group-hover:scale-[3] group-hover:bg-primary/10" />
             <div className="relative flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-secondary text-secondary-foreground shadow-sm">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/8 text-primary shadow-sm transition-transform group-hover:scale-110">
                 <FileText className="size-5" />
               </div>
               <div className="flex-1">
@@ -313,18 +329,19 @@ export default async function PatientDetailPage({ params }: Props) {
                   Upload lab results and scan reports for AI analysis
                 </p>
               </div>
-              <span className="text-xs font-medium text-secondary-foreground transition-transform group-hover:translate-x-0.5">
-                View →
+              <span className="flex items-center gap-1 text-xs font-medium text-primary transition-all group-hover:gap-1.5">
+                View <span className="transition-transform group-hover:translate-x-0.5">→</span>
               </span>
             </div>
           </Link>
 
           <Link
             href={`/dashboard/patients/${patient.id}/lab-trends`}
-            className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-violet-50/50 to-card p-5 transition-all hover:border-violet-300/30 hover:shadow-md"
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
           >
+            <div className="absolute -right-6 -top-6 size-20 rounded-full bg-primary/5 blur-xl transition-all duration-500 group-hover:scale-[3] group-hover:bg-primary/10" />
             <div className="relative flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600 shadow-sm">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm transition-transform group-hover:scale-110">
                 <Activity className="size-5" />
               </div>
               <div className="flex-1">
@@ -333,8 +350,8 @@ export default async function PatientDetailPage({ params }: Props) {
                   Track lab results over time across all documents
                 </p>
               </div>
-              <span className="text-xs font-medium text-violet-600 transition-transform group-hover:translate-x-0.5">
-                View →
+              <span className="flex items-center gap-1 text-xs font-medium text-primary transition-all group-hover:gap-1.5">
+                View <span className="transition-transform group-hover:translate-x-0.5">→</span>
               </span>
             </div>
           </Link>

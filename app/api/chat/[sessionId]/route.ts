@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAuth, handleApiError } from "@/lib/auth";
 import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import {
   deleteSession,
@@ -19,49 +19,35 @@ type Params = {
 };
 
 export async function GET(req: Request, { params }: Params) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const { user } = await requireAuth();
+    const { sessionId } = await params;
+    const session = await getSessionById(sessionId);
+    if (!session || session.userId !== user.id) {
+      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+    }
+    const url = new URL(req.url);
+    const offset = Number(url.searchParams.get("offset")) || 0;
+    const { messages, hasMore } = await getSessionMessages(sessionId, offset);
+    return NextResponse.json({ session, messages, hasMore });
+  } catch (err) {
+    return handleApiError(err);
   }
-
-  const { sessionId } = await params;
-  const session = await getSessionById(sessionId);
-
-  if (!session || session.userId !== user.id) {
-    return NextResponse.json({ error: "Session not found." }, { status: 404 });
-  }
-
-  const url = new URL(req.url);
-  const offset = Number(url.searchParams.get("offset")) || 0;
-
-  const { messages, hasMore } = await getSessionMessages(sessionId, offset);
-
-  return NextResponse.json({ session, messages, hasMore });
 }
 
 export async function DELETE(_: Request, { params }: Params) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const { user } = await requireAuth();
+    const { sessionId } = await params;
+    const session = await getSessionById(sessionId);
+    if (!session || session.userId !== user.id) {
+      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+    }
+    await deleteSession(sessionId);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleApiError(err);
   }
-
-  const { sessionId } = await params;
-  const session = await getSessionById(sessionId);
-
-  if (!session || session.userId !== user.id) {
-    return NextResponse.json({ error: "Session not found." }, { status: 404 });
-  }
-
-  await deleteSession(sessionId);
-  return NextResponse.json({ ok: true });
 }
 
 export async function POST(req: Request, { params }: Params) {
@@ -73,21 +59,13 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { sessionId } = await params;
-  const session = await getSessionById(sessionId);
-
-  if (!session || session.userId !== user.id) {
-    return NextResponse.json({ error: "Session not found." }, { status: 404 });
-  }
+  try {
+    const { user } = await requireAuth();
+    const { sessionId } = await params;
+    const session = await getSessionById(sessionId);
+    if (!session || session.userId !== user.id) {
+      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+    }
 
   const body = (await req.json().catch(() => ({}))) as {
     messages?: Array<{
@@ -151,4 +129,7 @@ export async function POST(req: Request, { params }: Params) {
   });
 
   return result.toTextStreamResponse();
+  } catch (err) {
+    return handleApiError(err);
+  }
 }

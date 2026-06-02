@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Pencil, Save, X, Plus, Trash2 } from "lucide-react";
-import { renderNutrients } from "@/lib/nutrients";
+import { renderNutrients } from "@/types/domain";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

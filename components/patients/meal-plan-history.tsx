@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { renderNutrients } from "@/lib/nutrients";
+import { renderNutrients } from "@/types/domain";
 import {
   CalendarDays,
   Clock,

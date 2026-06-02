@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Sparkles, CalendarDays } from "lucide-react";
 
+import { PageHeader } from "@/components/common/page-header";
 import { MealPlanGenerator } from "@/components/patients/meal-plan-generator";
 import { MealPlanHistory } from "@/components/patients/meal-plan-history";
 import { createClient } from "@/lib/supabase/server";
@@ -43,47 +44,35 @@ export default async function MealPlanPage({ params }: Props) {
       </Link>
 
       <div className="mt-6">
-        {/* Editorial header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
-                <Sparkles className="size-3.5 text-primary" />
-              </div>
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-primary">
-                AI-Powered
-              </span>
-            </div>
-            <h1 className="mt-2 font-serif text-3xl font-medium tracking-tight text-foreground">
-              Meal Plan
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Personalized weekly nutrition based on {patient.name}&apos;s clinical profile
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          icon={Sparkles}
+          label="AI-Powered"
+          title="Meal Plan"
+          description={`Personalized weekly nutrition based on ${patient.name}'s clinical profile`}
+        />
 
         {/* Patient context bar */}
-        <div className="mt-6 flex flex-wrap gap-3 rounded-xl border border-border/60 bg-card px-5 py-3.5">
-          <span className="text-xs text-muted-foreground">
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border/60 bg-card px-5 py-3.5">
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Diagnoses:</span>{" "}
             {patient.diagnoses.map((d) => d.replace(/-/g, " ")).join(", ")}
           </span>
-          <span className="hidden text-muted-foreground/30 sm:inline">|</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="hidden size-1 rounded-full bg-border sm:inline" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Budget:</span> ₱
             {patient.monthlyBudgetPhp.toLocaleString()}/mo
           </span>
-          <span className="hidden text-muted-foreground/30 sm:inline">|</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="hidden size-1 rounded-full bg-border sm:inline" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Feeding:</span>{" "}
             {patient.feedingMethod.replace("-", " + ")}
           </span>
           {latestDoc && (
             <>
-              <span className="hidden text-muted-foreground/30 sm:inline">|</span>
-              <span className="text-xs text-emerald-600">
-                ✓ Lab data from{" "}
+              <span className="hidden size-1 rounded-full bg-border sm:inline" />
+              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600">
+                <span className="flex size-3 items-center justify-center rounded-full bg-emerald-100 text-[8px] font-bold text-emerald-700">✓</span>
+                Lab data from{" "}
                 {new Date(latestDoc.analyzedAt!).toLocaleDateString("en-PH", {
                   month: "short",
                   day: "numeric",
@@ -93,9 +82,9 @@ export default async function MealPlanPage({ params }: Props) {
           )}
           {pastPlans.length > 0 && (
             <>
-              <span className="hidden text-muted-foreground/30 sm:inline">|</span>
-              <span className="text-xs text-muted-foreground">
-                <CalendarDays className="mr-1 inline size-3" />
+              <span className="hidden size-1 rounded-full bg-border sm:inline" />
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="size-3" />
                 {pastPlans.length} past {pastPlans.length === 1 ? "plan" : "plans"}
               </span>
             </>
