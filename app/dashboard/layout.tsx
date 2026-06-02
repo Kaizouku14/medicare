@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/common/logout-button";
 import { Sidebar } from "@/components/common/sidebar";
+import { MobileNav } from "@/components/common/mobile-nav";
 import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
 import { listRecentPatientsByUser } from "@/lib/db/patients";
@@ -32,22 +33,25 @@ export default async function DashboardLayout({
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-10 border-b border-border/60 bg-card/90 backdrop-blur-lg">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/dashboard" className="flex items-center gap-3.5">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-primary to-primary/80 text-base font-bold text-primary-foreground shadow-xs transition-transform hover:scale-105">
-              M
-            </span>
-            <div className="hidden sm:block">
-              <p className="font-serif text-base font-medium leading-tight text-foreground">
-                MediCare AI
-              </p>
-              <p className="flex items-center gap-1.5 text-xs leading-tight text-muted-foreground">
-                <span className="flex size-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
-                  {initials ?? "U"}
-                </span>
-                {user.user_metadata?.name ?? user.email}
-              </p>
-            </div>
-          </Link>
+          <div className="flex items-center gap-2">
+            <MobileNav recentPatients={await listRecentPatientsByUser(user.id)} />
+            <Link href="/dashboard" className="flex items-center gap-3.5">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-primary to-primary/80 text-base font-bold text-primary-foreground shadow-xs transition-transform hover:scale-105">
+                M
+              </span>
+              <div className="hidden sm:block">
+                <p className="font-serif text-base font-medium leading-tight text-foreground">
+                  MediCare AI
+                </p>
+                <p className="flex items-center gap-1.5 text-xs leading-tight text-muted-foreground">
+                  <span className="flex size-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                    {initials ?? "U"}
+                  </span>
+                  {user.user_metadata?.name ?? user.email}
+                </p>
+              </div>
+            </Link>
+          </div>
           <LogoutButton />
         </div>
       </header>

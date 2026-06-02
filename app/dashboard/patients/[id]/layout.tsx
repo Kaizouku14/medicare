@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
 import { PatientChatPopup } from "@/components/chat/patient-chat-popup";
+import { PatientSubnav } from "@/components/patients/patient-subnav";
 
 type Props = {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ export default async function PatientLayout({ children, params }: Props) {
 
   return (
     <>
+      <PatientSubnav patientId={id} />
       {children}
       <PatientChatPopup patientId={id} />
     </>
