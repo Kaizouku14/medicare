@@ -106,6 +106,19 @@ export async function updatePatient(
   return row ? toPatient(row) : null;
 }
 
+export async function updatePatientDiagnoses(
+  userId: string,
+  patientId: string,
+  diagnoses: string[],
+) {
+  const [row] = await db
+    .update(patients)
+    .set({ diagnoses, updatedAt: new Date() })
+    .where(and(eq(patients.id, patientId), eq(patients.userId, userId)))
+    .returning();
+  return row ? toPatient(row) : null;
+}
+
 export async function deletePatient(userId: string, patientId: string) {
   const [row] = await db
     .delete(patients)

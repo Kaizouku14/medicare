@@ -99,7 +99,7 @@ export default async function MealPlanPage({ params }: Props) {
 
           {pastPlans.length > 0 && (
             <div className="lg:col-span-1">
-              <MealPlanHistory pastPlans={pastPlans} />
+              <MealPlanHistory patientId={patient.id} pastPlans={pastPlans} />
             </div>
           )}
         </div>

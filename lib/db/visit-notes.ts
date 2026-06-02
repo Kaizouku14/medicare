@@ -35,6 +35,18 @@ export async function listVisitNotesByPatient(patientId: string) {
   return rows.map(toVisitNote);
 }
 
+export async function updateVisitNote(
+  noteId: string,
+  data: { date?: string; type?: string; notes?: string },
+) {
+  const [row] = await db
+    .update(visitNotes)
+    .set(data)
+    .where(eq(visitNotes.id, noteId))
+    .returning();
+  return row ? toVisitNote(row) : null;
+}
+
 export async function deleteVisitNote(patientId: string, noteId: string) {
   const [row] = await db
     .delete(visitNotes)

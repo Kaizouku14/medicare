@@ -68,3 +68,11 @@ export async function getMealPlanById(patientId: string, planId: string) {
 
   return row ? toMealPlan(row) : null;
 }
+
+export async function deleteMealPlan(patientId: string, planId: string) {
+  const [row] = await db
+    .delete(mealPlans)
+    .where(and(eq(mealPlans.id, planId), eq(mealPlans.patientId, patientId)))
+    .returning({ id: mealPlans.id });
+  return !!row;
+}

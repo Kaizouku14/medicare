@@ -4,6 +4,8 @@ import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
 import {
   createExpense,
   listExpensesByPatient,
+  updateExpense,
+  deleteExpense,
 } from "@/lib/db/expenses";
 
 type Params = {
@@ -43,6 +45,55 @@ export async function POST(req: Request, { params }: Params) {
 
     const expense = await createExpense(patient.id, date, amount, note);
     return NextResponse.json({ expense }, { status: 201 });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function PUT(req: Request, { params }: Params) {
+  try {
+    const { user } = await requireAuth();
+    const { id } = await params;
+    const patient = await requirePatientAccess(user.id, id);
+
+    const body = await req.json();
+    if (!body.expenseId) {
+      return NextResponse.json({ error: "expenseId is required." }, { status: 400 });
+    }
+
+    const updated = await updateExpense(body.expenseId, {
+      date: body.date,
+      amount: body.amount,
+      note: body.note,
+    });
+
+    if (!updated) {
+      return NextResponse.json({ error: "Expense not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ expense: updated });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function DELETE(req: Request, { params }: Params) {
+  try {
+    const { user } = await requireAuth();
+    const { id } = await params;
+    const patient = await requirePatientAccess(user.id, id);
+
+    const { expenseId } = (await req.json()) as { expenseId: string };
+    if (!expenseId) {
+      return NextResponse.json({ error: "expenseId is required." }, { status: 400 });
+    }
+
+    const deleted = await deleteExpense(patient.id, expenseId);
+    if (!deleted) {
+      return NextResponse.json({ error: "Expense not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (err) {
     return handleApiError(err);
   }

@@ -10,6 +10,8 @@ import {
   Sun,
   Coffee,
   Moon,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +30,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import type { MealPlan } from "@/types/domain";
 
 function formatCurrency(n: number) {
@@ -220,10 +234,27 @@ function PlanDetailDialog({
   );
 }
 
-export function MealPlanHistory({ pastPlans }: { pastPlans: MealPlan[] }) {
+export function MealPlanHistory({ patientId, pastPlans }: { patientId: string; pastPlans: MealPlan[] }) {
   const [selectedPlan, setSelectedPlan] = useState<MealPlan | null>(null);
+  const [plans, setPlans] = useState(pastPlans);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  if (pastPlans.length === 0) return null;
+  async function handleDelete(planId: string) {
+    setDeleting(planId);
+    try {
+      const res = await fetch(`/api/patients/${patientId}/meal-plan`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+      if (!res.ok) { const d = await res.json() as { error?: string }; toast.error(d.error ?? "Failed."); return; }
+      setPlans((prev) => prev.filter((p) => p.id !== planId));
+      toast.success("Meal plan deleted");
+    } catch { toast.error("Network error."); }
+    finally { setDeleting(null); }
+  }
+
+  if (plans.length === 0) return null;
 
   return (
     <>
@@ -236,12 +267,12 @@ export function MealPlanHistory({ pastPlans }: { pastPlans: MealPlan[] }) {
             Past Plans
           </h2>
           <Badge variant="secondary" className="rounded-full text-[10px] font-medium">
-            {pastPlans.length}
+            {plans.length}
           </Badge>
         </div>
 
         <div className="space-y-2.5">
-          {pastPlans.map((plan, i) => (
+          {plans.map((plan, i) => (
             <div
               key={plan.id}
               className="group animate-fade-in-up relative overflow-hidden rounded-xl border border-border/60 bg-card p-4 transition-all hover:border-primary/20 hover:shadow-sm"
@@ -267,15 +298,43 @@ export function MealPlanHistory({ pastPlans }: { pastPlans: MealPlan[] }) {
                   <Clock className="size-3" />
                   {formatDate(plan.createdAt)}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-3 h-8 w-full gap-1.5 rounded-lg text-xs font-medium"
-                  onClick={() => setSelectedPlan(plan)}
-                >
-                  <Eye className="size-3.5" />
-                  View details
-                </Button>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 flex-1 gap-1.5 rounded-lg text-xs font-medium"
+                    onClick={() => setSelectedPlan(plan)}
+                  >
+                    <Eye className="size-3.5" />
+                    View details
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 rounded-lg p-0 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                        disabled={deleting === plan.id}
+                      >
+                        {deleting === plan.id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-3.5" />
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete meal plan?</AlertDialogTitle>
+                        <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction variant="destructive" onClick={() => handleDelete(plan.id)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </div>
           ))}

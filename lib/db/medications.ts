@@ -47,6 +47,26 @@ export async function listMedicationsByPatient(patientId: string) {
   return rows.map(toMedication);
 }
 
+export async function updateMedication(
+  medId: string,
+  data: {
+    name?: string;
+    dosage?: string;
+    frequency?: string;
+    route?: string;
+    startDate?: string;
+    endDate?: string | null;
+    notes?: string | null;
+  },
+) {
+  const [row] = await db
+    .update(medications)
+    .set(data)
+    .where(eq(medications.id, medId))
+    .returning();
+  return row ? toMedication(row) : null;
+}
+
 export async function deleteMedication(patientId: string, medId: string) {
   const [row] = await db
     .delete(medications)

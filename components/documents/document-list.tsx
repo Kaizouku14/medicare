@@ -8,6 +8,7 @@ import {
   AlertCircle,
   FileImage,
   Eye,
+  RefreshCw,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { AnalysisDisplay } from "@/components/documents/analysis-display";
 import type { PatientDocument } from "@/types/domain";
 
@@ -40,11 +42,39 @@ export function DocumentList({
   const [documents, setDocuments] = useState(initialDocuments);
   const [viewing, setViewing] = useState<PatientDocument | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [reanalyzing, setReanalyzing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
   const totalPages = Math.max(1, Math.ceil(documents.length / PAGE_SIZE));
   const paginated = documents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  async function handleReanalyze(doc: PatientDocument) {
+    setReanalyzing(doc.id);
+    setError(null);
+
+    try {
+      const res = await fetch(
+        `/api/patients/${patientId}/documents/${doc.id}`,
+        { method: "POST" },
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Re-analysis failed.");
+        return;
+      }
+
+      setDocuments((prev) =>
+        prev.map((d) => (d.id === doc.id ? data.document : d)),
+      );
+      toast.success("Document re-analyzed");
+    } catch {
+      setError("Network error.");
+    } finally {
+      setReanalyzing(null);
+    }
+  }
 
   async function handleDelete(doc: PatientDocument) {
     setDeleting(doc.id);
@@ -72,12 +102,14 @@ export function DocumentList({
 
   if (documents.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border/50 bg-gradient-to-br from-card via-card to-muted/20 px-8 py-12 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border/50 bg-linear-to-br from-card via-card to-muted/20 px-8 py-12 text-center">
         <div className="flex size-12 items-center justify-center rounded-xl bg-muted/50">
           <FileText className="size-5 text-muted-foreground" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-foreground">No documents yet</p>
+          <p className="text-sm font-semibold text-foreground">
+            No documents yet
+          </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Upload lab results or scan reports above to get started
           </p>
@@ -95,7 +127,10 @@ export function DocumentList({
       </div>
 
       {error && (
-        <Alert variant="destructive" className="rounded-xl border-red-200 bg-red-50">
+        <Alert
+          variant="destructive"
+          className="rounded-xl border-red-200 bg-red-50"
+        >
           <AlertCircle className="size-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -111,13 +146,14 @@ export function DocumentList({
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 {signedUrls?.has(doc.id) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={signedUrls.get(doc.id)}
                     alt={doc.fileName}
                     className="size-10 shrink-0 rounded-xl border border-border/40 object-cover"
                   />
                 ) : (
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 text-primary">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/10 to-primary/5 text-primary">
                     <FileImage className="size-4" />
                   </div>
                 )}
@@ -144,7 +180,7 @@ export function DocumentList({
               </div>
 
               <div className="flex shrink-0 items-center gap-1">
-                {doc.analyzedAt && doc.analysis && (
+                {doc.analysis && (
                   <Dialog
                     open={viewing?.id === doc.id}
                     onOpenChange={(open) => setViewing(open ? doc : null)}
@@ -174,6 +210,22 @@ export function DocumentList({
                       <AnalysisDisplay analysis={doc.analysis} />
                     </DialogContent>
                   </Dialog>
+                )}
+                {doc.analyzedAt && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-medium opacity-0 transition-all group-hover:opacity-100"
+                    disabled={reanalyzing === doc.id}
+                    onClick={() => handleReanalyze(doc)}
+                  >
+                    {reanalyzing === doc.id ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-3.5" />
+                    )}
+                    Re-analyze
+                  </Button>
                 )}
 
                 <Dialog>

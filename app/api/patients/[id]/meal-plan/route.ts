@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
 import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
-import { getLatestMealPlan, saveMealPlan } from "@/lib/db/meal-plans";
+import { getLatestMealPlan, saveMealPlan, deleteMealPlan } from "@/lib/db/meal-plans";
 import { buildPatientContext } from "@/lib/db/patient-context";
 import {
   generateRecommendations,
@@ -79,5 +79,27 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ plan }, { status: 201 });
   } catch (error) {
     return handleApiError(error, "Unable to generate meal plan.");
+  }
+}
+
+export async function DELETE(req: Request, { params }: Params) {
+  try {
+    const { user } = await requireAuth();
+    const { id } = await params;
+    const patient = await requirePatientAccess(user.id, id);
+
+    const { planId } = (await req.json()) as { planId: string };
+    if (!planId) {
+      return NextResponse.json({ error: "planId is required." }, { status: 400 });
+    }
+
+    const deleted = await deleteMealPlan(patient.id, planId);
+    if (!deleted) {
+      return NextResponse.json({ error: "Meal plan not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return handleApiError(err);
   }
 }

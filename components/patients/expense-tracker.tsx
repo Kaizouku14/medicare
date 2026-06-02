@@ -7,6 +7,8 @@ import {
   Loader2,
   TrendingDown,
   TrendingUp,
+  Trash2,
+  Pencil,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,17 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type { Expense } from "@/types/domain";
 
@@ -38,6 +51,7 @@ export function ExpenseTracker({
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const dailyBudget = Math.round(monthlyBudgetPhp / 30);
 
@@ -65,28 +79,63 @@ export function ExpenseTracker({
 
     setSaving(true);
     try {
-      const res = await fetch(`/api/patients/${patientId}/expenses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: today, amount: amountNum, note: note || undefined }),
-      });
-
-      const data = (await res.json()) as { expense?: Expense; error?: string };
-      if (!res.ok) {
-        toast.error(data.error ?? "Failed to log expense.");
-        return;
+      if (editingId) {
+        const res = await fetch(`/api/patients/${patientId}/expenses`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expenseId: editingId, amount: amountNum, note: note || null }),
+        });
+        const data = (await res.json()) as { expense?: Expense; error?: string };
+        if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
+        setExpenses((prev) => prev.map((e) => e.id === editingId ? data.expense! : e));
+        setEditingId(null);
+        toast.success("Expense updated");
+      } else {
+        const res = await fetch(`/api/patients/${patientId}/expenses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: today, amount: amountNum, note: note || undefined }),
+        });
+        const data = (await res.json()) as { expense?: Expense; error?: string };
+        if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
+        setExpenses((prev) => [data.expense!, ...prev]);
+        toast.success("Expense logged");
       }
-
-      setExpenses((prev) => [data.expense!, ...prev]);
       setAmount("");
       setNote("");
       setShowForm(false);
-      toast.success("Expense logged");
     } catch {
       toast.error("Network error.");
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleDelete(expenseId: string) {
+    try {
+      const res = await fetch(`/api/patients/${patientId}/expenses`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expenseId }),
+      });
+      if (!res.ok) { const d = await res.json() as { error?: string }; toast.error(d.error ?? "Failed."); return; }
+      setExpenses((prev) => prev.filter((e) => e.id !== expenseId));
+      toast.success("Expense deleted");
+    } catch { toast.error("Network error."); }
+  }
+
+  function startEdit(expense: Expense) {
+    setAmount(expense.amount.toString());
+    setNote(expense.note ?? "");
+    setEditingId(expense.id);
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setAmount("");
+    setNote("");
   }
 
   return (
@@ -145,6 +194,40 @@ export function ExpenseTracker({
           </div>
         </div>
 
+        {/* Recent expenses list with edit/delete */}
+        <div className="divide-y divide-border/30">
+          {expenses.slice(0, 10).map((exp) => (
+            <div key={exp.id} className="flex items-center justify-between px-5 py-2.5">
+              <div>
+                <p className="text-xs font-medium text-foreground">{formatCurrency(exp.amount)}</p>
+                <p className="text-[10px] text-muted-foreground">{exp.date}{exp.note ? ` · ${exp.note}` : ""}</p>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => startEdit(exp)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+                  <Pencil className="size-3" />
+                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                      <Trash2 className="size-3" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete expense?</AlertDialogTitle>
+                      <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction variant="destructive" onClick={() => handleDelete(exp.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Add expense button / form */}
         <div className="px-5 py-3">
           {showForm ? (
@@ -191,14 +274,14 @@ export function ExpenseTracker({
                   {saving ? (
                     <Loader2 className="mr-1 size-3 animate-spin" />
                   ) : null}
-                  Log expense
+                  {editingId ? "Update" : "Log expense"}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   className="h-7 rounded-lg text-xs"
-                  onClick={() => setShowForm(false)}
+                  onClick={cancelForm}
                 >
                   Cancel
                 </Button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pill, Plus, Trash2, Loader2 } from "lucide-react";
+import { Pill, Plus, Trash2, Loader2, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,17 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type { Medication } from "@/types/domain";
 
@@ -23,6 +34,8 @@ export function MedicationTracker({
 }) {
   const [medications, setMedications] = useState(initialMedications);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", dosage: "", frequency: "", route: "oral", startDate: "", endDate: "", notes: "" });
 
@@ -35,19 +48,65 @@ export function MedicationTracker({
 
     setSaving(true);
     try {
-      const res = await fetch(`/api/patients/${patientId}/medications`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = (await res.json()) as { medication?: Medication; error?: string };
-      if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
-      setMedications((prev) => [data.medication!, ...prev]);
+      if (editingId) {
+        const res = await fetch(`/api/patients/${patientId}/medications`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ medicationId: editingId, ...form }),
+        });
+        const data = (await res.json()) as { medication?: Medication; error?: string };
+        if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
+        setMedications((prev) => prev.map((m) => m.id === editingId ? data.medication! : m));
+        setEditingId(null);
+        toast.success("Medication updated");
+      } else {
+        const res = await fetch(`/api/patients/${patientId}/medications`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        const data = (await res.json()) as { medication?: Medication; error?: string };
+        if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
+        setMedications((prev) => [data.medication!, ...prev]);
+        toast.success("Medication added");
+      }
       setForm({ name: "", dosage: "", frequency: "", route: "oral", startDate: "", endDate: "", notes: "" });
       setShowForm(false);
-      toast.success("Medication added");
     } catch { toast.error("Network error."); }
     finally { setSaving(false); }
+  }
+
+  async function handleDelete(medicationId: string) {
+    try {
+      const res = await fetch(`/api/patients/${patientId}/medications`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ medicationId }),
+      });
+      if (!res.ok) { const d = await res.json() as { error?: string }; toast.error(d.error ?? "Failed."); return; }
+      setMedications((prev) => prev.filter((m) => m.id !== medicationId));
+      toast.success("Medication deleted");
+    } catch { toast.error("Network error."); }
+  }
+
+  function startEdit(med: Medication) {
+    setForm({
+      name: med.name,
+      dosage: med.dosage,
+      frequency: med.frequency,
+      route: med.route,
+      startDate: med.startDate,
+      endDate: med.endDate ?? "",
+      notes: med.notes ?? "",
+    });
+    setEditingId(med.id);
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm({ name: "", dosage: "", frequency: "", route: "oral", startDate: "", endDate: "", notes: "" });
   }
 
   const active = medications.filter((m) => !m.endDate || m.endDate >= new Date().toISOString().split("T")[0]);
@@ -73,6 +132,28 @@ export function MedicationTracker({
                 {med.notes && <span className="text-[10px] text-muted-foreground">{med.notes}</span>}
               </div>
             </div>
+            <div className="flex gap-1">
+              <button onClick={() => startEdit(med)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+                <Pencil className="size-3.5" />
+              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete medication?</AlertDialogTitle>
+                    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" onClick={() => handleDelete(med.id)}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         ))}
 
@@ -87,6 +168,28 @@ export function MedicationTracker({
                   <div>
                     <p className="text-xs font-medium text-foreground">{med.name}</p>
                     <p className="text-[10px] text-muted-foreground">{med.dosage} &middot; ended {med.endDate}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => startEdit(med)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+                      <Pencil className="size-3" />
+                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                          <Trash2 className="size-3" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete medication?</AlertDialogTitle>
+                          <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction variant="destructive" onClick={() => handleDelete(med.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}
@@ -132,9 +235,9 @@ export function MedicationTracker({
               <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Notes (optional)" className="h-8 text-sm" />
               <div className="flex gap-2">
                 <Button type="submit" size="sm" className="h-7 rounded-lg text-xs" disabled={saving}>
-                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}Add
+                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}{editingId ? "Update" : "Add"}
                 </Button>
-                <Button type="button" variant="ghost" size="sm" className="h-7 rounded-lg text-xs" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button type="button" variant="ghost" size="sm" className="h-7 rounded-lg text-xs" onClick={cancelForm}>Cancel</Button>
               </div>
             </form>
           ) : (

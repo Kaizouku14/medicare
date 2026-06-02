@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList, Plus, Loader2 } from "lucide-react";
+import { ClipboardList, Plus, Loader2, Trash2, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type { VisitNote } from "@/types/domain";
 
@@ -37,6 +48,7 @@ export function VisitNotes({
 }) {
   const [visits, setVisits] = useState(initialVisits);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ date: new Date().toISOString().split("T")[0], type: "checkup", notes: "" });
 
@@ -46,19 +58,57 @@ export function VisitNotes({
 
     setSaving(true);
     try {
-      const res = await fetch(`/api/patients/${patientId}/visits`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = (await res.json()) as { visit?: VisitNote; error?: string };
-      if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
-      setVisits((prev) => [data.visit!, ...prev]);
+      if (editingId) {
+        const res = await fetch(`/api/patients/${patientId}/visits`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ visitId: editingId, ...form }),
+        });
+        const data = (await res.json()) as { visit?: VisitNote; error?: string };
+        if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
+        setVisits((prev) => prev.map((v) => v.id === editingId ? data.visit! : v));
+        setEditingId(null);
+        toast.success("Visit updated");
+      } else {
+        const res = await fetch(`/api/patients/${patientId}/visits`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        const data = (await res.json()) as { visit?: VisitNote; error?: string };
+        if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
+        setVisits((prev) => [data.visit!, ...prev]);
+        toast.success("Visit logged");
+      }
       setForm({ date: new Date().toISOString().split("T")[0], type: "checkup", notes: "" });
       setShowForm(false);
-      toast.success("Visit logged");
     } catch { toast.error("Network error."); }
     finally { setSaving(false); }
+  }
+
+  async function handleDelete(visitId: string) {
+    try {
+      const res = await fetch(`/api/patients/${patientId}/visits`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitId }),
+      });
+      if (!res.ok) { const d = await res.json() as { error?: string }; toast.error(d.error ?? "Failed."); return; }
+      setVisits((prev) => prev.filter((v) => v.id !== visitId));
+      toast.success("Visit deleted");
+    } catch { toast.error("Network error."); }
+  }
+
+  function startEdit(v: VisitNote) {
+    setForm({ date: v.date, type: v.type, notes: v.notes });
+    setEditingId(v.id);
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm({ date: new Date().toISOString().split("T")[0], type: "checkup", notes: "" });
   }
 
   return (
@@ -86,6 +136,28 @@ export function VisitNotes({
                 >
                   {v.type}
                 </Badge>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => startEdit(v)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+                  <Pencil className="size-3.5" />
+                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete visit note?</AlertDialogTitle>
+                      <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction variant="destructive" onClick={() => handleDelete(v.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{v.notes}</p>
@@ -119,9 +191,9 @@ export function VisitNotes({
               />
               <div className="flex gap-2">
                 <Button type="submit" size="sm" className="h-7 rounded-lg text-xs" disabled={saving}>
-                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}Log visit
+                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}{editingId ? "Update" : "Log visit"}
                 </Button>
-                <Button type="button" variant="ghost" size="sm" className="h-7 rounded-lg text-xs" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button type="button" variant="ghost" size="sm" className="h-7 rounded-lg text-xs" onClick={cancelForm}>Cancel</Button>
               </div>
             </form>
           ) : (

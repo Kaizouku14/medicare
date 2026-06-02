@@ -52,3 +52,28 @@ export async function listExpensesByPatient(
 
   return rows.map(toExpense);
 }
+
+export async function updateExpense(
+  expenseId: string,
+  data: { date?: string; amount?: number; note?: string | null },
+) {
+  const values: Record<string, string | null> = {};
+  if (data.date !== undefined) values.date = data.date;
+  if (data.amount !== undefined) values.amount = data.amount.toString();
+  if (data.note !== undefined) values.note = data.note;
+
+  const [row] = await db
+    .update(expenses)
+    .set(values)
+    .where(eq(expenses.id, expenseId))
+    .returning();
+  return row ? toExpense(row) : null;
+}
+
+export async function deleteExpense(patientId: string, expenseId: string) {
+  const [row] = await db
+    .delete(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.patientId, patientId)))
+    .returning({ id: expenses.id });
+  return !!row;
+}

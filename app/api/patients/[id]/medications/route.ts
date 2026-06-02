@@ -4,6 +4,8 @@ import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
 import {
   createMedication,
   listMedicationsByPatient,
+  updateMedication,
+  deleteMedication,
 } from "@/lib/db/medications";
 
 type Params = {
@@ -44,6 +46,59 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     return NextResponse.json({ medication }, { status: 201 });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function PUT(req: Request, { params }: Params) {
+  try {
+    const { user } = await requireAuth();
+    const { id } = await params;
+    const patient = await requirePatientAccess(user.id, id);
+
+    const body = await req.json();
+    if (!body.medicationId) {
+      return NextResponse.json({ error: "medicationId is required." }, { status: 400 });
+    }
+
+    const updated = await updateMedication(body.medicationId, {
+      name: body.name,
+      dosage: body.dosage,
+      frequency: body.frequency,
+      route: body.route,
+      startDate: body.startDate,
+      endDate: body.endDate ?? null,
+      notes: body.notes ?? null,
+    });
+
+    if (!updated) {
+      return NextResponse.json({ error: "Medication not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ medication: updated });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function DELETE(req: Request, { params }: Params) {
+  try {
+    const { user } = await requireAuth();
+    const { id } = await params;
+    const patient = await requirePatientAccess(user.id, id);
+
+    const { medicationId } = (await req.json()) as { medicationId: string };
+    if (!medicationId) {
+      return NextResponse.json({ error: "medicationId is required." }, { status: 400 });
+    }
+
+    const deleted = await deleteMedication(patient.id, medicationId);
+    if (!deleted) {
+      return NextResponse.json({ error: "Medication not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (err) {
     return handleApiError(err);
   }

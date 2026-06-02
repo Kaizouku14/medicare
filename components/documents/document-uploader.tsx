@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { Upload, Loader2, AlertCircle, FileImage } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { AnalysisDisplay } from "@/components/documents/analysis-display";
@@ -94,12 +93,12 @@ export function DocumentUploader({
                 </p>
               </div>
               <div className="mt-1 h-1 w-48 overflow-hidden rounded-full bg-primary/10">
-                <div className="h-full w-1/2 animate-shimmer rounded-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                <div className="h-full w-1/2 animate-shimmer rounded-full bg-linear-to-r from-transparent via-primary/40 to-transparent" />
               </div>
             </>
           ) : (
             <>
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/20 transition-transform group-hover:scale-105">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 ring-1 ring-primary/20 transition-transform group-hover:scale-105">
                 <Upload className="size-6 text-primary" />
               </div>
               <div>
