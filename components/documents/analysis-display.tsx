@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, FileText, Activity } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, CheckCircle2, FileText, Activity, ChevronDown, ChevronRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -12,6 +13,7 @@ export function AnalysisDisplay({
 }: {
   analysis: DocumentAnalysis;
 }) {
+  const [showFindings, setShowFindings] = useState(false);
   const abnormalValues = analysis.extractedValues.filter((v) => v.isAbnormal);
 
   return (
@@ -63,6 +65,32 @@ export function AnalysisDisplay({
           {analysis.summary}
         </p>
       </div>
+
+      {/* Findings (expandable) */}
+      {analysis.findings && (
+        <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+          <button
+            onClick={() => setShowFindings(!showFindings)}
+            className="flex w-full items-center gap-2 px-5 py-3 text-left transition-colors hover:bg-muted/30"
+          >
+            {showFindings ? (
+              <ChevronDown className="size-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="size-4 text-muted-foreground" />
+            )}
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Detailed Findings
+            </span>
+          </button>
+          {showFindings && (
+            <div className="border-t border-border/60 px-5 py-4">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
+                {analysis.findings}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Extracted values */}
       {analysis.extractedValues.length > 0 && (

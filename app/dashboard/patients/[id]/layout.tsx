@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
-import { getPatientChatData } from "@/lib/db/chat";
-import { PatientChatSidebar } from "@/components/chat/patient-chat-sidebar";
+import { PatientChatPopup } from "@/components/chat/patient-chat-popup";
 
 type Props = {
   children: React.ReactNode;
@@ -23,15 +22,10 @@ export default async function PatientLayout({ children, params }: Props) {
 
   if (!patient) redirect("/dashboard");
 
-  const { session, messages } = await getPatientChatData(id, user.id);
-
   return (
     <>
       {children}
-      <PatientChatSidebar
-        sessionId={session.id}
-        initialMessages={messages}
-      />
+      <PatientChatPopup patientId={id} />
     </>
   );
 }

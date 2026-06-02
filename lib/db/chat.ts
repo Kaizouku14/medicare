@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { chatMessages, chatSessions } from "@/lib/db/schema/schema";
@@ -25,10 +25,7 @@ function toMessage(row: typeof chatMessages.$inferSelect): ChatMessage {
   };
 }
 
-export async function createSession(
-  userId: string,
-  patientId: string | null,
-) {
+export async function createSession(userId: string, patientId: string | null) {
   const [row] = await db
     .insert(chatSessions)
     .values({ userId, patientId })
@@ -47,12 +44,13 @@ export async function getSessionById(sessionId: string) {
   return row ? toSession(row) : null;
 }
 
-export async function listGlobalSessions(userId: string) {
+export async function listGlobalSessions(userId: string, max = 50) {
   const rows = await db
     .select()
     .from(chatSessions)
     .where(and(eq(chatSessions.userId, userId), isNull(chatSessions.patientId)))
-    .orderBy(desc(chatSessions.updatedAt));
+    .orderBy(desc(chatSessions.updatedAt))
+    .limit(max);
 
   return rows.map(toSession);
 }
@@ -74,15 +72,37 @@ export async function renameSession(sessionId: string, title: string) {
     .where(eq(chatSessions.id, sessionId));
 }
 
-export async function getSessionMessages(sessionId: string) {
+export async function getSessionMessages(
+  sessionId: string,
+  offset = 0,
+  limit = 30,
+) {
   const rows = await db
     .select()
     .from(chatMessages)
     .where(eq(chatMessages.sessionId, sessionId))
-    .orderBy(chatMessages.createdAt)
-    .limit(100);
+    .orderBy(desc(chatMessages.createdAt))
+    .offset(offset)
+    .limit(limit + 1);
 
-  return rows.map(toMessage);
+  // Return rows in ASC order (oldest first) for the UI
+  // The extra row tells the caller if there are more older messages
+  const hasMore = rows.length > limit;
+  if (hasMore) rows.pop();
+
+  return {
+    messages: rows.map(toMessage).reverse(),
+    hasMore,
+  };
+}
+
+export async function getSessionMessageCount(sessionId: string) {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(chatMessages)
+    .where(eq(chatMessages.sessionId, sessionId));
+
+  return Number(row?.count ?? 0);
 }
 
 export async function saveMessage(
@@ -106,28 +126,21 @@ export async function touchSession(sessionId: string) {
 }
 
 export async function deleteSession(sessionId: string) {
-  await db
-    .delete(chatSessions)
-    .where(eq(chatSessions.id, sessionId));
+  await db.delete(chatSessions).where(eq(chatSessions.id, sessionId));
 }
 
 export async function deleteSessions(sessionIds: string[]) {
   if (sessionIds.length === 0) return;
-  await db
-    .delete(chatSessions)
-    .where(inArray(chatSessions.id, sessionIds));
+  await db.delete(chatSessions).where(inArray(chatSessions.id, sessionIds));
 }
 
-export async function getPatientChatData(
-  patientId: string,
-  userId: string,
-) {
+export async function getPatientChatData(patientId: string, userId: string) {
   let session = await getPatientSession(patientId);
 
   if (!session) {
     session = await createSession(userId, patientId);
   }
 
-  const messages = await getSessionMessages(session.id);
-  return { session, messages };
+  const { messages, hasMore } = await getSessionMessages(session.id);
+  return { session, messages, hasMore };
 }

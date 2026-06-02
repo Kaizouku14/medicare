@@ -4,6 +4,7 @@ import { Bot } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { listGlobalSessions, getSessionMessages } from "@/lib/db/chat";
 import { GlobalChatClient } from "@/components/chat/global-chat-client";
+import type { ChatMessage } from "@/types/domain";
 
 export const metadata = { title: "Caregiver Chat — MediCare AI" };
 
@@ -17,9 +18,11 @@ export default async function ChatPage() {
 
   const sessions = await listGlobalSessions(user.id);
   const activeSession = sessions[0] ?? null;
-  const activeMessages = activeSession
+  const chatData = activeSession
     ? await getSessionMessages(activeSession.id)
-    : [];
+    : { messages: [] as ChatMessage[], hasMore: false };
+  const activeMessages = chatData.messages;
+  const activeHasMore = chatData.hasMore;
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
@@ -41,6 +44,7 @@ export default async function ChatPage() {
         sessions={sessions}
         activeSessionId={activeSession?.id ?? null}
         activeMessages={activeMessages}
+        activeHasMore={activeHasMore}
       />
     </div>
   );

@@ -18,7 +18,7 @@ const ALLOWED_TYPES = new Set([
   "image/jpeg",
   "image/webp",
 ]);
-const MAX_SIZE = 3 * 1024 * 1024;
+const MAX_SIZE = 10 * 1024 * 1024;
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -95,7 +95,7 @@ export async function POST(req: Request, { params }: Params) {
 
   if (file.size > MAX_SIZE) {
     return NextResponse.json(
-      { error: "File must be under 3 MB for Groq vision analysis." },
+      { error: "File must be under 10 MB." },
       { status: 413 },
     );
   }

@@ -30,14 +30,17 @@ export function GlobalChatClient({
   sessions: initialSessions,
   activeSessionId: initialSessionId,
   activeMessages: initialMessages,
+  activeHasMore = true,
 }: {
   sessions: ChatSession[];
   activeSessionId: string | null;
   activeMessages: ChatMessage[];
+  activeHasMore?: boolean;
 }) {
   const [sessions, setSessions] = useState(initialSessions);
   const [activeId, setActiveId] = useState<string | null>(initialSessionId);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [hasMore, setHasMore] = useState(activeHasMore);
   const [creating, setCreating] = useState(false);
   const [newInput, setNewInput] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -47,30 +50,37 @@ export function GlobalChatClient({
   const [deleting, setDeleting] = useState(false);
   const newInputRef = useRef<HTMLInputElement>(null);
 
+  const messageCache = useRef<Map<string, ChatMessage[]>>(new Map());
+
   async function createSessionAndSend(text: string) {
     setCreating(true);
     try {
-      const res = await fetch("/api/chat", { method: "POST" });
-      const data = (await res.json()) as { sessionId?: string };
-      if (!data.sessionId) return;
-
-      const newId = data.sessionId;
-
-      // Send the first message via the streaming API (consume the stream)
-      await fetch(`/api/chat/${newId}`, {
+      const res = await fetch("/api/chat", {
         method: "POST",
-        body: JSON.stringify({
-          messages: [{ role: "user", content: text }],
-        }),
+        body: JSON.stringify({ message: text }),
       });
 
-      // Load the resulting conversation
-      const msgRes = await fetch(`/api/chat/${newId}`);
-      const msgData = (await msgRes.json()) as { messages?: ChatMessage[] };
+      if (!res.ok) return;
+
+      const sessionId = res.headers.get("X-Session-Id");
+      if (!sessionId) return;
+
+      // Read the streaming response to get the assistant's reply
+      const reader = res.body?.getReader();
+      let assistantText = "";
+      if (reader) {
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          assistantText += decoder.decode(value, { stream: true });
+        }
+      }
+
       const firstText = text.length > 60 ? text.slice(0, 60) + "..." : text;
 
       const newSession: ChatSession = {
-        id: newId,
+        id: sessionId,
         userId: "",
         patientId: null,
         title: firstText,
@@ -78,9 +88,27 @@ export function GlobalChatClient({
         updatedAt: new Date().toISOString(),
       };
 
+      const msgs: ChatMessage[] = [
+        {
+          id: crypto.randomUUID(),
+          sessionId,
+          role: "user",
+          content: text,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: crypto.randomUUID(),
+          sessionId,
+          role: "assistant",
+          content: assistantText,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+
+      messageCache.current.set(sessionId, msgs);
       setSessions((prev) => [newSession, ...prev]);
-      setActiveId(newId);
-      setMessages(msgData.messages ?? []);
+      setActiveId(sessionId);
+      setMessages(msgs);
       setNewInput("");
     } catch {
       /* ignore */
@@ -96,15 +124,36 @@ export function GlobalChatClient({
     setTimeout(() => newInputRef.current?.focus(), 50);
   }
 
+  const hasMoreMap = useRef<Map<string, boolean>>(new Map());
+
   async function selectSession(sessionId: string) {
-    setActiveId(sessionId);
     setSelectedIds(new Set());
+
+    const cached = messageCache.current.get(sessionId);
+    if (cached) {
+      setMessages(cached);
+      setHasMore(hasMoreMap.current.get(sessionId) ?? true);
+      setActiveId(sessionId);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/chat/${sessionId}`);
-      const data = (await res.json()) as { messages?: ChatMessage[] };
-      setMessages(data.messages ?? []);
+      const data = (await res.json()) as {
+        messages?: ChatMessage[];
+        hasMore?: boolean;
+      };
+      const msgs = data.messages ?? [];
+      const more = data.hasMore ?? false;
+      messageCache.current.set(sessionId, msgs);
+      hasMoreMap.current.set(sessionId, more);
+      setMessages(msgs);
+      setHasMore(more);
+      setActiveId(sessionId);
     } catch {
       setMessages([]);
+      setHasMore(false);
+      setActiveId(sessionId);
     }
   }
 
@@ -138,6 +187,10 @@ export function GlobalChatClient({
         : await fetch(`/api/chat/${ids[0]}`, { method: "DELETE" });
       if (!res.ok) return;
       setSessions((prev) => prev.filter((s) => !confirmingDelete.has(s.id)));
+      ids.forEach((id) => {
+        messageCache.current.delete(id);
+        hasMoreMap.current.delete(id);
+      });
       if (activeId && confirmingDelete.has(activeId)) {
         const remaining = sessions.filter((s) => !confirmingDelete.has(s.id));
         if (remaining.length > 0) {
@@ -270,11 +323,12 @@ export function GlobalChatClient({
             key={activeId}
             sessionId={activeId}
             initialMessages={messages}
+            hasMore={hasMore}
             className="flex-1"
           />
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center px-6">
-            <div className="w-full max-w-md text-center">
+          <div className="flex flex-1 flex-col items-center justify-end px-6 py-4">
+            <div className="w-full max-w-md text-center ">
               <p className="mb-6 text-sm text-muted-foreground">
                 Start a new conversation
               </p>

@@ -3,6 +3,7 @@ import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import {
   deleteSession,
   getSessionById,
@@ -17,7 +18,7 @@ type Params = {
   params: Promise<{ sessionId: string }>;
 };
 
-export async function GET(_: Request, { params }: Params) {
+export async function GET(req: Request, { params }: Params) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -34,8 +35,12 @@ export async function GET(_: Request, { params }: Params) {
     return NextResponse.json({ error: "Session not found." }, { status: 404 });
   }
 
-  const messages = await getSessionMessages(sessionId);
-  return NextResponse.json({ session, messages });
+  const url = new URL(req.url);
+  const offset = Number(url.searchParams.get("offset")) || 0;
+
+  const { messages, hasMore } = await getSessionMessages(sessionId, offset);
+
+  return NextResponse.json({ session, messages, hasMore });
 }
 
 export async function DELETE(_: Request, { params }: Params) {
@@ -60,6 +65,14 @@ export async function DELETE(_: Request, { params }: Params) {
 }
 
 export async function POST(req: Request, { params }: Params) {
+  const { allowed } = rateLimit(rateLimitKey(req, "chat"), 10, 60000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment." },
+      { status: 429 },
+    );
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -104,7 +117,7 @@ export async function POST(req: Request, { params }: Params) {
 
   await saveMessage(sessionId, "user", userText);
 
-  const existingMessages = await getSessionMessages(sessionId);
+  const { messages: existingMessages } = await getSessionMessages(sessionId, 0, 30);
 
   // Auto-title from first message
   if (existingMessages.length === 1) {
