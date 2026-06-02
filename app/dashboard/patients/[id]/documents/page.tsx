@@ -4,7 +4,7 @@ import { ArrowLeft, FileText } from "lucide-react";
 
 import { DocumentUploader } from "@/components/documents/document-uploader";
 import { DocumentList } from "@/components/documents/document-list";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
 import { listDocumentsByPatient } from "@/lib/db/patient-documents";
 
@@ -27,6 +27,17 @@ export default async function DocumentsPage({ params }: Props) {
   }
 
   const documents = await listDocumentsByPatient(patient.id);
+
+  const adminSupabase = createAdminClient();
+  const signedUrls = new Map<string, string>();
+  for (const doc of documents) {
+    const { data } = await adminSupabase.storage
+      .from("patient-documents")
+      .createSignedUrl(doc.storagePath, 3600);
+    if (data) {
+      signedUrls.set(doc.id, data.signedUrl);
+    }
+  }
 
   return (
     <div className="animate-fade-in">
@@ -76,7 +87,11 @@ export default async function DocumentsPage({ params }: Props) {
 
         {/* Document list */}
         <div className="mt-8">
-          <DocumentList documents={documents} patientId={patient.id} />
+          <DocumentList
+            documents={documents}
+            patientId={patient.id}
+            signedUrls={signedUrls}
+          />
         </div>
       </div>
     </div>

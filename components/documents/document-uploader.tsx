@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { AnalysisDisplay } from "@/components/documents/analysis-display";
 import type { DocumentAnalysis } from "@/types/domain";
 
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
 const ACCEPTED = "image/png,image/jpeg,image/webp";
 
 export function DocumentUploader({
@@ -30,7 +30,7 @@ export function DocumentUploader({
       return;
     }
     if (file.size > MAX_SIZE) {
-      setError("File must be under 10 MB.");
+      setError("File must be under 3 MB.");
       return;
     }
 
@@ -76,7 +76,7 @@ export function DocumentUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="group relative w-full overflow-hidden rounded-2xl border-2 border-dashed border-border/70 bg-gradient-to-br from-card via-card to-secondary/5 p-8 text-left transition-all hover:border-primary/30 hover:bg-secondary/10"
+        className="group relative w-full overflow-hidden rounded-2xl border-2 border-dashed border-border/70 bg-linear-to-br from-card via-card to-secondary/5 p-8 text-left transition-all hover:border-primary/30 hover:bg-secondary/10"
       >
         <div className="absolute -right-8 -top-8 size-28 rounded-full bg-primary/5 blur-2xl transition-all group-hover:scale-150" />
         <div className="relative flex flex-col items-center gap-3 text-center">
@@ -113,7 +113,7 @@ export function DocumentUploader({
               <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-2">
                 <FileImage className="size-3.5 text-muted-foreground" />
                 <span className="text-[11px] text-muted-foreground">
-                  PNG, JPEG, WebP &middot; Max 10 MB
+                  PNG, JPEG, WebP &middot; Max 3 MB
                 </span>
               </div>
             </>
@@ -135,11 +135,15 @@ export function DocumentUploader({
 
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
         <AlertCircle className="size-3" />
-        Remove patient names and IDs from images before uploading. Images are sent to Groq AI for analysis and stored securely.
+        Remove patient names and IDs from images before uploading. Images are
+        sent to Groq AI for analysis and stored securely.
       </p>
 
       {error && (
-        <Alert variant="destructive" className="rounded-xl border-red-200 bg-red-50">
+        <Alert
+          variant="destructive"
+          className="rounded-xl border-red-200 bg-red-50"
+        >
           <AlertCircle className="size-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>

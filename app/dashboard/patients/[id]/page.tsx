@@ -31,6 +31,22 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
+function calculateBmi(heightCm: number, weightKg: number): number | null {
+  if (!heightCm || !weightKg) return null;
+  const heightM = heightCm / 100;
+  return Math.round((weightKg / (heightM * heightM)) * 10) / 10;
+}
+
+function bmiCategory(bmi: number): { label: string; color: string } {
+  if (bmi < 18.5)
+    return { label: "Underweight", color: "text-blue-600 bg-blue-50" };
+  if (bmi < 25)
+    return { label: "Normal", color: "text-emerald-600 bg-emerald-50" };
+  if (bmi < 30)
+    return { label: "Overweight", color: "text-amber-600 bg-amber-50" };
+  return { label: "Obese", color: "text-red-600 bg-red-50" };
+}
+
 export default async function PatientDetailPage({ params }: Props) {
   const supabase = await createClient();
   const {
@@ -95,10 +111,13 @@ export default async function PatientDetailPage({ params }: Props) {
           </div>
 
           <div className="flex shrink-0 gap-2 pt-1">
-            <Button asChild variant="outline" size="sm" className="h-8 rounded-full px-3 text-xs">
-              <Link href={`/dashboard/patients/${patient.id}/edit`}>
-                Edit
-              </Link>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-full px-3 text-xs"
+            >
+              <Link href={`/dashboard/patients/${patient.id}/edit`}>Edit</Link>
             </Button>
             <DeletePatientButton patientId={patient.id} />
           </div>
@@ -115,7 +134,8 @@ export default async function PatientDetailPage({ params }: Props) {
                 Age
               </p>
               <p className="text-sm font-bold text-foreground">
-                {patient.age} <span className="font-normal text-muted-foreground">years</span>
+                {patient.age}{" "}
+                <span className="font-normal text-muted-foreground">years</span>
               </p>
             </div>
           </div>
@@ -167,7 +187,8 @@ export default async function PatientDetailPage({ params }: Props) {
                 Budget
               </p>
               <p className="text-sm font-bold text-foreground">
-                ₱{patient.monthlyBudgetPhp.toLocaleString()}/<span className="font-normal text-muted-foreground">mo</span>
+                ₱{patient.monthlyBudgetPhp.toLocaleString()}/
+                <span className="font-normal text-muted-foreground">mo</span>
               </p>
             </div>
           </div>
@@ -178,14 +199,46 @@ export default async function PatientDetailPage({ params }: Props) {
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         {/* Side details */}
         <div className="space-y-4 lg:col-span-2">
+          {(() => {
+            const bmi =
+              patient.heightCm && patient.weightKg
+                ? calculateBmi(patient.heightCm, patient.weightKg)
+                : null;
+            const category = bmi ? bmiCategory(bmi) : null;
+
+            if (!bmi) return null;
+
+            return (
+              <div className="rounded-xl border border-border/60 bg-card p-5">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  BMI
+                </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <p className="text-2xl font-bold text-foreground">{bmi}</p>
+                  {category && (
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${category.color}`}
+                    >
+                      {category.label}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="rounded-xl border border-border/60 bg-card p-5">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               Allergies
             </p>
             <p className="mt-2 text-sm leading-relaxed text-foreground">
-              {patient.allergies.length > 0
-                ? patient.allergies.join(", ")
-                : <span className="italic text-muted-foreground">None reported</span>}
+              {patient.allergies.length > 0 ? (
+                patient.allergies.join(", ")
+              ) : (
+                <span className="italic text-muted-foreground">
+                  None reported
+                </span>
+              )}
             </p>
           </div>
 
@@ -194,22 +247,13 @@ export default async function PatientDetailPage({ params }: Props) {
               Intolerances
             </p>
             <p className="mt-2 text-sm leading-relaxed text-foreground">
-              {patient.intolerances.length > 0
-                ? patient.intolerances.join(", ")
-                : <span className="italic text-muted-foreground">None reported</span>}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-border/60 bg-card p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Created
-            </p>
-            <p className="mt-1 text-sm text-foreground">
-              {new Date(patient.createdAt).toLocaleDateString("en-PH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {patient.intolerances.length > 0 ? (
+                patient.intolerances.join(", ")
+              ) : (
+                <span className="italic text-muted-foreground">
+                  None reported
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -226,7 +270,9 @@ export default async function PatientDetailPage({ params }: Props) {
                 <UtensilsCrossed className="size-5" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">Meal Plan</p>
+                <p className="text-sm font-semibold text-foreground">
+                  Meal Plan
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Generate AI-powered weekly meal plans
                 </p>
@@ -247,7 +293,9 @@ export default async function PatientDetailPage({ params }: Props) {
                 <FileText className="size-5" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">Medical Documents</p>
+                <p className="text-sm font-semibold text-foreground">
+                  Medical Documents
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Upload lab results and scan reports for AI analysis
                 </p>

@@ -31,9 +31,11 @@ import type { PatientDocument } from "@/types/domain";
 export function DocumentList({
   patientId,
   documents: initialDocuments,
+  signedUrls,
 }: {
   patientId: string;
   documents: PatientDocument[];
+  signedUrls?: Map<string, string>;
 }) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [viewing, setViewing] = useState<PatientDocument | null>(null);
@@ -108,9 +110,17 @@ export function DocumentList({
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 text-primary">
-                  <FileImage className="size-4" />
-                </div>
+                {signedUrls?.has(doc.id) ? (
+                  <img
+                    src={signedUrls.get(doc.id)}
+                    alt={doc.fileName}
+                    className="size-10 shrink-0 rounded-xl border border-border/40 object-cover"
+                  />
+                ) : (
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 text-primary">
+                    <FileImage className="size-4" />
+                  </div>
+                )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
                     {doc.fileName}
