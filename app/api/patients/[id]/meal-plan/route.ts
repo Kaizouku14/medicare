@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { getLatestMealPlan, saveMealPlan, deleteMealPlan } from "@/lib/db/meal-plans";
-import { buildPatientContext } from "@/lib/db/patient-context";
+import { buildPatientContext } from "@/lib/db/patients/context";
 import {
   generateRecommendations,
   generateMealPlan,
-} from "@/lib/ai/meal-planner";
+} from "@/lib/ai/services/meal-planner";
 
 type Params = {
   params: Promise<{ id: string }>;

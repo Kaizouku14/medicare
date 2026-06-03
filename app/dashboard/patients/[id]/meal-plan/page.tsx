@@ -7,7 +7,7 @@ import { MealPlanGenerator } from "@/components/patients/meal-plans/meal-plan-ge
 import { MealPlanHistory } from "@/components/patients/meal-plans/meal-plan-history";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
-import { getLatestAnalyzedDocument } from "@/lib/db/patient-documents";
+import { getLatestAnalyzedDocument } from "@/lib/db/patients/documents";
 import { getLatestMealPlan, listMealPlansByPatient } from "@/lib/db/meal-plans";
 
 type Props = {
@@ -42,7 +42,7 @@ export default async function MealPlanPage({ params }: Props) {
         className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3 transition-transform group-hover:-translate-x-0.5" />
-        {patient.name} · Profile
+        {patient.name} Â· Profile
       </Link>
 
       <div className="mt-6">
@@ -61,7 +61,7 @@ export default async function MealPlanPage({ params }: Props) {
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Budget:</span> ₱
+            <span className="font-semibold text-foreground">Budget:</span> â‚±
             {patient.monthlyBudgetPhp.toLocaleString()}/mo
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
@@ -73,7 +73,7 @@ export default async function MealPlanPage({ params }: Props) {
             <>
               <span className="hidden size-1 rounded-full bg-border sm:inline" />
               <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600">
-                <span className="flex size-3 items-center justify-center rounded-full bg-emerald-100 text-[8px] font-bold text-emerald-700">✓</span>
+                <span className="flex size-3 items-center justify-center rounded-full bg-emerald-100 text-[8px] font-bold text-emerald-700">âœ“</span>
                 Lab data from{" "}
                 {new Date(latestDoc.analyzedAt!).toLocaleDateString("en-PH", {
                   month: "short",

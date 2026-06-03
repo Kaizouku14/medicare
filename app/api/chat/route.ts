@@ -12,7 +12,7 @@ import {
   renameSession,
   touchSession,
 } from "@/lib/db/chat";
-import { buildSystemPrompt } from "@/lib/ai/chat-prompt";
+import { buildSystemPrompt } from "@/lib/ai/prompts/chat-prompt";
 
 export async function POST(req: Request) {
   const { allowed } = await rateLimit("chat", { request: req, limit: 10, windowMs: 60000 });

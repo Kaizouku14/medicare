@@ -7,8 +7,8 @@ import {
   getDocumentById,
   deleteDocument,
   updateDocumentAnalysis,
-} from "@/lib/db/patient-documents";
-import { analyzeDocument } from "@/lib/ai/document-analyzer";
+} from "@/lib/db/patients/documents";
+import { analyzeDocument } from "@/lib/ai/services/document-analyzer";
 
 type Params = {
   params: Promise<{ id: string; docId: string }>;

@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { ExpenseTracker } from "@/components/patients/trackers/expense-tracker";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
-import { listExpensesByPatient } from "@/lib/db/expenses";
+import { listExpensesByPatient } from "@/lib/db/tracking/expenses";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -32,7 +32,7 @@ export default async function ExpensesPage({ params }: Props) {
         className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3 transition-transform group-hover:-translate-x-0.5" />
-        {patient.name} · Profile
+        {patient.name} Â· Profile
       </Link>
 
       <div className="mt-6">
@@ -48,12 +48,12 @@ export default async function ExpensesPage({ params }: Props) {
             <span className="font-semibold text-foreground">
               Monthly budget:
             </span>{" "}
-            ₱{patient.monthlyBudgetPhp.toLocaleString()}
+            â‚±{patient.monthlyBudgetPhp.toLocaleString()}
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Daily budget:</span>{" "}
-            ₱{Math.round(patient.monthlyBudgetPhp / 30).toLocaleString()}
+            â‚±{Math.round(patient.monthlyBudgetPhp / 30).toLocaleString()}
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">

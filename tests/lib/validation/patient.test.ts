@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { patientSchema, patientFormSchema } from "./patient";
+import { patientSchema, patientFormSchema } from "@/lib/validation/patient";
 
 const validPatient = {
   name: "Juan Dela Cruz",

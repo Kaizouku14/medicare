@@ -6,7 +6,7 @@ import {
   listExpensesByPatient,
   updateExpense,
   deleteExpense,
-} from "@/lib/db/expenses";
+} from "@/lib/db/tracking/expenses";
 
 type Params = {
   params: Promise<{ id: string }>;

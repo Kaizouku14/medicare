@@ -1,5 +1,5 @@
-import { buildPatientContext } from "@/lib/db/patient-context";
-import { buildChatSystemPrompt } from "@/lib/ai/prompt-builder";
+import { buildPatientContext } from "@/lib/db/patients/context";
+import { buildChatSystemPrompt } from "@/lib/ai/prompts/prompt-builder";
 
 export async function buildSystemPrompt(
   userId: string,

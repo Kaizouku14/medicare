@@ -4,14 +4,11 @@ import {
   type DayMeal,
   type DocumentAnalysis,
 } from "@/types/domain";
-import {
-  groqChat,
-  type GroqMessage,
-} from "@/lib/ai/groq-client";
+import { groqChat, type GroqMessage } from "@/lib/ai/groq-client";
 import {
   type MedicationBrief,
   type DocAbnormal,
-} from "@/lib/db/patient-context";
+} from "@/lib/db/patients/context";
 
 const JSON_MODEL = "llama-3.3-70b-versatile";
 
@@ -22,7 +19,8 @@ function isFoodRecArray(v: unknown): v is FoodRecommendation[] {
     typeof v[0]?.name === "string" &&
     typeof v[0]?.description === "string" &&
     typeof v[0]?.estimatedCost === "number" &&
-    (typeof v[0]?.nutrients === "string" || typeof v[0]?.nutrients === "object") &&
+    (typeof v[0]?.nutrients === "string" ||
+      typeof v[0]?.nutrients === "object") &&
     typeof v[0]?.reason === "string"
   );
 }

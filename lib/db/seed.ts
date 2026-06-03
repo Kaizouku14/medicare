@@ -16,7 +16,7 @@ async function seed() {
       email: "test@example.com",
       name: "Maria Test",
     },
-  ]);
+  ]).onConflictDoNothing();
 
   await db.insert(patients).values([
     {
@@ -58,7 +58,7 @@ async function seed() {
       intolerances: [],
       monthlyBudgetPhp: "4000",
     },
-  ]);
+  ]).onConflictDoNothing();
 
   const analysis: DocumentAnalysis = {
     documentType: "lab-results",
@@ -107,7 +107,7 @@ async function seed() {
       analysis,
       analyzedAt: new Date(),
     },
-  ]);
+  ]).onConflictDoNothing();
 
   const recommendations: FoodRecommendation[] = [
     {
@@ -193,7 +193,7 @@ async function seed() {
       meals,
       totalDailyCost: "202",
     },
-  ]);
+  ]).onConflictDoNothing();
 
   console.log("Seed complete ✓");
   process.exit(0);

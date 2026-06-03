@@ -30,7 +30,3 @@ jobs:
       - run: pnpm build
 
       - run: pnpm test
-
-      - name: React health scan
-        run: pnpm doctor
-        continue-on-error: true

@@ -7,8 +7,8 @@ import { MedicationTracker } from "@/components/patients/trackers/medication-tra
 import { VisitNotes } from "@/components/patients/trackers/visit-notes";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
-import { listMedicationsByPatient } from "@/lib/db/medications";
-import { listVisitNotesByPatient } from "@/lib/db/visit-notes";
+import { listMedicationsByPatient } from "@/lib/db/tracking/medications";
+import { listVisitNotesByPatient } from "@/lib/db/tracking/visit-notes";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -39,7 +39,7 @@ export default async function CarePage({ params }: Props) {
         className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3 transition-transform group-hover:-translate-x-0.5" />
-        {patient.name} · Profile
+        {patient.name} Â· Profile
       </Link>
 
       <div className="mt-6">

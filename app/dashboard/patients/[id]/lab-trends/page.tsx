@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { LabTrends } from "@/components/patients/trackers/lab-trends";
 import { createClient } from "@/lib/supabase/server";
 import { getPatientById } from "@/lib/db/patients";
-import { listDocumentsByPatient } from "@/lib/db/patient-documents";
+import { listDocumentsByPatient } from "@/lib/db/patients/documents";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -36,7 +36,7 @@ export default async function LabTrendsPage({ params }: Props) {
         className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3 transition-transform group-hover:-translate-x-0.5" />
-        {patient.name} · Profile
+        {patient.name} Â· Profile
       </Link>
 
       <div className="mt-6">

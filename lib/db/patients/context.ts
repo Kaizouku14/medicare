@@ -1,10 +1,10 @@
 import { type Patient, type DocumentAnalysis } from "@/types/domain";
 import { getPatientById } from "@/lib/db/patients";
 import { getLatestMealPlan } from "@/lib/db/meal-plans";
-import { listDocumentsByPatient } from "@/lib/db/patient-documents";
-import { listMedicationsByPatient } from "@/lib/db/medications";
-import { listVisitNotesByPatient } from "@/lib/db/visit-notes";
-import { listExpensesByPatient } from "@/lib/db/expenses";
+import { listDocumentsByPatient } from "@/lib/db/patients/documents";
+import { listMedicationsByPatient } from "@/lib/db/tracking/medications";
+import { listVisitNotesByPatient } from "@/lib/db/tracking/visit-notes";
+import { listExpensesByPatient } from "@/lib/db/tracking/expenses";
 
 export type MedicationBrief = {
   name: string;

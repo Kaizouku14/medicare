@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildChatSystemPrompt } from "./prompt-builder";
-import type { PatientContext } from "@/lib/db/patient-context";
+import { buildChatSystemPrompt } from "@/lib/ai/prompts/prompt-builder";
+import type { PatientContext } from "@/lib/db/patients/context";
 
 const baseContext: PatientContext = {
   patient: {

@@ -1,4 +1,4 @@
-import { type PatientContext } from "@/lib/db/patient-context";
+import { type PatientContext } from "@/lib/db/patients/context";
 
 export function buildChatSystemPrompt(context: PatientContext): string {
   const { patient } = context;

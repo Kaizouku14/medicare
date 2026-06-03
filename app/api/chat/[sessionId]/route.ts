@@ -12,7 +12,7 @@ import {
   renameSession,
   touchSession,
 } from "@/lib/db/chat";
-import { buildSystemPrompt } from "@/lib/ai/chat-prompt";
+import { buildSystemPrompt } from "@/lib/ai/prompts/chat-prompt";
 
 type Params = {
   params: Promise<{ sessionId: string }>;

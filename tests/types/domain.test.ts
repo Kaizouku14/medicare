@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderNutrients, FEEDING_METHODS } from "./domain";
+import { renderNutrients, FEEDING_METHODS } from "@/types/domain";
 
 describe("renderNutrients", () => {
   it("returns a string as-is", () => {

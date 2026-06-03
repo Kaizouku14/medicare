@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { AuthError, NotFoundError, handleApiError } from "./auth";
+import { AuthError, NotFoundError, handleApiError } from "@/lib/auth";
 
 describe("AuthError", () => {
   it("has name AuthError", () => {

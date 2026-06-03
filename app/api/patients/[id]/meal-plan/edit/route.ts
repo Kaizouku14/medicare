@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
 import { getMealPlanById, toMealPlan } from "@/lib/db/meal-plans";
-import { updateMealPlan } from "@/lib/db/meal-plans-edit";
+import { updateMealPlan } from "@/lib/db/meal-plans/meal-plans-edit";
 import type { FoodRecommendation, DayMeal } from "@/types/domain";
 
 type Params = {
