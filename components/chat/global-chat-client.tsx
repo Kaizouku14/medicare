@@ -21,7 +21,12 @@ type GlobalChatAction =
   | { type: "SET_CREATING"; creating: boolean }
   | { type: "SESSION_CREATED"; session: ChatSession; messages: ChatMessage[] }
   | { type: "NEW_CHAT" }
-  | { type: "SELECT_SESSION"; activeId: string | null; messages: ChatMessage[]; hasMore: boolean }
+  | {
+      type: "SELECT_SESSION";
+      activeId: string | null;
+      messages: ChatMessage[];
+      hasMore: boolean;
+    }
   | { type: "SET_NEW_INPUT"; newInput: string }
   | { type: "TOGGLE_SELECT"; id: string }
   | { type: "TOGGLE_SELECT_ALL" }
@@ -33,7 +38,10 @@ type GlobalChatAction =
   | { type: "SET_HAS_MORE"; hasMore: boolean }
   | { type: "SET_MESSAGES"; messages: ChatMessage[]; hasMore: boolean };
 
-function globalChatReducer(state: GlobalChatState, action: GlobalChatAction): GlobalChatState {
+function globalChatReducer(
+  state: GlobalChatState,
+  action: GlobalChatAction,
+): GlobalChatState {
   switch (action.type) {
     case "SET_CREATING":
       return { ...state, creating: action.creating };
@@ -44,12 +52,19 @@ function globalChatReducer(state: GlobalChatState, action: GlobalChatAction): Gl
         sessions: [action.session, ...state.sessions],
         activeId: action.session.id,
         messages: action.messages,
+        hasMore: false,
         newInput: "",
       };
     case "NEW_CHAT":
       return { ...state, activeId: null, messages: [], selectedIds: new Set() };
     case "SELECT_SESSION":
-      return { ...state, activeId: action.activeId, messages: action.messages, hasMore: action.hasMore, selectedIds: new Set() };
+      return {
+        ...state,
+        activeId: action.activeId,
+        messages: action.messages,
+        hasMore: action.hasMore,
+        selectedIds: new Set(),
+      };
     case "SET_NEW_INPUT":
       return { ...state, newInput: action.newInput };
     case "TOGGLE_SELECT": {
@@ -62,7 +77,10 @@ function globalChatReducer(state: GlobalChatState, action: GlobalChatAction): Gl
       if (state.selectedIds.size === state.sessions.length) {
         return { ...state, selectedIds: new Set() };
       }
-      return { ...state, selectedIds: new Set(state.sessions.map((s) => s.id)) };
+      return {
+        ...state,
+        selectedIds: new Set(state.sessions.map((s) => s.id)),
+      };
     }
     case "CLEAR_SELECTION":
       return { ...state, selectedIds: new Set() };
@@ -85,7 +103,8 @@ function globalChatReducer(state: GlobalChatState, action: GlobalChatAction): Gl
         selectedIds: new Set(),
         ...(activeRemoved
           ? {
-              activeId: remainingSessions.length > 0 ? remainingSessions[0].id : null,
+              activeId:
+                remainingSessions.length > 0 ? remainingSessions[0].id : null,
               messages: [],
               hasMore: true,
             }
@@ -148,13 +167,7 @@ export function GlobalChatClient({
       // Read the streaming response to get the assistant's reply
       let assistantText = "";
       if (res.body) {
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          assistantText += decoder.decode(value, { stream: true });
-        }
+        assistantText = await new Response(res.body).text();
       }
 
       const firstText = text.length > 60 ? text.slice(0, 60) + "..." : text;
@@ -186,7 +199,11 @@ export function GlobalChatClient({
       ];
 
       messageCache.current.set(sessionId, msgs);
-      dispatch({ type: "SESSION_CREATED", session: newSession, messages: msgs });
+      dispatch({
+        type: "SESSION_CREATED",
+        session: newSession,
+        messages: msgs,
+      });
     } catch {
       dispatch({ type: "SET_CREATING", creating: false });
     }
@@ -222,9 +239,19 @@ export function GlobalChatClient({
       const more = data.hasMore ?? false;
       messageCache.current.set(sessionId, msgs);
       hasMoreMap.current.set(sessionId, more);
-      dispatch({ type: "SELECT_SESSION", activeId: sessionId, messages: msgs, hasMore: more });
+      dispatch({
+        type: "SELECT_SESSION",
+        activeId: sessionId,
+        messages: msgs,
+        hasMore: more,
+      });
     } catch {
-      dispatch({ type: "SELECT_SESSION", activeId: sessionId, messages: [], hasMore: false });
+      dispatch({
+        type: "SELECT_SESSION",
+        activeId: sessionId,
+        messages: [],
+        hasMore: false,
+      });
     }
   }
 
@@ -285,7 +312,9 @@ export function GlobalChatClient({
         hasMore={state.hasMore}
         creating={state.creating}
         newInput={state.newInput}
-        onNewInputChange={(v) => dispatch({ type: "SET_NEW_INPUT", newInput: v })}
+        onNewInputChange={(v) =>
+          dispatch({ type: "SET_NEW_INPUT", newInput: v })
+        }
         onCreateSessionAndSend={createSessionAndSend}
         inputRef={newInputRef}
       />

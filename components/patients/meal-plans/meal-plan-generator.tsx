@@ -6,6 +6,7 @@ import {
   Loader2,
   AlertCircle,
   RotateCcw,
+  PhilippinePeso,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -96,7 +97,11 @@ function mealPlanReducer(
   }
 }
 
-function replaceFoodInMeals(meals: DayMeal[], oldName: string, newName: string): DayMeal[] {
+function replaceFoodInMeals(
+  meals: DayMeal[],
+  oldName: string,
+  newName: string,
+): DayMeal[] {
   return meals.map((day) => ({
     ...day,
     breakfast: day.breakfast === oldName ? newName : day.breakfast,
@@ -153,7 +158,10 @@ export function MealPlanGenerator({
     const data = (await res.json()) as { plan?: MealPlan; error?: string };
     if (!res.ok) {
       toast.error(data.error ?? "Failed to generate meal plan.");
-      dispatch({ type: "SET_ERROR", error: data.error ?? "Failed to generate meal plan." });
+      dispatch({
+        type: "SET_ERROR",
+        error: data.error ?? "Failed to generate meal plan.",
+      });
       dispatch({ type: "SET_GENERATING", generating: false });
       return;
     }
@@ -177,7 +185,10 @@ export function MealPlanGenerator({
         },
       );
       const data = await res.json();
-      dispatch({ type: "SET_SUBSTITUTES", substitutes: data.substitutes ?? [] });
+      dispatch({
+        type: "SET_SUBSTITUTES",
+        substitutes: data.substitutes ?? [],
+      });
     } catch {
       toast.error("Failed to find substitutes.");
     } finally {
@@ -282,9 +293,7 @@ export function MealPlanGenerator({
 
       <Dialog
         open={confirmOpen}
-        onOpenChange={(open) =>
-          dispatch({ type: "SET_CONFIRM_OPEN", open })
-        }
+        onOpenChange={(open) => dispatch({ type: "SET_CONFIRM_OPEN", open })}
       >
         <DialogContent>
           <DialogHeader>
@@ -298,7 +307,9 @@ export function MealPlanGenerator({
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => dispatch({ type: "SET_CONFIRM_OPEN", open: false })}
+              onClick={() =>
+                dispatch({ type: "SET_CONFIRM_OPEN", open: false })
+              }
             >
               Cancel
             </Button>
@@ -339,8 +350,12 @@ export function MealPlanGenerator({
           dispatch({ type: "SET_PLAN", plan: updated });
         }}
         onClose={() => dispatch({ type: "CLEAR_SUBSTITUTION" })}
-        onManualSubChange={(v) => dispatch({ type: "SET_MANUAL_SUB", value: v })}
-        onLoadingChange={(loading) => dispatch({ type: "SET_SUBS_LOADING", loading })}
+        onManualSubChange={(v) =>
+          dispatch({ type: "SET_MANUAL_SUB", value: v })
+        }
+        onLoadingChange={(loading) =>
+          dispatch({ type: "SET_SUBS_LOADING", loading })
+        }
       />
     </div>
   );
@@ -357,7 +372,6 @@ function SubstituteDialog({
   onSelect,
   onClose,
   onManualSubChange,
-  onLoadingChange,
 }: {
   open: boolean;
   substituting: string | null;
@@ -372,7 +386,12 @@ function SubstituteDialog({
   onLoadingChange: (loading: boolean) => void;
 }) {
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-serif text-lg font-medium">
@@ -388,7 +407,7 @@ function SubstituteDialog({
             <div className="flex items-center justify-center py-8">
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
               <span className="ml-2 text-sm text-muted-foreground">
-                Finding alternatives\u2026
+                Finding alternatives...
               </span>
             </div>
           ) : substitutes ? (
@@ -409,9 +428,15 @@ function SubstituteDialog({
                         body: JSON.stringify({
                           planId: plan.id,
                           recommendations: plan.recommendations.map((r) =>
-                            r.name === substituting ? { ...sub, name: sub.name } : r,
+                            r.name === substituting
+                              ? { ...sub, name: sub.name }
+                              : r,
                           ),
-                          meals: replaceFoodInMeals(plan.meals, substituting, sub.name),
+                          meals: replaceFoodInMeals(
+                            plan.meals,
+                            substituting,
+                            sub.name,
+                          ),
                         }),
                       });
                     } catch {}
@@ -422,12 +447,20 @@ function SubstituteDialog({
                     <p className="text-sm font-semibold text-foreground">
                       {sub.name}
                     </p>
-                    <Badge variant="secondary" className="rounded-full text-[10px] font-medium">
-                      \u20B1{sub.estimatedCost}
+                    <Badge
+                      variant="secondary"
+                      className="rounded-full text-xs font-medium flex items-center gap-1"
+                    >
+                      <PhilippinePeso className="size-2.5" />
+                      {sub.estimatedCost}
                     </Badge>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{sub.description}</p>
-                  <p className="mt-0.5 text-[10px] italic text-muted-foreground/70">{sub.reason}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {sub.description}
+                  </p>
+                  <p className="mt-0.5 text-[10px] italic text-muted-foreground/70">
+                    {sub.reason}
+                  </p>
                 </button>
               ))}
             </div>
@@ -459,7 +492,11 @@ function SubstituteDialog({
                       recommendations: plan.recommendations.map((r) =>
                         r.name === substituting ? { ...r, name: newName } : r,
                       ),
-                      meals: replaceFoodInMeals(plan.meals, substituting, newName),
+                      meals: replaceFoodInMeals(
+                        plan.meals,
+                        substituting,
+                        newName,
+                      ),
                     }),
                   });
                 } catch {}

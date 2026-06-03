@@ -1,3 +1,4 @@
+import { Heart } from "lucide-react";
 import Link from "next/link";
 
 export default function AuthLayout({
@@ -17,7 +18,11 @@ export default function AuthLayout({
       {/* Decorative corner element */}
       <div className="pointer-events-none fixed bottom-0 left-0 -z-10 size-48 opacity-[0.03]">
         <svg viewBox="0 0 200 200" fill="none" className="h-full w-full">
-          <path d="M0 200L200 0H0V200Z" fill="currentColor" className="text-primary" />
+          <path
+            d="M0 200L200 0H0V200Z"
+            fill="currentColor"
+            className="text-primary"
+          />
         </svg>
       </div>
 
@@ -28,17 +33,25 @@ export default function AuthLayout({
         <span className="flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-primary/80 text-sm font-bold text-primary-foreground shadow-xs transition-transform group-hover:scale-105">
           M
         </span>
-        <span className="hidden text-sm font-semibold text-foreground sm:inline">MediCare AI</span>
+        <span className="hidden text-sm font-semibold text-foreground sm:inline">
+          MediCare AI
+        </span>
       </Link>
 
-      <div className="animate-fade-in-up w-full max-w-sm" style={{ animationDelay: "0.1s" }}>
-        <div className="rounded-2xl border border-border/60 bg-card/80 p-8 shadow-lg shadow-primary/5 backdrop-blur-sm">
-          {children}
-        </div>
+      <div
+        className="animate-fade-in-up w-full max-w-sm"
+        style={{ animationDelay: "0.1s" }}
+      >
+        {children}
       </div>
 
-      <p className="animate-fade-in-up absolute bottom-6 flex items-center gap-2 text-[11px] text-muted-foreground" style={{ animationDelay: "0.3s" }}>
-        <span className="flex size-3 items-center justify-center rounded-full bg-primary/10 text-[7px] font-bold text-primary">♥</span>
+      <p
+        className="animate-fade-in-up absolute bottom-6 flex items-center gap-2 text-[11px] text-muted-foreground"
+        style={{ animationDelay: "0.3s" }}
+      >
+        <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-[7px] font-bold text-primary">
+          <Heart className="size-3" />
+        </span>
         Supporting Filipino families with compassion
       </p>
     </main>

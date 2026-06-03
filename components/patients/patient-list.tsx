@@ -2,12 +2,20 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, X, Users, Plus, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, X, Users, Plus, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Check } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import type { Patient } from "@/types/domain";
 
 const PAGE_SIZE = 9;
@@ -28,30 +36,25 @@ export function PatientList({ patients }: { patients: Patient[] }) {
   );
   const [page, setPage] = useState(1);
 
+  const searchFiltered = useMemo(() => {
+    if (!search.trim()) return patients;
+    const q = search.toLowerCase();
+    return patients.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.diagnoses.some((d) => d.toLowerCase().includes(q)),
+    );
+  }, [patients, search]);
+
   const allDiagnoses = useMemo(() => {
     const set = new Set<string>();
-    patients.forEach((p) => p.diagnoses.forEach((d) => set.add(d)));
+    searchFiltered.forEach((p) => p.diagnoses.forEach((d) => set.add(d)));
     return Array.from(set).sort();
-  }, [patients]);
+  }, [searchFiltered]);
 
-  const filtered = useMemo(() => {
-    let result = patients;
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.diagnoses.some((d) => d.toLowerCase().includes(q)),
-      );
-    }
-
-    if (selectedDiagnosis) {
-      result = result.filter((p) => p.diagnoses.includes(selectedDiagnosis));
-    }
-
-    return result;
-  }, [patients, search, selectedDiagnosis]);
+  const filtered = selectedDiagnosis
+    ? searchFiltered.filter((p) => p.diagnoses.includes(selectedDiagnosis))
+    : searchFiltered;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -110,24 +113,39 @@ export function PatientList({ patients }: { patients: Patient[] }) {
             </button>
           )}
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {allDiagnoses.map((d) => (
-            <button type="button"
-              key={d}
-              onClick={() => {
-                setSelectedDiagnosis(selectedDiagnosis === d ? null : d);
-                setPage(1);
-              }}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
-                selectedDiagnosis === d
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary/50 text-secondary-foreground hover:bg-secondary"
-              }`}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0 rounded-xl px-3 text-xs font-medium"
             >
-              {d.replace(/-/g, " ")}
-            </button>
-          ))}
-        </div>
+              {selectedDiagnosis ? selectedDiagnosis.replace(/-/g, " ") : "Filter by diagnosis"}
+              <ChevronDown className="ml-1 size-3 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search diagnoses..." />
+              <CommandEmpty>No diagnosis found.</CommandEmpty>
+              <CommandList>
+                {allDiagnoses.map((d) => (
+                  <CommandItem
+                    key={d}
+                    value={d}
+                    onSelect={() => {
+                      setSelectedDiagnosis(selectedDiagnosis === d ? null : d);
+                      setPage(1);
+                    }}
+                  >
+                    <Check className={`mr-2 size-3.5 ${selectedDiagnosis === d ? "opacity-100" : "opacity-0"}`} />
+                    {d.replace(/-/g, " ")}
+                  </CommandItem>
+                ))}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Count */}

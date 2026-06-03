@@ -24,7 +24,7 @@ export default async function Home() {
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4">
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center text-center">
-        <div className="animate-fade-in-up animate-stagger-1 mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-white/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+        <div className="animate-fade-in-up animate-stagger-1 mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-white/60 px-4 py-1.5 text-xs font-medium text-muted-foreground dark:text-black backdrop-blur-sm">
           <span className="inline-block size-1.5 rounded-full bg-primary" />
           AI-Powered Care Planning
         </div>
@@ -44,7 +44,12 @@ export default async function Home() {
           <Button asChild size="lg" className="h-11 rounded-full px-6 text-sm">
             <Link href="/signup">Create free account</Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="h-11 rounded-full px-6 text-sm">
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="h-11 rounded-full px-6 text-sm"
+          >
             <Link href="/login">Sign in</Link>
           </Button>
         </div>

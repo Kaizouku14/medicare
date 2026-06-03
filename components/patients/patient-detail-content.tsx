@@ -12,6 +12,7 @@ import {
   HeartPulse,
   Activity,
   Pill,
+  ArrowRight,
 } from "lucide-react";
 
 import { DeletePatientButton } from "@/components/patients/delete-patient-button";
@@ -45,11 +46,7 @@ function bmiCategory(bmi: number): { label: string; color: string } {
   return { label: "Obese", color: "text-red-600 bg-red-50" };
 }
 
-export function PatientDetailContent({
-  patient,
-}: {
-  patient: Patient;
-}) {
+export function PatientDetailContent({ patient }: { patient: Patient }) {
   return (
     <div className="animate-fade-in p-4 max-w-7xl mx-auto space-y-6">
       <Link
@@ -119,7 +116,11 @@ function PatientProfileCard({ patient }: { patient: Patient }) {
       </div>
 
       <div className="grid border-t border-border/60 grid-cols-2 sm:grid-cols-5">
-        <PatientStat icon={<Syringe className="size-4" />} label="Age" value={`${patient.age} years`} />
+        <PatientStat
+          icon={<Syringe className="size-4" />}
+          label="Age"
+          value={`${patient.age} years`}
+        />
         <PatientStat
           icon={<Ruler className="size-4" />}
           label="Height"
@@ -166,7 +167,9 @@ function PatientStat({
         <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
           {label}
         </p>
-        <p className={`text-sm font-bold text-foreground${capitalize ? " capitalize" : ""}`}>
+        <p
+          className={`text-sm font-bold text-foreground${capitalize ? " capitalize" : ""}`}
+        >
           {value}
         </p>
       </div>
@@ -180,25 +183,47 @@ function PatientOverviewGrid({ patient }: { patient: Patient }) {
       <div className="flex flex-col gap-4 md:col-span-2 h-full justify-start">
         <PatientInfoCard
           icon={
-            <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="size-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z" />
               <path d="M8 15h8" />
               <path d="M12 9v4" />
             </svg>
           }
           label="Allergies"
-          value={patient.allergies.length > 0 ? patient.allergies.join(", ") : null}
+          value={
+            patient.allergies.length > 0 ? patient.allergies.join(", ") : null
+          }
         />
         <PatientInfoCard
           icon={
-            <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="size-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="16" />
               <line x1="8" y1="12" x2="16" y2="12" />
             </svg>
           }
           label="Intolerances"
-          value={patient.intolerances.length > 0 ? patient.intolerances.join(", ") : null}
+          value={
+            patient.intolerances.length > 0
+              ? patient.intolerances.join(", ")
+              : null
+          }
         />
         <PatientBmiCard patient={patient} />
       </div>
@@ -280,7 +305,15 @@ function PatientBmiCard({ patient }: { patient: Patient }) {
     <div className="rounded-xl border border-border/60 bg-linear-to-br from-card to-card/80 p-5 shadow-xs">
       <div className="flex items-center gap-2">
         <div className="flex size-5 items-center justify-center rounded-md bg-primary/10 text-primary flex-shrink-0">
-          <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            className="size-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M3 3l18 18" />
             <path d="M21 3l-18 18" />
           </svg>
@@ -291,7 +324,9 @@ function PatientBmiCard({ patient }: { patient: Patient }) {
       </div>
       <div className="mt-2 flex items-baseline gap-2">
         <p className="text-2xl font-bold text-foreground">{bmi}</p>
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${category.color}`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${category.color}`}
+        >
           {category.label}
         </span>
       </div>
@@ -320,18 +355,22 @@ function PatientNavCard({
       <div className="absolute -right-6 -top-6 size-20 rounded-full bg-primary/5 blur-xl transition-all duration-500 group-hover:scale-[3] group-hover:bg-primary/10" />
       <div className="relative flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className={`flex size-11 items-center justify-center rounded-xl shadow-sm transition-transform group-hover:scale-110 flex-shrink-0 ${iconClass}`}>
+          <div
+            className={`flex size-11 items-center justify-center rounded-xl shadow-sm transition-transform group-hover:scale-110 flex-shrink-0 ${iconClass}`}
+          >
             {icon}
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">{title}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {description}
+            </p>
           </div>
         </div>
-        <span className="flex items-center gap-1 text-xs font-medium text-primary transition-all group-hover:gap-1.5 flex-shrink-0">
+        <span className="flex items-center gap-1 text-xs font-medium text-primary transition-all group-hover:gap-1.5 shrink-0">
           View{" "}
           <span className="transition-transform group-hover:translate-x-0.5">
-            \u2192
+            <ArrowRight className="size-4" />
           </span>
         </span>
       </div>
