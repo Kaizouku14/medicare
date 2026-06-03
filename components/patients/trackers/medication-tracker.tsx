@@ -25,6 +25,44 @@ import {
 import { toast } from "sonner";
 import type { Medication } from "@/types/domain";
 
+const initialFormState = {
+  editingId: null as string | null,
+  name: "",
+  dosage: "",
+  frequency: "",
+  route: "oral",
+  startDate: "",
+  endDate: "",
+  notes: "",
+};
+
+type FormAction =
+  | { type: "SET_FIELD"; field: "name" | "dosage" | "frequency" | "route" | "startDate" | "endDate" | "notes"; value: string }
+  | { type: "START_EDIT"; medication: Medication }
+  | { type: "RESET" };
+
+function formReducer(state: typeof initialFormState, action: FormAction) {
+  switch (action.type) {
+    case "SET_FIELD":
+      return { ...state, [action.field]: action.value };
+    case "START_EDIT":
+      return {
+        editingId: action.medication.id,
+        name: action.medication.name,
+        dosage: action.medication.dosage,
+        frequency: action.medication.frequency,
+        route: action.medication.route,
+        startDate: action.medication.startDate,
+        endDate: action.medication.endDate ?? "",
+        notes: action.medication.notes ?? "",
+      };
+    case "RESET":
+      return initialFormState;
+    default:
+      return state;
+  }
+}
+
 export function MedicationTracker({
   patientId,
   initialMedications,
@@ -35,44 +73,6 @@ export function MedicationTracker({
   const [medications, setMedications] = useState(initialMedications);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const initialFormState = {
-    editingId: null as string | null,
-    name: "",
-    dosage: "",
-    frequency: "",
-    route: "oral",
-    startDate: "",
-    endDate: "",
-    notes: "",
-  };
-
-  type FormAction =
-    | { type: "SET_FIELD"; field: "name" | "dosage" | "frequency" | "route" | "startDate" | "endDate" | "notes"; value: string }
-    | { type: "START_EDIT"; medication: Medication }
-    | { type: "RESET" };
-
-  function formReducer(state: typeof initialFormState, action: FormAction) {
-    switch (action.type) {
-      case "SET_FIELD":
-        return { ...state, [action.field]: action.value };
-      case "START_EDIT":
-        return {
-          editingId: action.medication.id,
-          name: action.medication.name,
-          dosage: action.medication.dosage,
-          frequency: action.medication.frequency,
-          route: action.medication.route,
-          startDate: action.medication.startDate,
-          endDate: action.medication.endDate ?? "",
-          notes: action.medication.notes ?? "",
-        };
-      case "RESET":
-        return initialFormState;
-      default:
-        return state;
-    }
-  }
 
   const [formState, dispatch] = useReducer(formReducer, initialFormState);
 

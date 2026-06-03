@@ -319,146 +319,158 @@ export function MealPlanGenerator({
         />
       )}
 
-      {/* Substitute dialog */}
-      <Dialog
+      <SubstituteDialog
         open={!!substituting}
-        onOpenChange={(o) => {
-          if (!o) {
-            dispatch({ type: "CLEAR_SUBSTITUTION" });
-          }
+        substituting={substituting}
+        subsLoading={subsLoading}
+        substitutes={substitutes}
+        manualSub={manualSub}
+        plan={plan}
+        patientId={patient.id}
+        onSelect={(food, subName) => {
+          if (!plan) return;
+          const updated = {
+            ...plan,
+            recommendations: plan.recommendations.map((r) =>
+              r.name === food ? { ...r, name: subName } : r,
+            ),
+            meals: replaceFoodInMeals(plan.meals, food, subName),
+          };
+          dispatch({ type: "SET_PLAN", plan: updated });
         }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-serif text-lg font-medium">
-              Substitute: {substituting}
-            </DialogTitle>
-            <DialogDescription>
-              Choose an AI-suggested alternative or type your own
-            </DialogDescription>
-          </DialogHeader>
+        onClose={() => dispatch({ type: "CLEAR_SUBSTITUTION" })}
+        onManualSubChange={(v) => dispatch({ type: "SET_MANUAL_SUB", value: v })}
+        onLoadingChange={(loading) => dispatch({ type: "SET_SUBS_LOADING", loading })}
+      />
+    </div>
+  );
+}
 
-          <div className="space-y-3">
-            {subsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">
-                  Finding alternatives…
-                </span>
-              </div>
-            ) : substitutes ? (
-              <div className="space-y-2">
-                {substitutes.map((sub) => (
-                  <button
-                    key={sub.name}
-                    type="button"
-                    className="w-full rounded-xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/20"
-                    onClick={async () => {
-                      if (!plan || !substituting) return;
-                      const updated = {
-                        ...plan,
-                        recommendations: plan.recommendations.map((r) =>
-                          r.name === substituting
-                            ? { ...sub, name: sub.name }
-                            : r,
-                        ),
-                        meals: replaceFoodInMeals(plan.meals, substituting, sub.name),
-                      };
-                      dispatch({ type: "SET_PLAN", plan: updated });
-                      dispatch({ type: "SET_SUBSTITUTING", food: null });
-                      dispatch({ type: "SET_SUBSTITUTES", substitutes: null });
-                      try {
-                        await fetch(
-                          `/api/patients/${patient.id}/meal-plan/edit`,
-                          {
-                            method: "PUT",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              planId: plan.id,
-                              recommendations: updated.recommendations,
-                              meals: updated.meals,
-                            }),
-                          },
-                        );
-                      } catch {}
-                      toast.success(`Replaced with ${sub.name}`);
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-foreground">
-                        {sub.name}
-                      </p>
-                      <Badge
-                        variant="secondary"
-                        className="rounded-full text-[10px] font-medium"
-                      >
-                        ₱{sub.estimatedCost}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {sub.description}
-                    </p>
-                    <p className="mt-0.5 text-[10px] italic text-muted-foreground/70">
-                      {sub.reason}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            ) : null}
+function SubstituteDialog({
+  open,
+  substituting,
+  subsLoading,
+  substitutes,
+  manualSub,
+  plan,
+  patientId,
+  onSelect,
+  onClose,
+  onManualSubChange,
+  onLoadingChange,
+}: {
+  open: boolean;
+  substituting: string | null;
+  subsLoading: boolean;
+  substitutes: FoodRecommendation[] | null;
+  manualSub: string;
+  plan: MealPlan | null;
+  patientId: string;
+  onSelect: (food: string, subName: string) => void;
+  onClose: () => void;
+  onManualSubChange: (v: string) => void;
+  onLoadingChange: (loading: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-lg font-medium">
+            Substitute: {substituting}
+          </DialogTitle>
+          <DialogDescription>
+            Choose an AI-suggested alternative or type your own
+          </DialogDescription>
+        </DialogHeader>
 
-            <div className="flex gap-2">
-              <Input
-                value={manualSub}
-                onChange={(e) =>
-                  dispatch({ type: "SET_MANUAL_SUB", value: e.target.value })
-                }
-                placeholder="Or type your own substitute..."
-                className="h-9 text-sm"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 shrink-0 text-xs"
-                onClick={async () => {
-                  if (!plan || !substituting || !manualSub.trim()) return;
-                  const newName = manualSub.trim();
-                  const updated = {
-                    ...plan,
-                    recommendations: plan.recommendations.map((r) =>
-                      r.name === substituting
-                        ? { ...r, name: newName }
-                        : r,
-                    ),
-                    meals: replaceFoodInMeals(plan.meals, substituting, newName),
-                  };
-                  dispatch({ type: "SET_PLAN", plan: updated });
-                  dispatch({ type: "SET_SUBSTITUTING", food: null });
-                  dispatch({ type: "SET_MANUAL_SUB", value: "" });
-                  try {
-                    await fetch(
-                      `/api/patients/${patient.id}/meal-plan/edit`,
-                      {
+        <div className="space-y-3">
+          {subsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">
+                Finding alternatives\u2026
+              </span>
+            </div>
+          ) : substitutes ? (
+            <div className="space-y-2">
+              {substitutes.map((sub) => (
+                <button
+                  key={sub.name}
+                  type="button"
+                  className="w-full rounded-xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/20"
+                  onClick={async () => {
+                    if (!plan || !substituting) return;
+                    onSelect(substituting, sub.name);
+                    onClose();
+                    try {
+                      await fetch(`/api/patients/${patientId}/meal-plan/edit`, {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           planId: plan.id,
-                          recommendations: updated.recommendations,
-                          meals: updated.meals,
+                          recommendations: plan.recommendations.map((r) =>
+                            r.name === substituting ? { ...sub, name: sub.name } : r,
+                          ),
+                          meals: replaceFoodInMeals(plan.meals, substituting, sub.name),
                         }),
-                      },
-                    );
-                  } catch {}
-                  toast.success(`Replaced with ${manualSub.trim()}`);
-                }}
-              >
-                Apply
-              </Button>
+                      });
+                    } catch {}
+                    toast.success(`Replaced with ${sub.name}`);
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-foreground">
+                      {sub.name}
+                    </p>
+                    <Badge variant="secondary" className="rounded-full text-[10px] font-medium">
+                      \u20B1{sub.estimatedCost}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{sub.description}</p>
+                  <p className="mt-0.5 text-[10px] italic text-muted-foreground/70">{sub.reason}</p>
+                </button>
+              ))}
             </div>
+          ) : null}
+
+          <div className="flex gap-2">
+            <Input
+              value={manualSub}
+              onChange={(e) => onManualSubChange(e.target.value)}
+              placeholder="Or type your own substitute..."
+              className="h-9 text-sm"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0 text-xs"
+              onClick={async () => {
+                if (!plan || !substituting || !manualSub.trim()) return;
+                const newName = manualSub.trim();
+                onSelect(substituting, newName);
+                onClose();
+                onManualSubChange("");
+                try {
+                  await fetch(`/api/patients/${patientId}/meal-plan/edit`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      planId: plan.id,
+                      recommendations: plan.recommendations.map((r) =>
+                        r.name === substituting ? { ...r, name: newName } : r,
+                      ),
+                      meals: replaceFoodInMeals(plan.meals, substituting, newName),
+                    }),
+                  });
+                } catch {}
+                toast.success(`Replaced with ${newName}`);
+              }}
+            >
+              Apply
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

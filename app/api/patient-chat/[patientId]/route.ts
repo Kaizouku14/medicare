@@ -14,14 +14,13 @@ type Params = {
 export async function GET(_: Request, { params }: Params) {
   try {
     const [{ user }, { patientId }] = await Promise.all([requireAuth(), params]);
-    await requirePatientAccess(user.id, patientId);
-
-    let session = await getPatientSession(patientId);
-    if (!session) {
-      session = await createSession(user.id, patientId);
-    }
-    const messages = await getSessionMessages(session.id);
-    return NextResponse.json({ session, messages });
+    const [, session] = await Promise.all([
+      requirePatientAccess(user.id, patientId),
+      getPatientSession(patientId),
+    ]);
+    const resolvedSession = session ?? await createSession(user.id, patientId);
+    const messages = await getSessionMessages(resolvedSession.id);
+    return NextResponse.json({ session: resolvedSession, messages });
   } catch (err) {
     return handleApiError(err);
   }
