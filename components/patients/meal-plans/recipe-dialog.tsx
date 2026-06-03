@@ -45,7 +45,7 @@ export function RecipeDialog({
             </p>
             <ul className="space-y-1">
               {recipe.ingredients.map((item, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                <li key={`${item}-${i}`} className="flex items-center gap-2 text-sm text-foreground">
                   <span className="size-1.5 rounded-full bg-primary/40 shrink-0" />
                   {item}
                 </li>
@@ -61,7 +61,7 @@ export function RecipeDialog({
             </p>
             <ol className="space-y-2">
               {recipe.instructions.split(". ").filter(Boolean).map((step, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground/85">
+                <li key={step} className="flex items-start gap-2 text-sm text-foreground/85">
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                     {i + 1}
                   </span>

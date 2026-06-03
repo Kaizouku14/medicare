@@ -141,9 +141,9 @@ export function LabTrends({
 
         {/* Values table */}
         <div className="space-y-1">
-          {activeLab.entries.map((entry, i) => (
+          {activeLab.entries.map((entry) => (
             <div
-              key={i}
+              key={entry.date}
               className={`flex items-center justify-between rounded-lg px-4 py-2.5 ${
                 entry.isAbnormal
                   ? "bg-red-50/50 border border-red-200/60"
@@ -254,9 +254,9 @@ export function LabTrends({
               </div>
             )}
             <div className="mt-2 flex gap-1">
-              {lab.entries.map((e, i) => (
+              {lab.entries.map((e) => (
                 <span
-                  key={i}
+                  key={e.date}
                   className={`inline-block h-1.5 flex-1 rounded-full ${
                     e.isAbnormal ? "bg-red-300" : "bg-emerald-300"
                   }`}
@@ -315,9 +315,9 @@ function LabChart({ lab }: { lab: LabSeries }) {
       />
 
       {/* Y-axis labels */}
-      {[min, (min + max) / 2, max].map((v, i) => (
+      {[min, (min + max) / 2, max].map((v) => (
         <text
-          key={i}
+          key={v.toFixed(1)}
           x={CHART_PAD.left - 8}
           y={y(v) + 4}
           textAnchor="end"
@@ -330,7 +330,7 @@ function LabChart({ lab }: { lab: LabSeries }) {
       {/* X-axis labels */}
       {lab.entries.map((e, i) => (
         <text
-          key={i}
+          key={e.date}
           x={x(i)}
           y={CHART_H - 5}
           textAnchor={i === 0 ? "start" : i === values.length - 1 ? "end" : "middle"}
@@ -351,17 +351,21 @@ function LabChart({ lab }: { lab: LabSeries }) {
       />
 
       {/* Dots */}
-      {values.map((v, i) => (
-        <circle
-          key={i}
-          cx={x(i)}
-          cy={y(v)}
-          r={4}
-          className={lab.entries[i].isAbnormal ? "fill-red-500" : "fill-emerald-500"}
-          stroke="white"
-          strokeWidth={2}
-        />
-      ))}
+      {lab.entries.map((e, i) => {
+        const v = values[i];
+        if (v === undefined) return null;
+        return (
+          <circle
+            key={e.date}
+            cx={x(i)}
+            cy={y(v)}
+            r={4}
+            className={e.isAbnormal ? "fill-red-500" : "fill-emerald-500"}
+            stroke="white"
+            strokeWidth={2}
+          />
+        );
+      })}
     </svg>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FileImage, Eye, ZoomIn, RefreshCw, Loader2, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -53,10 +54,12 @@ export function DocumentCard({
             className="shrink-0"
           >
             {signedUrls?.has(doc.id) ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={signedUrls.get(doc.id)}
+              <Image
+                src={signedUrls.get(doc.id)!}
                 alt={doc.fileName}
+                width={40}
+                height={40}
+                unoptimized
                 className="size-10 shrink-0 rounded-xl border border-border/40 object-cover transition-transform hover:scale-105"
               />
             ) : (

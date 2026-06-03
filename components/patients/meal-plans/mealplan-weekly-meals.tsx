@@ -46,7 +46,7 @@ function RecipeViewButton({ recipe, mealName, editing }: { recipe: MealRecipe; m
             </p>
             <ul className="space-y-1">
               {recipe.ingredients.map((item, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                <li key={`${item}-${i}`} className="flex items-center gap-2 text-sm text-foreground">
                   <span className="size-1.5 rounded-full bg-primary/40 shrink-0" />
                   {item}
                 </li>
@@ -60,7 +60,7 @@ function RecipeViewButton({ recipe, mealName, editing }: { recipe: MealRecipe; m
             </p>
             <ol className="space-y-2">
               {recipe.instructions.split(". ").filter(Boolean).map((step, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground/85">
+                <li key={step} className="flex items-start gap-2 text-sm text-foreground/85">
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                     {i + 1}
                   </span>
@@ -146,7 +146,7 @@ export function WeeklyMealsList({
                 {editing ? (
                   <div className="mt-0.5 space-y-1">
                     {day.snacks.map((snack, j) => (
-                      <div key={j} className="flex items-center gap-1">
+                      <div key={snack} className="flex items-center gap-1">
                         <Input
                           value={snack}
                           onChange={(e) => updateSnack(i, j, e.target.value)}
@@ -176,7 +176,7 @@ export function WeeklyMealsList({
                 ) : (
                   <div className="mt-0.5 flex flex-wrap gap-1">
                     {day.snacks.map((snack, j) => (
-                      <div key={j} className="flex items-center gap-1">
+                      <div key={snack} className="flex items-center gap-1">
                         <Badge variant="secondary" className="rounded-full text-[10px] font-medium">
                           {snack}
                         </Badge>

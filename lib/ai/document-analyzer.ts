@@ -59,23 +59,22 @@ export async function analyzeDocument(
     );
   }
 
-  let lastError: Error | null = null;
-
-  for (const model of [VISION_MODEL, FALLBACK_MODEL]) {
-    try {
-      const content = await groqVision(SYSTEM_PROMPT, USER_PROMPT, base64, mimeType, model);
-      const parsed = JSON.parse(content);
-      if (isDocumentAnalysis(parsed)) {
-        return parsed;
-      }
-      throw new Error(
-        `Response missing required fields. Keys: ${Object.keys(parsed).join(", ")}`,
-      );
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      if (model === FALLBACK_MODEL) break;
+  try {
+    const content = await groqVision(SYSTEM_PROMPT, USER_PROMPT, base64, mimeType, VISION_MODEL);
+    const parsed = JSON.parse(content);
+    if (isDocumentAnalysis(parsed)) {
+      return parsed;
     }
+  } catch {
+    // primary model failed, try fallback
   }
 
-  throw lastError ?? new Error("Document analysis failed.");
+  const content = await groqVision(SYSTEM_PROMPT, USER_PROMPT, base64, mimeType, FALLBACK_MODEL);
+  const parsed = JSON.parse(content);
+  if (!isDocumentAnalysis(parsed)) {
+    throw new Error(
+      `Response missing required fields. Keys: ${Object.keys(parsed).join(", ")}`,
+    );
+  }
+  return parsed;
 }

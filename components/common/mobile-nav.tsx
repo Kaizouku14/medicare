@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, Home, Plus, HeartPulse, ChevronRight, Bot } from "lucide-react";
@@ -37,11 +37,13 @@ export function MobileNav({
   const pathname = usePathname();
 
   const close = useCallback(() => setOpen(false), []);
+  const closeRef = useRef(close);
+  closeRef.current = close;
 
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") closeRef.current();
     };
     document.addEventListener("keydown", handleKey);
     document.body.style.overflow = "hidden";
@@ -49,7 +51,7 @@ export function MobileNav({
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
     };
-  }, [open, close]);
+  }, [open]);
 
   const isPatientPage =
     pathname.startsWith("/dashboard/patients/") &&

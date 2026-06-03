@@ -96,6 +96,16 @@ function mealPlanReducer(
   }
 }
 
+function replaceFoodInMeals(meals: DayMeal[], oldName: string, newName: string): DayMeal[] {
+  return meals.map((day) => ({
+    ...day,
+    breakfast: day.breakfast === oldName ? newName : day.breakfast,
+    lunch: day.lunch === oldName ? newName : day.lunch,
+    dinner: day.dinner === oldName ? newName : day.dinner,
+    snacks: day.snacks.map((s) => (s === oldName ? newName : s)),
+  }));
+}
+
 export function MealPlanGenerator({
   patient,
   latestDoc,
@@ -130,16 +140,6 @@ export function MealPlanGenerator({
     substitutes,
     manualSub,
   } = state;
-
-  function replaceFoodInMeals(meals: DayMeal[], oldName: string, newName: string): DayMeal[] {
-    return meals.map((day) => ({
-      ...day,
-      breakfast: day.breakfast === oldName ? newName : day.breakfast,
-      lunch: day.lunch === oldName ? newName : day.lunch,
-      dinner: day.dinner === oldName ? newName : day.dinner,
-      snacks: day.snacks.map((s) => (s === oldName ? newName : s)),
-    }));
-  }
 
   async function generate() {
     dispatch({ type: "SET_GENERATING", generating: true });
@@ -348,9 +348,9 @@ export function MealPlanGenerator({
               </div>
             ) : substitutes ? (
               <div className="space-y-2">
-                {substitutes.map((sub, i) => (
+                {substitutes.map((sub) => (
                   <button
-                    key={i}
+                    key={sub.name}
                     type="button"
                     className="w-full rounded-xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/20"
                     onClick={async () => {

@@ -28,7 +28,7 @@ export function RecommendedFoodList({
           const nutrientText = renderNutrients(food.nutrients);
           return (
             <div
-              key={i}
+              key={food.name}
               className="rounded-xl border border-border/60 bg-card p-3"
             >
               {editing ? (

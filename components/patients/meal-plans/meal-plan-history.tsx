@@ -108,9 +108,9 @@ function PlanDetailDialog({
             </CardHeader>
             <CardContent>
               <div className="grid gap-3 sm:grid-cols-2">
-                {plan.recommendations.map((food, i) => (
+                {plan.recommendations.map((food) => (
                   <div
-                    key={i}
+                    key={food.name}
                     className="rounded-xl border border-border/60 bg-card p-4"
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -209,9 +209,9 @@ function PlanDetailDialog({
                               Snacks
                             </p>
                             <div className="mt-0.5 flex flex-wrap gap-1">
-                              {day.snacks.map((snack, j) => (
+                              {day.snacks.map((snack) => (
                                 <Badge
-                                  key={j}
+                                  key={snack}
                                   variant="secondary"
                                   className="rounded-full text-[10px] font-medium"
                                 >
@@ -236,8 +236,9 @@ function PlanDetailDialog({
 
 export function MealPlanHistory({ patientId, pastPlans }: { patientId: string; pastPlans: MealPlan[] }) {
   const [selectedPlan, setSelectedPlan] = useState<MealPlan | null>(null);
-  const [plans, setPlans] = useState(pastPlans);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState<string | null>(null);
+  const plans = pastPlans.filter((p) => !deletedIds.has(p.id));
 
   async function handleDelete(planId: string) {
     setDeleting(planId);
@@ -248,7 +249,7 @@ export function MealPlanHistory({ patientId, pastPlans }: { patientId: string; p
         body: JSON.stringify({ planId }),
       });
       if (!res.ok) { const d = await res.json() as { error?: string }; toast.error(d.error ?? "Failed."); return; }
-      setPlans((prev) => prev.filter((p) => p.id !== planId));
+      setDeletedIds((prev) => new Set(prev).add(planId));
       toast.success("Meal plan deleted");
     } catch { toast.error("Network error."); }
     finally { setDeleting(null); }

@@ -71,7 +71,7 @@ export function MealPlanView({
         <div className="grid gap-3 sm:grid-cols-2">
           {plan.recommendations.map((food, i) => (
             <div
-              key={i}
+              key={food.name}
               className="group animate-fade-in-up rounded-xl border border-border/60 bg-card p-4 transition-all hover:border-primary/20 hover:shadow-sm"
               style={{ animationDelay: `${i * 0.03}s` }}
             >
@@ -220,9 +220,9 @@ export function MealPlanView({
                         Snacks
                       </p>
                       <div className="mt-0.5 flex flex-wrap gap-1">
-                        {day.snacks.map((snack, j) => (
+                        {day.snacks.map((snack) => (
                           <Badge
-                            key={j}
+                            key={snack}
                             variant="secondary"
                             className="rounded-full text-[10px] font-medium"
                           >
@@ -236,13 +236,13 @@ export function MealPlanView({
                         ) && (
                           <div className="mt-1 flex flex-wrap gap-2">
                             {day.snacks.map((snack, j) => {
-                              const key = `snack-${j}`;
-                              return day.recipes?.[key] ? (
+                              const recipeKey = `snack-${j}`;
+                              return day.recipes?.[recipeKey] ? (
                                 <button
-                                  key={j}
+                                  key={`${snack}-recipe`}
                                   type="button"
                                   onClick={() =>
-                                    onViewRecipe(snack, day.recipes![key])
+                                    onViewRecipe(snack, day.recipes![recipeKey])
                                   }
                                   className="flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
                                 >

@@ -146,9 +146,9 @@ export function GlobalChatClient({
       }
 
       // Read the streaming response to get the assistant's reply
-      const reader = res.body?.getReader();
       let assistantText = "";
-      if (reader) {
+      if (res.body) {
+        const reader = res.body.getReader();
         const decoder = new TextDecoder();
         while (true) {
           const { done, value } = await reader.read();

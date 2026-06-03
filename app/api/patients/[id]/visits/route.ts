@@ -26,9 +26,10 @@ export async function GET(_: Request, { params }: Params) {
 export async function POST(req: Request, { params }: Params) {
   try {
     const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
-    const patient = await requirePatientAccess(user.id, id);
-
-    const body = await req.json();
+    const [patient, body] = await Promise.all([
+      requirePatientAccess(user.id, id),
+      req.json(),
+    ]);
     if (!body.date || !body.notes) {
       return NextResponse.json({ error: "Date and notes are required." }, { status: 400 });
     }
@@ -48,9 +49,10 @@ export async function POST(req: Request, { params }: Params) {
 export async function PUT(req: Request, { params }: Params) {
   try {
     const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
-    const patient = await requirePatientAccess(user.id, id);
-
-    const body = await req.json();
+    const [patient, body] = await Promise.all([
+      requirePatientAccess(user.id, id),
+      req.json(),
+    ]);
     if (!body.visitId) {
       return NextResponse.json({ error: "visitId is required." }, { status: 400 });
     }

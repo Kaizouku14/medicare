@@ -28,11 +28,11 @@ export default async function MealPlanPage({ params }: Props) {
     notFound();
   }
 
-  const [latestDoc, existingPlan] = await Promise.all([
+  const [latestDoc, existingPlan, allPlans] = await Promise.all([
     getLatestAnalyzedDocument(patient.id),
     getLatestMealPlan(patient.id),
+    listMealPlansByPatient(patient.id),
   ]);
-  const allPlans = await listMealPlansByPatient(patient.id);
   const pastPlans = allPlans.filter((p) => p.id !== existingPlan?.id);
 
   return (

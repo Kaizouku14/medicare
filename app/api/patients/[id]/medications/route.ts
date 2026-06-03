@@ -26,9 +26,10 @@ export async function GET(_: Request, { params }: Params) {
 export async function POST(req: Request, { params }: Params) {
   try {
     const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
-    const patient = await requirePatientAccess(user.id, id);
-
-    const body = await req.json();
+    const [patient, body] = await Promise.all([
+      requirePatientAccess(user.id, id),
+      req.json(),
+    ]);
     if (!body.name || !body.dosage || !body.frequency || !body.startDate) {
       return NextResponse.json({ error: "Name, dosage, frequency, and start date are required." }, { status: 400 });
     }
@@ -52,9 +53,10 @@ export async function POST(req: Request, { params }: Params) {
 export async function PUT(req: Request, { params }: Params) {
   try {
     const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
-    const patient = await requirePatientAccess(user.id, id);
-
-    const body = await req.json();
+    const [patient, body] = await Promise.all([
+      requirePatientAccess(user.id, id),
+      req.json(),
+    ]);
     if (!body.medicationId) {
       return NextResponse.json({ error: "medicationId is required." }, { status: 400 });
     }

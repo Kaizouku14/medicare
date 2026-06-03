@@ -104,7 +104,7 @@ export function AnalysisDisplay({
           <div className="grid gap-2 sm:grid-cols-2">
             {analysis.extractedValues.map((v, i) => (
               <div
-                key={i}
+                key={v.name}
                 className={`animate-fade-in-up rounded-xl border p-3.5 ${
                   v.isAbnormal
                     ? "border-red-200/80 bg-red-50/50 doc-alert-abnormal"
@@ -154,9 +154,9 @@ export function AnalysisDisplay({
               Clinical Concerns
             </p>
             <ul className="space-y-1.5">
-              {analysis.concerns.map((c, i) => (
+              {analysis.concerns.map((c) => (
                 <li
-                  key={i}
+                  key={c}
                   className="flex items-start gap-2.5 rounded-lg bg-amber-50/60 px-3.5 py-2.5 text-sm text-foreground/85 doc-concern"
                 >
                   <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-amber-500 doc-concern-icon" />

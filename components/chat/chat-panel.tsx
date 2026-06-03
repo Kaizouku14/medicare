@@ -28,7 +28,8 @@ export function ChatPanel({
   const [input, setInput] = useState("");
   const [earlierMessages, setEarlierMessages] = useState<ChatMessageType[]>([]);
   const [loadingEarlier, setLoadingEarlier] = useState(false);
-  const [hasMoreEarlier, setHasMoreEarlier] = useState(hasMore);
+  const [apiHasMore, setApiHasMore] = useState<boolean | null>(null);
+  const hasMoreEarlier = apiHasMore ?? hasMore;
 
   const { messages, sendMessage, status, error, regenerate } = useChat({
     id: sessionId,
@@ -67,7 +68,7 @@ export function ChatPanel({
       if (data.messages && data.messages.length > 0) {
         setEarlierMessages((prev) => [...data.messages!, ...prev]);
       }
-      setHasMoreEarlier(data.hasMore ?? false);
+      setApiHasMore(data.hasMore ?? false);
     } catch {
       /* ignore */
     } finally {

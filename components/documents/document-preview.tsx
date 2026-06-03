@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FileImage } from "lucide-react";
 
 import {
@@ -33,10 +34,12 @@ export function DocumentPreview({
         </DialogHeader>
         <div className="flex items-center justify-center overflow-auto rounded-xl bg-muted/30 doc-preview-bg p-2">
           {previewDoc && signedUrls?.has(previewDoc.id) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={signedUrls.get(previewDoc.id)}
+            <Image
+              src={signedUrls.get(previewDoc.id)!}
               alt={previewDoc.fileName}
+              width={800}
+              height={600}
+              unoptimized
               className="max-h-[65vh] w-auto rounded-lg object-contain shadow-sm"
             />
           ) : (

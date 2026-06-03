@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Pill, Clock, CalendarDays, AlertCircle, ChevronDown, ChevronRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,10 @@ export function MedicationSchedule({
   medications: Medication[];
 }) {
   const [expanded, setExpanded] = useState(true);
+  const nowRef = useRef<Date | null>(null);
+  if (nowRef.current === null) nowRef.current = new Date();
+  const cutoffRef = useRef<Date | null>(null);
+  if (cutoffRef.current === null) cutoffRef.current = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const today = new Date().toISOString().split("T")[0];
   const active = medications.filter(
@@ -115,8 +119,8 @@ export function MedicationSchedule({
                       const startDate = new Date(med.startDate);
                       const endDate = med.endDate ? new Date(med.endDate) : null;
                       const daysActive = countDays(med.startDate, med.endDate);
-                      const isStartingSoon = startDate > new Date();
-                      const isEndingSoon = endDate && endDate < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                      const isStartingSoon = startDate > nowRef.current!;
+                      const isEndingSoon = endDate && endDate < cutoffRef.current!;
 
                       return (
                         <div key={med.id} className="px-4 py-3">
