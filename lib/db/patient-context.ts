@@ -76,26 +76,27 @@ export async function buildPatientContext(
     ]);
 
   const activeMedications = allMeds
-    .filter((m) => !m.endDate || new Date(m.endDate) >= new Date())
-    .map((m) => ({
-      name: m.name,
-      dosage: m.dosage,
-      frequency: m.frequency,
-      route: m.route,
-    }));
+    .flatMap((m) => {
+      if (m.endDate && new Date(m.endDate) < new Date()) return [];
+      return [{
+        name: m.name,
+        dosage: m.dosage,
+        frequency: m.frequency,
+        route: m.route,
+      }];
+    });
 
   const analyzedDocs = allDocuments.filter((d) => d.analysis);
 
   const allAbnormalValues: DocAbnormal[] = analyzedDocs
-    .map((doc) => {
+    .flatMap((doc) => {
       const abnormal = (doc.analysis?.extractedValues ?? []).filter(
         (v) => v.isAbnormal,
       );
       return abnormal.length > 0
-        ? { fileName: doc.fileName, values: abnormal.map((v) => ({ name: v.name, value: v.value, unit: v.unit, referenceRange: v.referenceRange, interpretation: v.interpretation })) }
-        : null;
-    })
-    .filter(Boolean) as DocAbnormal[];
+        ? [{ fileName: doc.fileName, values: abnormal.map((v) => ({ name: v.name, value: v.value, unit: v.unit, referenceRange: v.referenceRange, interpretation: v.interpretation })) }]
+        : [];
+    });
 
   const latestDoc = analyzedDocs.length > 0
     ? analyzedDocs[analyzedDocs.length - 1]

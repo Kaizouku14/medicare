@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { PatientDocument, DocumentAnalysis } from "@/types/domain";
 
+const CHART_W = 600;
+const CHART_H = 200;
+const CHART_PAD = { top: 20, right: 20, bottom: 30, left: 50 };
+
 type LabEntry = {
   date: string;
   value: string;
@@ -283,18 +287,15 @@ function LabChart({ lab }: { lab: LabSeries }) {
 
   const min = Math.min(...values, range.low) * 0.9;
   const max = Math.max(...values, range.high) * 1.1;
-  const chartW = 600;
-  const chartH = 200;
-  const pad = { top: 20, right: 20, bottom: 30, left: 50 };
-  const w = chartW - pad.left - pad.right;
-  const h = chartH - pad.top - pad.bottom;
+  const w = CHART_W - CHART_PAD.left - CHART_PAD.right;
+  const h = CHART_H - CHART_PAD.top - CHART_PAD.bottom;
 
   function x(i: number) {
-    return pad.left + (i / (values.length - 1)) * w;
+    return CHART_PAD.left + (i / (values.length - 1)) * w;
   }
 
   function y(v: number) {
-    return pad.top + h - ((v - min) / (max - min)) * h;
+    return CHART_PAD.top + h - ((v - min) / (max - min)) * h;
   }
 
   const rangeLowY = y(range.low);
@@ -302,10 +303,10 @@ function LabChart({ lab }: { lab: LabSeries }) {
   const linePath = values.map((v, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(v)}`).join(" ");
 
   return (
-    <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full max-h-56">
+    <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="w-full max-h-56">
       {/* Reference range band */}
       <rect
-        x={pad.left}
+        x={CHART_PAD.left}
         y={rangeHighY}
         width={w}
         height={rangeLowY - rangeHighY}
@@ -317,7 +318,7 @@ function LabChart({ lab }: { lab: LabSeries }) {
       {[min, (min + max) / 2, max].map((v, i) => (
         <text
           key={i}
-          x={pad.left - 8}
+          x={CHART_PAD.left - 8}
           y={y(v) + 4}
           textAnchor="end"
           className="fill-muted-foreground text-[10px]"
@@ -331,7 +332,7 @@ function LabChart({ lab }: { lab: LabSeries }) {
         <text
           key={i}
           x={x(i)}
-          y={chartH - 5}
+          y={CHART_H - 5}
           textAnchor={i === 0 ? "start" : i === values.length - 1 ? "end" : "middle"}
           className="fill-muted-foreground text-[9px]"
         >

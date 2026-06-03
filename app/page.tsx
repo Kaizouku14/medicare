@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "MediCare AI",
+  description:
+    "An intelligent companion for Filipino families managing the financial and medical challenges of caring for a loved one with chronic illness.",
+};
 
 export default async function Home() {
   const supabase = await createClient();

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/field";
 
 const forgotSchema = z.object({
-  email: z.string().email("Enter a valid email address."),
+  email: z.email("Enter a valid email address."),
 });
 
 type ForgotValues = z.infer<typeof forgotSchema>;

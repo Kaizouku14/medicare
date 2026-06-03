@@ -69,7 +69,7 @@ export function AnalysisDisplay({
       {/* Findings (expandable) */}
       {analysis.findings && (
         <div className="overflow-hidden rounded-xl border border-border/60 bg-card doc-card">
-          <button
+          <button type="button"
             onClick={() => setShowFindings(!showFindings)}
             className="flex w-full items-center gap-2 px-5 py-3 text-left transition-colors hover:bg-muted/30 doc-card-hover"
           >

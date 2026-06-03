@@ -31,14 +31,14 @@ export default async function DocumentsPage({ params }: Props) {
 
   const adminSupabase = createAdminClient();
   const signedUrls = new Map<string, string>();
-  for (const doc of documents) {
-    const { data } = await adminSupabase.storage
-      .from("patient-documents")
-      .createSignedUrl(doc.storagePath, 3600);
-    if (data) {
-      signedUrls.set(doc.id, data.signedUrl);
-    }
-  }
+  const results = await Promise.all(
+    documents.map((doc) =>
+      adminSupabase.storage
+        .from("patient-documents")
+        .createSignedUrl(doc.storagePath, 3600)
+        .then(({ data }) => data && signedUrls.set(doc.id, data.signedUrl)),
+    ),
+  );
 
   return (
     <div className="animate-fade-in">
@@ -47,7 +47,7 @@ export default async function DocumentsPage({ params }: Props) {
         className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3 transition-transform group-hover:-translate-x-0.5" />
-        {patient.name} — Profile
+        {patient.name} · Profile
       </Link>
 
       <div className="mt-6">

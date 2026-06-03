@@ -80,8 +80,7 @@ export async function POST(req: Request, { params }: Params) {
   const userText =
     lastUserMsg?.content?.trim() ??
     lastUserMsg?.parts
-      ?.filter((p) => p.type === "text")
-      .map((p) => p.text)
+      ?.flatMap((p) => p.type === "text" ? [p.text] : [])
       .join("")
       .trim();
 

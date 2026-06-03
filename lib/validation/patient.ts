@@ -10,9 +10,7 @@ export const patientSchema = z.object({
     .max(120, "Age must be between 1 and 120."),
   heightCm: z.number().min(50).max(250).nullable().optional(),
   weightKg: z.number().nullable().optional(),
-  diagnoses: z
-    .array(z.string())
-    .min(1, "At least one diagnosis is required."),
+  diagnoses: z.array(z.string()).min(1, "At least one diagnosis is required."),
   feedingMethod: z.enum(FEEDING_METHODS, {
     message: "Feeding method is invalid.",
   }),

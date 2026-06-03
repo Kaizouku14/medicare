@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-import { PatientForm } from "@/components/patients/patient-form";
+import { PatientForm } from "@/components/patients/forms/patient-form";
 import {
   Card,
   CardContent,

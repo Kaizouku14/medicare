@@ -11,7 +11,7 @@ import type { DocumentAnalysis } from "@/types/domain";
 
 const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
 const MAX_FILES = 10;
-const ACCEPTED = "image/png,image/jpeg,image/webp";
+const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 export function DocumentUploader({
   patientId,
@@ -34,7 +34,7 @@ export function DocumentUploader({
 
     const invalid: string[] = [];
     for (const file of files) {
-      if (!ACCEPTED.split(",").includes(file.type)) {
+      if (!ACCEPTED_TYPES.has(file.type)) {
         invalid.push(`${file.name} (unsupported type)`);
       }
       if (file.size > MAX_SIZE) {
@@ -52,37 +52,35 @@ export function DocumentUploader({
     setAnalysis(null);
 
     let lastAnalysis: DocumentAnalysis | null = null;
-    let hasError = false;
-
-    for (let i = 0; i < files.length; i++) {
-      const formData = new FormData();
-      formData.append("file", files[i]);
-
-      try {
+    const results = await Promise.allSettled(
+      files.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
         const res = await fetch(`/api/patients/${patientId}/documents`, {
           method: "POST",
           body: formData,
         });
-
         const data = await res.json();
-
-        if (!res.ok) {
-          toast.error(`${files[i].name}: ${data.error ?? "Upload failed."}`);
-          hasError = true;
-          continue;
-        }
-
+        if (!res.ok) throw new Error(data.error ?? "Upload failed.");
         if (data.document?.analysis) {
           lastAnalysis = data.document.analysis;
         }
+        return file.name;
+      }),
+    );
 
-        setUploadedCount(i + 1);
-        toast.success(`${files[i].name} uploaded and analyzed`);
-      } catch {
-        toast.error(`${files[i].name}: Network error.`);
+    let hasError = false;
+    let completed = 0;
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        completed++;
+        toast.success(`${result.value} uploaded and analyzed`);
+      } else {
         hasError = true;
+        toast.error(result.reason?.message ?? "Upload failed");
       }
     }
+    setUploadedCount(completed);
 
     if (lastAnalysis) {
       setAnalysis(lastAnalysis);
@@ -154,10 +152,11 @@ export function DocumentUploader({
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPTED}
+          accept="image/png,image/jpeg,image/webp"
           multiple
           className="hidden"
           disabled={uploading}
+          aria-label="Upload medical documents"
           onChange={(e) => {
             const files = e.target.files;
             if (files && files.length > 0) {

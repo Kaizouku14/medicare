@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useReducer } from "react";
 import { ClipboardList, Plus, Loader2, Trash2, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,35 @@ import {
 import { toast } from "sonner";
 import type { VisitNote } from "@/types/domain";
 
+type FormState = {
+  editingId: string | null;
+  date: string;
+  type: string;
+  notes: string;
+};
+
+type FormAction =
+  | { type: "SET_FIELD"; field: "date" | "type" | "notes"; value: string }
+  | { type: "START_EDIT"; visit: VisitNote }
+  | { type: "RESET" };
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case "SET_FIELD":
+      return { ...state, [action.field]: action.value };
+    case "START_EDIT":
+      return { editingId: action.visit.id, date: action.visit.date, type: action.visit.type, notes: action.visit.notes };
+    case "RESET":
+      return { editingId: null, date: new Date().toISOString().split("T")[0], type: "checkup", notes: "" };
+    default:
+      return state;
+  }
+}
+
+function createInitialForm(): FormState {
+  return { editingId: null, date: new Date().toISOString().split("T")[0], type: "checkup", notes: "" };
+}
+
 const VISIT_TYPES = [
   { value: "checkup", label: "Check-up" },
   { value: "follow-up", label: "Follow-up" },
@@ -48,9 +77,8 @@ export function VisitNotes({
 }) {
   const [visits, setVisits] = useState(initialVisits);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ date: new Date().toISOString().split("T")[0], type: "checkup", notes: "" });
+  const [form, dispatch] = useReducer(formReducer, null, createInitialForm);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,16 +86,15 @@ export function VisitNotes({
 
     setSaving(true);
     try {
-      if (editingId) {
+      if (form.editingId) {
         const res = await fetch(`/api/patients/${patientId}/visits`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ visitId: editingId, ...form }),
+          body: JSON.stringify({ visitId: form.editingId, ...form }),
         });
         const data = (await res.json()) as { visit?: VisitNote; error?: string };
         if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
-        setVisits((prev) => prev.map((v) => v.id === editingId ? data.visit! : v));
-        setEditingId(null);
+        setVisits((prev) => prev.map((v) => v.id === form.editingId ? data.visit! : v));
         toast.success("Visit updated");
       } else {
         const res = await fetch(`/api/patients/${patientId}/visits`, {
@@ -80,7 +107,7 @@ export function VisitNotes({
         setVisits((prev) => [data.visit!, ...prev]);
         toast.success("Visit logged");
       }
-      setForm({ date: new Date().toISOString().split("T")[0], type: "checkup", notes: "" });
+      dispatch({ type: "RESET" });
       setShowForm(false);
     } catch { toast.error("Network error."); }
     finally { setSaving(false); }
@@ -100,15 +127,13 @@ export function VisitNotes({
   }
 
   function startEdit(v: VisitNote) {
-    setForm({ date: v.date, type: v.type, notes: v.notes });
-    setEditingId(v.id);
+    dispatch({ type: "START_EDIT", visit: v });
     setShowForm(true);
   }
 
   function cancelForm() {
+    dispatch({ type: "RESET" });
     setShowForm(false);
-    setEditingId(null);
-    setForm({ date: new Date().toISOString().split("T")[0], type: "checkup", notes: "" });
   }
 
   return (
@@ -138,12 +163,12 @@ export function VisitNotes({
                 </Badge>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => startEdit(v)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+                <button type="button" onClick={() => startEdit(v)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
                   <Pencil className="size-3.5" />
                 </button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                    <button type="button" className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
                       <Trash2 className="size-3.5" />
                     </button>
                   </AlertDialogTrigger>
@@ -170,11 +195,11 @@ export function VisitNotes({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <FieldLabel htmlFor="visit-date" className="text-[10px] uppercase text-muted-foreground">Date</FieldLabel>
-                  <Input id="visit-date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="h-8 text-sm" required />
+                  <Input id="visit-date" type="date" value={form.date} onChange={(e) => dispatch({ type: "SET_FIELD", field: "date", value: e.target.value })} className="h-8 text-sm" required />
                 </div>
                 <div>
                   <FieldLabel htmlFor="visit-type" className="text-[10px] uppercase text-muted-foreground">Type</FieldLabel>
-                  <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                  <Select value={form.type} onValueChange={(v) => dispatch({ type: "SET_FIELD", field: "type", value: v })}>
                     <SelectTrigger id="visit-type" className="h-8 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {VISIT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
@@ -184,14 +209,14 @@ export function VisitNotes({
               </div>
               <Textarea
                 value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                onChange={(e) => dispatch({ type: "SET_FIELD", field: "notes", value: e.target.value })}
                 placeholder="Key takeaways from the visit..."
                 className="min-h-[80px] text-sm"
                 required
               />
               <div className="flex gap-2">
                 <Button type="submit" size="sm" className="h-7 rounded-lg text-xs" disabled={saving}>
-                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}{editingId ? "Update" : "Log visit"}
+                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}{form.editingId ? "Update" : "Log visit"}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" className="h-7 rounded-lg text-xs" onClick={cancelForm}>Cancel</Button>
               </div>

@@ -15,7 +15,7 @@ export default function AuthLayout({
       </div>
 
       {/* Decorative corner element */}
-      <div className="pointer-events-none fixed bottom-0 left-0 -z-10 h-48 w-48 opacity-[0.03]">
+      <div className="pointer-events-none fixed bottom-0 left-0 -z-10 size-48 opacity-[0.03]">
         <svg viewBox="0 0 200 200" fill="none" className="h-full w-full">
           <path d="M0 200L200 0H0V200Z" fill="currentColor" className="text-primary" />
         </svg>

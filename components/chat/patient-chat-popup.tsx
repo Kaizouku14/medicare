@@ -43,7 +43,7 @@ export function PatientChatPopup({
 
   return (
     <>
-      <button
+      <button type="button"
         onClick={initChat}
         disabled={loading}
         className="fixed bottom-5 right-5 z-50 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-70"
@@ -72,7 +72,7 @@ export function PatientChatPopup({
               onClick={() => setOpen(false)}
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+              className="size-6 p-0 text-muted-foreground hover:text-foreground"
             >
               <X className="size-3.5" />
             </Button>

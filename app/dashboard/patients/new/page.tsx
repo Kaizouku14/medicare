@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PatientForm } from "@/components/patients/patient-form";
+import { PatientForm } from "@/components/patients/forms/patient-form";
 
 export default function NewPatientPage() {
   return (

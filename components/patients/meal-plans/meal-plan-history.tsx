@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { renderNutrients } from "@/types/domain";
+import { Nutrients } from "./nutrients";
 import {
   CalendarDays,
   Clock,
@@ -132,7 +132,7 @@ function PlanDetailDialog({
                         variant="outline"
                         className="rounded-full text-[10px] font-medium"
                       >
-                        {renderNutrients(food.nutrients)}
+                        <Nutrients nutrients={food.nutrients} />
                       </Badge>
                     </div>
                     <p className="mt-2 text-xs italic leading-relaxed text-muted-foreground/70">
@@ -313,7 +313,7 @@ export function MealPlanHistory({ patientId, pastPlans }: { patientId: string; p
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 rounded-lg p-0 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                        className="size-8 rounded-lg p-0 text-muted-foreground hover:bg-red-50 hover:text-red-600"
                         disabled={deleting === plan.id}
                       >
                         {deleting === plan.id ? (

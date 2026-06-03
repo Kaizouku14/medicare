@@ -84,7 +84,7 @@ export default function UpdatePasswordPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Verifying recovery link...</p>
+        <p className="text-sm text-muted-foreground">Verifying recovery link…</p>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export default function UpdatePasswordPage() {
         </div>
         <h1 className="mt-4 font-serif text-2xl font-medium tracking-tight">Password updated</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Redirecting you to sign in...
+          Redirecting you to sign in…
         </p>
       </div>
     );

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/field";
 
 const loginSchema = z.object({
-  email: z.string().email("Enter a valid email address."),
+  email: z.email("Enter a valid email address."),
   password: z.string().min(1, "Password is required."),
 });
 

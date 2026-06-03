@@ -51,7 +51,7 @@ export function MedicationSchedule({
 
   const frequencyOrder = [
     ...new Set(active.map((m) => m.frequency.toLowerCase())),
-  ].sort();
+  ].toSorted();
 
   return (
     <div className="space-y-6">

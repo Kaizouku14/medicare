@@ -102,7 +102,7 @@ export function PatientList({ patients }: { patients: Patient[] }) {
             className="h-9 rounded-xl border-border/60 pl-9 text-sm"
           />
           {search && (
-            <button
+            <button type="button"
               onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
@@ -112,7 +112,7 @@ export function PatientList({ patients }: { patients: Patient[] }) {
         </div>
         <div className="flex flex-wrap gap-1.5">
           {allDiagnoses.map((d) => (
-            <button
+            <button type="button"
               key={d}
               onClick={() => {
                 setSelectedDiagnosis(selectedDiagnosis === d ? null : d);
@@ -219,7 +219,7 @@ export function PatientList({ patients }: { patients: Patient[] }) {
             size="sm"
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="h-8 w-8 rounded-lg p-0"
+            className="size-8 rounded-lg p-0"
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -239,7 +239,7 @@ export function PatientList({ patients }: { patients: Patient[] }) {
             size="sm"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="h-8 w-8 rounded-lg p-0"
+            className="size-8 rounded-lg p-0"
           >
             <ChevronRight className="size-4" />
           </Button>

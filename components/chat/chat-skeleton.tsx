@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function ChatPanelSkeleton() {
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex-1 space-y-4 px-4 py-4">
+      <div className="flex-1 space-y-4 p-4">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
@@ -20,7 +20,7 @@ export function ChatPanelSkeleton() {
       </div>
       <div className="flex gap-2 border-t border-border/60 px-4 py-3">
         <Skeleton className="h-9 flex-1 rounded-lg" />
-        <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
+        <Skeleton className="size-9 shrink-0 rounded-lg" />
       </div>
     </div>
   );

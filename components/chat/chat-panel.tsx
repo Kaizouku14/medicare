@@ -129,8 +129,7 @@ export function ChatPanel({
                     typeof m.content === "string"
                       ? m.content
                       : (m.parts
-                          ?.filter((p) => p.type === "text")
-                          .map((p) => (p as { text: string }).text)
+                          ?.flatMap((p) => p.type === "text" ? [(p as { text: string }).text] : [])
                           .join("") ?? ""),
                   createdAt: "",
                 } as ChatMessageType
@@ -143,7 +142,7 @@ export function ChatPanel({
                 <Loader2 className="size-4 animate-spin" />
               </div>
               <div className="rounded-2xl bg-muted/50 px-4 py-2.5 text-sm text-muted-foreground">
-                <span className="animate-pulse">Thinking...</span>
+                <span className="animate-pulse">Thinking…</span>
               </div>
             </div>
           )}

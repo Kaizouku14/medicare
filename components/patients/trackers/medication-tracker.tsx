@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useReducer } from "react";
 import { Pill, Plus, Trash2, Loader2, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,43 +34,81 @@ export function MedicationTracker({
 }) {
   const [medications, setMedications] = useState(initialMedications);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", dosage: "", frequency: "", route: "oral", startDate: "", endDate: "", notes: "" });
+
+  const initialFormState = {
+    editingId: null as string | null,
+    name: "",
+    dosage: "",
+    frequency: "",
+    route: "oral",
+    startDate: "",
+    endDate: "",
+    notes: "",
+  };
+
+  type FormAction =
+    | { type: "SET_FIELD"; field: "name" | "dosage" | "frequency" | "route" | "startDate" | "endDate" | "notes"; value: string }
+    | { type: "START_EDIT"; medication: Medication }
+    | { type: "RESET" };
+
+  function formReducer(state: typeof initialFormState, action: FormAction) {
+    switch (action.type) {
+      case "SET_FIELD":
+        return { ...state, [action.field]: action.value };
+      case "START_EDIT":
+        return {
+          editingId: action.medication.id,
+          name: action.medication.name,
+          dosage: action.medication.dosage,
+          frequency: action.medication.frequency,
+          route: action.medication.route,
+          startDate: action.medication.startDate,
+          endDate: action.medication.endDate ?? "",
+          notes: action.medication.notes ?? "",
+        };
+      case "RESET":
+        return initialFormState;
+      default:
+        return state;
+    }
+  }
+
+  const [formState, dispatch] = useReducer(formReducer, initialFormState);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || !form.dosage || !form.frequency || !form.startDate) {
+    if (!formState.name || !formState.dosage || !formState.frequency || !formState.startDate) {
       toast.error("Name, dosage, frequency, and start date are required.");
       return;
     }
 
     setSaving(true);
     try {
-      if (editingId) {
+      if (formState.editingId) {
+        const { editingId, ...formData } = formState;
         const res = await fetch(`/api/patients/${patientId}/medications`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ medicationId: editingId, ...form }),
+          body: JSON.stringify({ medicationId: editingId, ...formData }),
         });
         const data = (await res.json()) as { medication?: Medication; error?: string };
         if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
         setMedications((prev) => prev.map((m) => m.id === editingId ? data.medication! : m));
-        setEditingId(null);
         toast.success("Medication updated");
       } else {
+        const { editingId: _, ...formData } = formState;
         const res = await fetch(`/api/patients/${patientId}/medications`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify(formData),
         });
         const data = (await res.json()) as { medication?: Medication; error?: string };
         if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
         setMedications((prev) => [data.medication!, ...prev]);
         toast.success("Medication added");
       }
-      setForm({ name: "", dosage: "", frequency: "", route: "oral", startDate: "", endDate: "", notes: "" });
+      dispatch({ type: "RESET" });
       setShowForm(false);
     } catch { toast.error("Network error."); }
     finally { setSaving(false); }
@@ -90,23 +128,13 @@ export function MedicationTracker({
   }
 
   function startEdit(med: Medication) {
-    setForm({
-      name: med.name,
-      dosage: med.dosage,
-      frequency: med.frequency,
-      route: med.route,
-      startDate: med.startDate,
-      endDate: med.endDate ?? "",
-      notes: med.notes ?? "",
-    });
-    setEditingId(med.id);
+    dispatch({ type: "START_EDIT", medication: med });
     setShowForm(true);
   }
 
   function cancelForm() {
     setShowForm(false);
-    setEditingId(null);
-    setForm({ name: "", dosage: "", frequency: "", route: "oral", startDate: "", endDate: "", notes: "" });
+    dispatch({ type: "RESET" });
   }
 
   const active = medications.filter((m) => !m.endDate || m.endDate >= new Date().toISOString().split("T")[0]);
@@ -133,12 +161,12 @@ export function MedicationTracker({
               </div>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => startEdit(med)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+              <button type="button" onClick={() => startEdit(med)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
                 <Pencil className="size-3.5" />
               </button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                  <button type="button" className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
                     <Trash2 className="size-3.5" />
                   </button>
                 </AlertDialogTrigger>
@@ -170,12 +198,12 @@ export function MedicationTracker({
                     <p className="text-[10px] text-muted-foreground">{med.dosage} &middot; ended {med.endDate}</p>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => startEdit(med)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+                    <button type="button" onClick={() => startEdit(med)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
                       <Pencil className="size-3" />
                     </button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <button className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                        <button type="button" className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
                           <Trash2 className="size-3" />
                         </button>
                       </AlertDialogTrigger>
@@ -204,38 +232,38 @@ export function MedicationTracker({
                 <FieldGroup>
                   <div>
                     <FieldLabel htmlFor="med-name" className="text-[10px] uppercase text-muted-foreground">Name</FieldLabel>
-                    <Input id="med-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-8 text-sm" placeholder="Metformin" required />
+                    <Input id="med-name" value={formState.name} onChange={(e) => dispatch({ type: "SET_FIELD", field: "name", value: e.target.value })} className="h-8 text-sm" placeholder="Metformin" required />
                   </div>
                   <div>
                     <FieldLabel htmlFor="med-dosage" className="text-[10px] uppercase text-muted-foreground">Dosage</FieldLabel>
-                    <Input id="med-dosage" value={form.dosage} onChange={(e) => setForm({ ...form, dosage: e.target.value })} className="h-8 text-sm" placeholder="500mg" required />
+                    <Input id="med-dosage" value={formState.dosage} onChange={(e) => dispatch({ type: "SET_FIELD", field: "dosage", value: e.target.value })} className="h-8 text-sm" placeholder="500mg" required />
                   </div>
                 </FieldGroup>
                 <FieldGroup>
                   <div>
                     <FieldLabel htmlFor="med-frequency" className="text-[10px] uppercase text-muted-foreground">Frequency</FieldLabel>
-                    <Input id="med-frequency" value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} className="h-8 text-sm" placeholder="Twice daily" required />
+                    <Input id="med-frequency" value={formState.frequency} onChange={(e) => dispatch({ type: "SET_FIELD", field: "frequency", value: e.target.value })} className="h-8 text-sm" placeholder="Twice daily" required />
                   </div>
                   <div>
                     <FieldLabel htmlFor="med-route" className="text-[10px] uppercase text-muted-foreground">Route</FieldLabel>
-                    <Input id="med-route" value={form.route} onChange={(e) => setForm({ ...form, route: e.target.value })} className="h-8 text-sm" placeholder="oral" />
+                    <Input id="med-route" value={formState.route} onChange={(e) => dispatch({ type: "SET_FIELD", field: "route", value: e.target.value })} className="h-8 text-sm" placeholder="oral" />
                   </div>
                 </FieldGroup>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <FieldLabel htmlFor="med-start" className="text-[10px] uppercase text-muted-foreground">Start date</FieldLabel>
-                  <Input id="med-start" type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="h-8 text-sm" required />
+                  <Input id="med-start" type="date" value={formState.startDate} onChange={(e) => dispatch({ type: "SET_FIELD", field: "startDate", value: e.target.value })} className="h-8 text-sm" required />
                 </div>
                 <div>
                   <FieldLabel htmlFor="med-end" className="text-[10px] uppercase text-muted-foreground">End date (optional)</FieldLabel>
-                  <Input id="med-end" type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="h-8 text-sm" />
+                  <Input id="med-end" type="date" value={formState.endDate} onChange={(e) => dispatch({ type: "SET_FIELD", field: "endDate", value: e.target.value })} className="h-8 text-sm" />
                 </div>
               </div>
-              <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Notes (optional)" className="h-8 text-sm" />
+              <Input value={formState.notes} onChange={(e) => dispatch({ type: "SET_FIELD", field: "notes", value: e.target.value })} placeholder="Notes (optional)" className="h-8 text-sm" />
               <div className="flex gap-2">
                 <Button type="submit" size="sm" className="h-7 rounded-lg text-xs" disabled={saving}>
-                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}{editingId ? "Update" : "Add"}
+                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}{formState.editingId ? "Update" : "Add"}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" className="h-7 rounded-lg text-xs" onClick={cancelForm}>Cancel</Button>
               </div>
