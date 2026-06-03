@@ -12,7 +12,7 @@ import { type CreatePatientInput } from "@/types/domain";
 import {
   patientFormSchema,
   type PatientFormValues,
-} from "@/lib/validation/patient-form";
+} from "@/lib/validation/patient";
 
 import { PersonalInfoSection } from "./patient-form-personal";
 import { MedicalInfoSection } from "./patient-form-medical";

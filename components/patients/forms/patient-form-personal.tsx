@@ -2,7 +2,7 @@
 
 import { type Control, Controller } from "react-hook-form";
 
-import { type PatientFormValues } from "@/lib/validation/patient-form";
+import { type PatientFormValues } from "@/lib/validation/patient";
 import { Input } from "@/components/ui/input";
 import {
   Field,

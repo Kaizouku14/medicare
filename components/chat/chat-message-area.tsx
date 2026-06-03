@@ -44,25 +44,28 @@ export function ChatMessageArea({
             <p className="mb-6 text-sm text-muted-foreground">
               Start a new conversation
             </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const t = newInput.trim();
-                if (t && !creating) onCreateSessionAndSend(t);
-              }}
-              className="flex gap-2"
-            >
+            <div className="flex gap-2">
               <Input
                 ref={inputRef}
                 value={newInput}
                 onChange={(e) => onNewInputChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const t = newInput.trim();
+                    if (t && !creating) onCreateSessionAndSend(t);
+                  }
+                }}
                 placeholder="Type your question..."
                 disabled={creating}
                 className="h-10 text-sm"
               />
               <Button
-                type="submit"
+                type="button"
                 size="sm"
+                onClick={() => {
+                  const t = newInput.trim();
+                  if (t && !creating) onCreateSessionAndSend(t);
+                }}
                 disabled={creating || !newInput.trim()}
                 className="h-10 shrink-0 rounded-lg px-4"
               >
@@ -72,7 +75,7 @@ export function ChatMessageArea({
                   <Send className="size-4" />
                 )}
               </Button>
-            </form>
+            </div>
           </div>
         </div>
       )}

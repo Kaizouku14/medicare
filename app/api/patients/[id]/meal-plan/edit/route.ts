@@ -11,8 +11,7 @@ type Params = {
 
 export async function PUT(req: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
 
     const body = (await req.json()) as {

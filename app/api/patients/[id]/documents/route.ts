@@ -26,8 +26,7 @@ type Params = {
 
 export async function GET(_: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
     const documents = await listDocumentsByPatient(patient.id);
     return NextResponse.json({ documents });
@@ -45,8 +44,7 @@ export async function POST(req: Request, { params }: Params) {
         { status: 429 },
       );
     }
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
 
     let formData: FormData;

@@ -14,8 +14,7 @@ type Params = {
 
 export async function GET(_: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
     const expenses = await listExpensesByPatient(patient.id);
     return NextResponse.json({ expenses });
@@ -26,8 +25,7 @@ export async function GET(_: Request, { params }: Params) {
 
 export async function POST(req: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
 
     const { date, amount, note } = (await req.json()) as {
@@ -52,8 +50,7 @@ export async function POST(req: Request, { params }: Params) {
 
 export async function PUT(req: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
 
     const body = await req.json();
@@ -79,8 +76,7 @@ export async function PUT(req: Request, { params }: Params) {
 
 export async function DELETE(req: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
 
     const { expenseId } = (await req.json()) as { expenseId: string };

@@ -11,8 +11,7 @@ type Params = {
 
 export async function GET(_: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
     return NextResponse.json({ patient });
   } catch (err) {
@@ -53,8 +52,7 @@ export async function PUT(req: Request, { params }: Params) {
 
 export async function DELETE(_: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const removed = await deletePatient(user.id, id);
     if (!removed) {
       return NextResponse.json({ error: "Patient not found." }, { status: 404 });

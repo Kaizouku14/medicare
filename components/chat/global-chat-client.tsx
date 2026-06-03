@@ -1,9 +1,103 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useReducer, useRef } from "react";
 import { SessionList } from "@/components/chat/session-list";
 import { ChatMessageArea } from "@/components/chat/chat-message-area";
 import type { ChatSession, ChatMessage } from "@/types/domain";
+
+type GlobalChatState = {
+  sessions: ChatSession[];
+  activeId: string | null;
+  messages: ChatMessage[];
+  hasMore: boolean;
+  creating: boolean;
+  newInput: string;
+  selectedIds: Set<string>;
+  confirmingDelete: Set<string> | null;
+  deleting: boolean;
+};
+
+type GlobalChatAction =
+  | { type: "SET_CREATING"; creating: boolean }
+  | { type: "SESSION_CREATED"; session: ChatSession; messages: ChatMessage[] }
+  | { type: "NEW_CHAT" }
+  | { type: "SELECT_SESSION"; activeId: string | null; messages: ChatMessage[]; hasMore: boolean }
+  | { type: "SET_NEW_INPUT"; newInput: string }
+  | { type: "TOGGLE_SELECT"; id: string }
+  | { type: "TOGGLE_SELECT_ALL" }
+  | { type: "CLEAR_SELECTION" }
+  | { type: "START_DELETE"; ids: Set<string> }
+  | { type: "CANCEL_DELETE" }
+  | { type: "DELETE_START" }
+  | { type: "DELETE_DONE" }
+  | { type: "SET_HAS_MORE"; hasMore: boolean }
+  | { type: "SET_MESSAGES"; messages: ChatMessage[]; hasMore: boolean };
+
+function globalChatReducer(state: GlobalChatState, action: GlobalChatAction): GlobalChatState {
+  switch (action.type) {
+    case "SET_CREATING":
+      return { ...state, creating: action.creating };
+    case "SESSION_CREATED":
+      return {
+        ...state,
+        creating: false,
+        sessions: [action.session, ...state.sessions],
+        activeId: action.session.id,
+        messages: action.messages,
+        newInput: "",
+      };
+    case "NEW_CHAT":
+      return { ...state, activeId: null, messages: [], selectedIds: new Set() };
+    case "SELECT_SESSION":
+      return { ...state, activeId: action.activeId, messages: action.messages, hasMore: action.hasMore, selectedIds: new Set() };
+    case "SET_NEW_INPUT":
+      return { ...state, newInput: action.newInput };
+    case "TOGGLE_SELECT": {
+      const next = new Set(state.selectedIds);
+      if (next.has(action.id)) next.delete(action.id);
+      else next.add(action.id);
+      return { ...state, selectedIds: next };
+    }
+    case "TOGGLE_SELECT_ALL": {
+      if (state.selectedIds.size === state.sessions.length) {
+        return { ...state, selectedIds: new Set() };
+      }
+      return { ...state, selectedIds: new Set(state.sessions.map((s) => s.id)) };
+    }
+    case "CLEAR_SELECTION":
+      return { ...state, selectedIds: new Set() };
+    case "START_DELETE":
+      return { ...state, confirmingDelete: action.ids };
+    case "CANCEL_DELETE":
+      return { ...state, confirmingDelete: null };
+    case "DELETE_START":
+      return { ...state, deleting: true };
+    case "DELETE_DONE": {
+      const ids = state.confirmingDelete;
+      if (!ids || ids.size === 0) return state;
+      const remainingSessions = state.sessions.filter((s) => !ids.has(s.id));
+      const activeRemoved = state.activeId && ids.has(state.activeId);
+      return {
+        ...state,
+        deleting: false,
+        confirmingDelete: null,
+        sessions: remainingSessions,
+        selectedIds: new Set(),
+        ...(activeRemoved
+          ? {
+              activeId: remainingSessions.length > 0 ? remainingSessions[0].id : null,
+              messages: [],
+              hasMore: true,
+            }
+          : {}),
+      };
+    }
+    case "SET_MESSAGES":
+      return { ...state, messages: action.messages, hasMore: action.hasMore };
+    case "SET_HAS_MORE":
+      return { ...state, hasMore: action.hasMore };
+  }
+}
 
 export function GlobalChatClient({
   sessions: initialSessions,
@@ -16,34 +110,40 @@ export function GlobalChatClient({
   activeMessages: ChatMessage[];
   activeHasMore?: boolean;
 }) {
-  const [sessions, setSessions] = useState(initialSessions);
-  const [activeId, setActiveId] = useState<string | null>(initialSessionId);
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-  const [hasMore, setHasMore] = useState(activeHasMore);
-  const [creating, setCreating] = useState(false);
-  const [newInput, setNewInput] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [confirmingDelete, setConfirmingDelete] = useState<Set<string> | null>(
-    null,
-  );
-  const [deleting, setDeleting] = useState(false);
+  const [state, dispatch] = useReducer(globalChatReducer, {
+    sessions: initialSessions,
+    activeId: initialSessionId,
+    messages: initialMessages,
+    hasMore: activeHasMore,
+    creating: false,
+    newInput: "",
+    selectedIds: new Set<string>(),
+    confirmingDelete: null,
+    deleting: false,
+  });
   const newInputRef = useRef<HTMLInputElement>(null);
 
   const messageCache = useRef<Map<string, ChatMessage[]>>(null!);
   if (messageCache.current === null) messageCache.current = new Map();
 
   async function createSessionAndSend(text: string) {
-    setCreating(true);
+    dispatch({ type: "SET_CREATING", creating: true });
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         body: JSON.stringify({ message: text }),
       });
 
-      if (!res.ok) return;
+      if (!res.ok) {
+        dispatch({ type: "SET_CREATING", creating: false });
+        return;
+      }
 
       const sessionId = res.headers.get("X-Session-Id");
-      if (!sessionId) return;
+      if (!sessionId) {
+        dispatch({ type: "SET_CREATING", creating: false });
+        return;
+      }
 
       // Read the streaming response to get the assistant's reply
       const reader = res.body?.getReader();
@@ -86,21 +186,14 @@ export function GlobalChatClient({
       ];
 
       messageCache.current.set(sessionId, msgs);
-      setSessions((prev) => [newSession, ...prev]);
-      setActiveId(sessionId);
-      setMessages(msgs);
-      setNewInput("");
+      dispatch({ type: "SESSION_CREATED", session: newSession, messages: msgs });
     } catch {
-      /* ignore */
-    } finally {
-      setCreating(false);
+      dispatch({ type: "SET_CREATING", creating: false });
     }
   }
 
   function newChat() {
-    setActiveId(null);
-    setMessages([]);
-    setSelectedIds(new Set());
+    dispatch({ type: "NEW_CHAT" });
     setTimeout(() => newInputRef.current?.focus(), 50);
   }
 
@@ -108,13 +201,14 @@ export function GlobalChatClient({
   if (hasMoreMap.current === null) hasMoreMap.current = new Map();
 
   async function selectSession(sessionId: string) {
-    setSelectedIds(new Set());
-
     const cached = messageCache.current.get(sessionId);
     if (cached) {
-      setMessages(cached);
-      setHasMore(hasMoreMap.current.get(sessionId) ?? true);
-      setActiveId(sessionId);
+      dispatch({
+        type: "SELECT_SESSION",
+        activeId: sessionId,
+        messages: cached,
+        hasMore: hasMoreMap.current.get(sessionId) ?? true,
+      });
       return;
     }
 
@@ -128,37 +222,25 @@ export function GlobalChatClient({
       const more = data.hasMore ?? false;
       messageCache.current.set(sessionId, msgs);
       hasMoreMap.current.set(sessionId, more);
-      setMessages(msgs);
-      setHasMore(more);
-      setActiveId(sessionId);
+      dispatch({ type: "SELECT_SESSION", activeId: sessionId, messages: msgs, hasMore: more });
     } catch {
-      setMessages([]);
-      setHasMore(false);
-      setActiveId(sessionId);
+      dispatch({ type: "SELECT_SESSION", activeId: sessionId, messages: [], hasMore: false });
     }
   }
 
   function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    dispatch({ type: "TOGGLE_SELECT", id });
   }
 
   function toggleSelectAll() {
-    setSelectedIds((prev) => {
-      if (prev.size === sessions.length) return new Set();
-      return new Set(sessions.map((s) => s.id));
-    });
+    dispatch({ type: "TOGGLE_SELECT_ALL" });
   }
 
   async function confirmDelete() {
-    if (!confirmingDelete || confirmingDelete.size === 0) return;
-    const ids = Array.from(confirmingDelete);
-    const isBulk = confirmingDelete.size > 1;
-    setDeleting(true);
+    if (!state.confirmingDelete || state.confirmingDelete.size === 0) return;
+    const ids = Array.from(state.confirmingDelete);
+    const isBulk = state.confirmingDelete.size > 1;
+    dispatch({ type: "DELETE_START" });
     try {
       const res = isBulk
         ? await fetch("/api/chat", {
@@ -166,58 +248,44 @@ export function GlobalChatClient({
             body: JSON.stringify({ ids }),
           })
         : await fetch(`/api/chat/${ids[0]}`, { method: "DELETE" });
-      if (!res.ok) return;
-      setSessions((prev) => prev.filter((s) => !confirmingDelete.has(s.id)));
+      if (!res.ok) {
+        dispatch({ type: "CANCEL_DELETE" });
+        return;
+      }
       ids.forEach((id) => {
         messageCache.current.delete(id);
         hasMoreMap.current.delete(id);
       });
-      if (activeId && confirmingDelete.has(activeId)) {
-        const remaining = sessions.filter((s) => !confirmingDelete.has(s.id));
-        if (remaining.length > 0) {
-          selectSession(remaining[0].id);
-        } else {
-          setActiveId(null);
-          setMessages([]);
-        }
-      }
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        ids.forEach((id) => next.delete(id));
-        return next;
-      });
-      setConfirmingDelete(null);
+      dispatch({ type: "DELETE_DONE" });
     } catch {
-      /* ignore */
-    } finally {
-      setDeleting(false);
+      dispatch({ type: "CANCEL_DELETE" });
     }
   }
 
   return (
     <div className="flex flex-1 gap-4">
       <SessionList
-        sessions={sessions}
-        activeId={activeId}
-        selectedIds={selectedIds}
-        confirmingDelete={confirmingDelete}
-        deleting={deleting}
+        sessions={state.sessions}
+        activeId={state.activeId}
+        selectedIds={state.selectedIds}
+        confirmingDelete={state.confirmingDelete}
+        deleting={state.deleting}
         onNewChat={newChat}
         onSelectSession={selectSession}
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
-        onClearSelection={() => setSelectedIds(new Set())}
-        onStartDelete={(ids) => setConfirmingDelete(ids)}
+        onClearSelection={() => dispatch({ type: "CLEAR_SELECTION" })}
+        onStartDelete={(ids) => dispatch({ type: "START_DELETE", ids })}
         onConfirmDelete={confirmDelete}
-        onCancelDelete={() => setConfirmingDelete(null)}
+        onCancelDelete={() => dispatch({ type: "CANCEL_DELETE" })}
       />
       <ChatMessageArea
-        activeId={activeId}
-        messages={messages}
-        hasMore={hasMore}
-        creating={creating}
-        newInput={newInput}
-        onNewInputChange={setNewInput}
+        activeId={state.activeId}
+        messages={state.messages}
+        hasMore={state.hasMore}
+        creating={state.creating}
+        newInput={state.newInput}
+        onNewInputChange={(v) => dispatch({ type: "SET_NEW_INPUT", newInput: v })}
         onCreateSessionAndSend={createSessionAndSend}
         inputRef={newInputRef}
       />

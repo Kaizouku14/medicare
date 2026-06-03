@@ -29,6 +29,7 @@ import type {
   Patient,
   PatientDocument,
   FoodRecommendation,
+  DayMeal,
   MealRecipe,
 } from "@/types/domain";
 
@@ -129,6 +130,16 @@ export function MealPlanGenerator({
     substitutes,
     manualSub,
   } = state;
+
+  function replaceFoodInMeals(meals: DayMeal[], oldName: string, newName: string): DayMeal[] {
+    return meals.map((day) => ({
+      ...day,
+      breakfast: day.breakfast === oldName ? newName : day.breakfast,
+      lunch: day.lunch === oldName ? newName : day.lunch,
+      dinner: day.dinner === oldName ? newName : day.dinner,
+      snacks: day.snacks.map((s) => (s === oldName ? newName : s)),
+    }));
+  }
 
   async function generate() {
     dispatch({ type: "SET_GENERATING", generating: true });
@@ -343,7 +354,7 @@ export function MealPlanGenerator({
                     type="button"
                     className="w-full rounded-xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/20"
                     onClick={async () => {
-                      if (!plan) return;
+                      if (!plan || !substituting) return;
                       const updated = {
                         ...plan,
                         recommendations: plan.recommendations.map((r) =>
@@ -351,6 +362,7 @@ export function MealPlanGenerator({
                             ? { ...sub, name: sub.name }
                             : r,
                         ),
+                        meals: replaceFoodInMeals(plan.meals, substituting, sub.name),
                       };
                       dispatch({ type: "SET_PLAN", plan: updated });
                       dispatch({ type: "SET_SUBSTITUTING", food: null });
@@ -410,14 +422,16 @@ export function MealPlanGenerator({
                 size="sm"
                 className="h-9 shrink-0 text-xs"
                 onClick={async () => {
-                  if (!plan || !manualSub.trim()) return;
+                  if (!plan || !substituting || !manualSub.trim()) return;
+                  const newName = manualSub.trim();
                   const updated = {
                     ...plan,
                     recommendations: plan.recommendations.map((r) =>
                       r.name === substituting
-                        ? { ...r, name: manualSub.trim() }
+                        ? { ...r, name: newName }
                         : r,
                     ),
+                    meals: replaceFoodInMeals(plan.meals, substituting, newName),
                   };
                   dispatch({ type: "SET_PLAN", plan: updated });
                   dispatch({ type: "SET_SUBSTITUTING", food: null });

@@ -15,8 +15,7 @@ type Params = {
 
 export async function GET(_: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
     const plan = await getLatestMealPlan(patient.id);
     return NextResponse.json({ plan });
@@ -34,8 +33,7 @@ export async function POST(request: Request, { params }: Params) {
         { status: 429 },
       );
     }
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
     const context = await buildPatientContext(user.id, patient.id);
 
@@ -83,8 +81,7 @@ export async function POST(request: Request, { params }: Params) {
 
 export async function DELETE(req: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { id } = await params;
+    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
 
     const { planId } = (await req.json()) as { planId: string };

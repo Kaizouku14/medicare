@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Upload, Loader2, AlertCircle, FileImage, Files } from "lucide-react";
+import { useRef, useReducer } from "react";
+import { Upload, Loader2, AlertCircle, Files } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AnalysisDisplay } from "@/components/documents/analysis-display";
 import type { DocumentAnalysis } from "@/types/domain";
@@ -12,6 +11,36 @@ import type { DocumentAnalysis } from "@/types/domain";
 const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
 const MAX_FILES = 10;
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+type UploadState = {
+  uploading: boolean;
+  error: string | null;
+  analysis: DocumentAnalysis | null;
+  uploadedCount: number;
+  totalCount: number;
+};
+
+type UploadAction =
+  | { type: "START"; totalCount: number }
+  | { type: "PROGRESS"; uploadedCount: number }
+  | { type: "DONE"; analysis: DocumentAnalysis | null }
+  | { type: "ERROR"; error: string }
+  | { type: "RESET" };
+
+function uploadReducer(state: UploadState, action: UploadAction): UploadState {
+  switch (action.type) {
+    case "START":
+      return { uploading: true, error: null, analysis: null, uploadedCount: 0, totalCount: action.totalCount };
+    case "PROGRESS":
+      return { ...state, uploadedCount: action.uploadedCount };
+    case "DONE":
+      return { ...state, uploading: false, analysis: action.analysis };
+    case "ERROR":
+      return { ...state, uploading: false, error: action.error };
+    case "RESET":
+      return { uploading: false, error: null, analysis: null, uploadedCount: 0, totalCount: 0 };
+  }
+}
 
 export function DocumentUploader({
   patientId,
@@ -21,16 +50,16 @@ export function DocumentUploader({
   onUploaded?: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<DocumentAnalysis | null>(null);
-  const [uploadedCount, setUploadedCount] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
+  const [state, dispatch] = useReducer(uploadReducer, {
+    uploading: false,
+    error: null,
+    analysis: null,
+    uploadedCount: 0,
+    totalCount: 0,
+  });
 
   async function handleFiles(fileList: FileList) {
     const files = Array.from(fileList).slice(0, MAX_FILES);
-    setTotalCount(files.length);
-    setUploadedCount(0);
 
     const invalid: string[] = [];
     for (const file of files) {
@@ -43,13 +72,11 @@ export function DocumentUploader({
     }
 
     if (invalid.length > 0) {
-      setError(`Skipped ${invalid.length} file(s): ${invalid.join(", ")}`);
+      dispatch({ type: "ERROR", error: `Skipped ${invalid.length} file(s): ${invalid.join(", ")}` });
       return;
     }
 
-    setUploading(true);
-    setError(null);
-    setAnalysis(null);
+    dispatch({ type: "START", totalCount: files.length });
 
     let lastAnalysis: DocumentAnalysis | null = null;
     const results = await Promise.allSettled(
@@ -69,29 +96,27 @@ export function DocumentUploader({
       }),
     );
 
-    let hasError = false;
     let completed = 0;
     for (const result of results) {
       if (result.status === "fulfilled") {
         completed++;
         toast.success(`${result.value} uploaded and analyzed`);
       } else {
-        hasError = true;
         toast.error(result.reason?.message ?? "Upload failed");
       }
     }
-    setUploadedCount(completed);
 
-    if (lastAnalysis) {
-      setAnalysis(lastAnalysis);
+    if (completed > 0) {
+      dispatch({ type: "DONE", analysis: lastAnalysis });
+    } else {
+      dispatch({ type: "DONE", analysis: null });
     }
 
-    if (!hasError && files.length > 0) {
+    if (completed === files.length && files.length > 0) {
       toast.success(`All ${files.length} file(s) uploaded successfully`);
     }
 
     onUploaded?.();
-    setUploading(false);
   }
 
   return (
@@ -100,19 +125,19 @@ export function DocumentUploader({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        disabled={uploading}
+        disabled={state.uploading}
         className="group relative w-full overflow-hidden rounded-2xl border-2 border-dashed border-border/70 bg-linear-to-br from-card via-card to-secondary/5 p-8 text-left transition-all hover:border-primary/30 hover:bg-secondary/10"
       >
         <div className="absolute -right-8 -top-8 size-28 rounded-full bg-primary/5 blur-2xl transition-all group-hover:scale-150" />
         <div className="relative flex flex-col items-center gap-3 text-center">
-          {uploading ? (
+          {state.uploading ? (
             <>
               <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
                 <Loader2 className="size-6 animate-spin text-primary" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">
-                  Uploading and analyzing{totalCount > 1 ? ` (${uploadedCount}/${totalCount})` : "..."}
+                  Uploading and analyzing{state.totalCount > 1 ? ` (${state.uploadedCount}/${state.totalCount})` : "..."}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   This may take 10–30 seconds per file
@@ -122,7 +147,7 @@ export function DocumentUploader({
                 <div
                   className="h-full rounded-full bg-linear-to-r from-transparent via-primary/40 to-transparent transition-all"
                   style={{
-                    width: totalCount > 0 ? `${(uploadedCount / totalCount) * 100}%` : "50%",
+                    width: state.totalCount > 0 ? `${(state.uploadedCount / state.totalCount) * 100}%` : "50%",
                   }}
                 />
               </div>
@@ -155,7 +180,7 @@ export function DocumentUploader({
           accept="image/png,image/jpeg,image/webp"
           multiple
           className="hidden"
-          disabled={uploading}
+          disabled={state.uploading}
           aria-label="Upload medical documents"
           onChange={(e) => {
             const files = e.target.files;
@@ -173,19 +198,19 @@ export function DocumentUploader({
         sent to Groq AI for analysis and stored securely.
       </p>
 
-      {error && (
+      {state.error && (
         <Alert
           variant="destructive"
           className="rounded-xl border-red-200 bg-red-50"
         >
           <AlertCircle className="size-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
 
-      {analysis && (
+      {state.analysis && (
         <div className="animate-fade-in-up">
-          <AnalysisDisplay analysis={analysis} />
+          <AnalysisDisplay analysis={state.analysis} />
         </div>
       )}
     </div>

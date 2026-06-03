@@ -20,8 +20,7 @@ type Params = {
 
 export async function GET(req: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { sessionId } = await params;
+    const [{ user }, { sessionId }] = await Promise.all([requireAuth(), params]);
     const session = await getSessionById(sessionId);
     if (!session || session.userId !== user.id) {
       return NextResponse.json({ error: "Session not found." }, { status: 404 });
@@ -37,8 +36,7 @@ export async function GET(req: Request, { params }: Params) {
 
 export async function DELETE(_: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { sessionId } = await params;
+    const [{ user }, { sessionId }] = await Promise.all([requireAuth(), params]);
     const session = await getSessionById(sessionId);
     if (!session || session.userId !== user.id) {
       return NextResponse.json({ error: "Session not found." }, { status: 404 });
@@ -59,8 +57,7 @@ export async function POST(req: Request, { params }: Params) {
         { status: 429 },
       );
     }
-    const { user } = await requireAuth();
-    const { sessionId } = await params;
+    const [{ user }, { sessionId }] = await Promise.all([requireAuth(), params]);
     const session = await getSessionById(sessionId);
     if (!session || session.userId !== user.id) {
       return NextResponse.json({ error: "Session not found." }, { status: 404 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useReducer } from "react";
 import { FileText, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,56 @@ import { toast } from "sonner";
 import { DocumentCard } from "@/components/documents/document-card";
 import { DocumentPreview } from "@/components/documents/document-preview";
 import type { PatientDocument } from "@/types/domain";
+
+type DocListState = {
+  documents: PatientDocument[];
+  viewing: PatientDocument | null;
+  previewDoc: PatientDocument | null;
+  deleting: string | null;
+  reanalyzing: string | null;
+  error: string | null;
+  page: number;
+};
+
+type DocListAction =
+  | { type: "SET_DOCUMENTS"; documents: PatientDocument[] }
+  | { type: "UPDATE_DOCUMENT"; id: string; document: PatientDocument }
+  | { type: "REMOVE_DOCUMENT"; id: string }
+  | { type: "VIEW_ANALYSIS"; doc: PatientDocument | null }
+  | { type: "PREVIEW"; doc: PatientDocument | null }
+  | { type: "DELETE_START"; id: string }
+  | { type: "DELETE_END" }
+  | { type: "REANALYZE_START"; id: string }
+  | { type: "REANALYZE_END" }
+  | { type: "SET_ERROR"; error: string | null }
+  | { type: "GO_TO_PAGE"; page: number };
+
+function docListReducer(state: DocListState, action: DocListAction): DocListState {
+  switch (action.type) {
+    case "SET_DOCUMENTS":
+      return { ...state, documents: action.documents };
+    case "UPDATE_DOCUMENT":
+      return { ...state, documents: state.documents.map((d) => (d.id === action.id ? action.document : d)) };
+    case "REMOVE_DOCUMENT":
+      return { ...state, documents: state.documents.filter((d) => d.id !== action.id) };
+    case "VIEW_ANALYSIS":
+      return { ...state, viewing: action.doc };
+    case "PREVIEW":
+      return { ...state, previewDoc: action.doc };
+    case "DELETE_START":
+      return { ...state, deleting: action.id, error: null };
+    case "DELETE_END":
+      return { ...state, deleting: null };
+    case "REANALYZE_START":
+      return { ...state, reanalyzing: action.id, error: null };
+    case "REANALYZE_END":
+      return { ...state, reanalyzing: null };
+    case "SET_ERROR":
+      return { ...state, error: action.error };
+    case "GO_TO_PAGE":
+      return { ...state, page: action.page };
+  }
+}
 
 export function DocumentList({
   patientId,
@@ -19,20 +69,21 @@ export function DocumentList({
   documents: PatientDocument[];
   signedUrls?: Map<string, string>;
 }) {
-  const [documents, setDocuments] = useState(initialDocuments);
-  const [viewing, setViewing] = useState<PatientDocument | null>(null);
-  const [previewDoc, setPreviewDoc] = useState<PatientDocument | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [reanalyzing, setReanalyzing] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [state, dispatch] = useReducer(docListReducer, {
+    documents: initialDocuments,
+    viewing: null,
+    previewDoc: null,
+    deleting: null,
+    reanalyzing: null,
+    error: null,
+    page: 1,
+  });
   const PAGE_SIZE = 10;
-  const totalPages = Math.max(1, Math.ceil(documents.length / PAGE_SIZE));
-  const paginated = documents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(state.documents.length / PAGE_SIZE));
+  const paginated = state.documents.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
 
   async function handleReanalyze(doc: PatientDocument) {
-    setReanalyzing(doc.id);
-    setError(null);
+    dispatch({ type: "REANALYZE_START", id: doc.id });
 
     try {
       const res = await fetch(
@@ -42,24 +93,22 @@ export function DocumentList({
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Re-analysis failed.");
+        dispatch({ type: "SET_ERROR", error: data.error ?? "Re-analysis failed." });
+        dispatch({ type: "REANALYZE_END" });
         return;
       }
 
-      setDocuments((prev) =>
-        prev.map((d) => (d.id === doc.id ? data.document : d)),
-      );
+      dispatch({ type: "UPDATE_DOCUMENT", id: doc.id, document: data.document });
       toast.success("Document re-analyzed");
     } catch {
-      setError("Network error.");
+      dispatch({ type: "SET_ERROR", error: "Network error." });
     } finally {
-      setReanalyzing(null);
+      dispatch({ type: "REANALYZE_END" });
     }
   }
 
   async function handleDelete(doc: PatientDocument) {
-    setDeleting(doc.id);
-    setError(null);
+    dispatch({ type: "DELETE_START", id: doc.id });
 
     try {
       const res = await fetch(
@@ -69,19 +118,20 @@ export function DocumentList({
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "Delete failed.");
+        dispatch({ type: "SET_ERROR", error: data.error ?? "Delete failed." });
+        dispatch({ type: "DELETE_END" });
         return;
       }
 
-      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+      dispatch({ type: "REMOVE_DOCUMENT", id: doc.id });
     } catch {
-      setError("Network error.");
+      dispatch({ type: "SET_ERROR", error: "Network error." });
     } finally {
-      setDeleting(null);
+      dispatch({ type: "DELETE_END" });
     }
   }
 
-  if (documents.length === 0) {
+  if (state.documents.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border/50 bg-linear-to-br from-card via-card to-muted/20 px-8 py-12 text-center">
         <div className="flex size-12 items-center justify-center rounded-xl bg-muted/50">
@@ -103,17 +153,17 @@ export function DocumentList({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          {documents.length} document{documents.length !== 1 ? "s" : ""}
+          {state.documents.length} document{state.documents.length !== 1 ? "s" : ""}
         </p>
       </div>
 
-      {error && (
+      {state.error && (
         <Alert
           variant="destructive"
           className="rounded-xl border-red-200 bg-red-50 doc-alert-error"
         >
           <AlertCircle className="size-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
 
@@ -123,12 +173,12 @@ export function DocumentList({
             key={doc.id}
             doc={doc}
             signedUrls={signedUrls}
-            viewing={viewing}
-            deleting={deleting}
-            reanalyzing={reanalyzing}
+            viewing={state.viewing}
+            deleting={state.deleting}
+            reanalyzing={state.reanalyzing}
             index={i}
-            onPreview={setPreviewDoc}
-            onViewAnalysis={setViewing}
+            onPreview={(doc) => dispatch({ type: "PREVIEW", doc })}
+            onViewAnalysis={(doc) => dispatch({ type: "VIEW_ANALYSIS", doc })}
             onReanalyze={handleReanalyze}
             onDelete={handleDelete}
           />
@@ -141,8 +191,8 @@ export function DocumentList({
           <Button
             variant="outline"
             size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={state.page <= 1}
+            onClick={() => dispatch({ type: "GO_TO_PAGE", page: Math.max(1, state.page - 1) })}
             className="size-8 rounded-lg p-0"
           >
             <ChevronLeft className="size-4" />
@@ -150,9 +200,9 @@ export function DocumentList({
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <Button
               key={p}
-              variant={p === page ? "default" : "outline"}
+              variant={p === state.page ? "default" : "outline"}
               size="sm"
-              onClick={() => setPage(p)}
+              onClick={() => dispatch({ type: "GO_TO_PAGE", page: p })}
               className="h-8 min-w-8 rounded-lg px-2 text-xs font-medium"
             >
               {p}
@@ -161,8 +211,8 @@ export function DocumentList({
           <Button
             variant="outline"
             size="sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={state.page >= totalPages}
+            onClick={() => dispatch({ type: "GO_TO_PAGE", page: Math.min(totalPages, state.page + 1) })}
             className="size-8 rounded-lg p-0"
           >
             <ChevronRight className="size-4" />
@@ -171,9 +221,9 @@ export function DocumentList({
       )}
 
       <DocumentPreview
-        previewDoc={previewDoc}
+        previewDoc={state.previewDoc}
         signedUrls={signedUrls}
-        onClose={() => setPreviewDoc(null)}
+        onClose={() => dispatch({ type: "PREVIEW", doc: null })}
       />
     </div>
   );

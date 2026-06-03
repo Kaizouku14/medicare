@@ -10,7 +10,7 @@ import {
 
 import { type Diagnosis, DIAGNOSIS_OPTIONS } from "@/data/diagnoses";
 import { FEEDING_METHODS } from "@/types/domain";
-import { type PatientFormValues } from "@/lib/validation/patient-form";
+import { type PatientFormValues } from "@/lib/validation/patient";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {

@@ -13,8 +13,7 @@ type Params = {
 
 export async function GET(_: Request, { params }: Params) {
   try {
-    const { user } = await requireAuth();
-    const { patientId } = await params;
+    const [{ user }, { patientId }] = await Promise.all([requireAuth(), params]);
     await requirePatientAccess(user.id, patientId);
 
     let session = await getPatientSession(patientId);
