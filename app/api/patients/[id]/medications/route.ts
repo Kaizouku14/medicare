@@ -53,10 +53,8 @@ export async function POST(req: Request, { params }: Params) {
 export async function PUT(req: Request, { params }: Params) {
   try {
     const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
-    const [patient, body] = await Promise.all([
-      requirePatientAccess(user.id, id),
-      req.json(),
-    ]);
+    await requirePatientAccess(user.id, id);
+    const body = await req.json();
     if (!body.medicationId) {
       return NextResponse.json({ error: "medicationId is required." }, { status: 400 });
     }

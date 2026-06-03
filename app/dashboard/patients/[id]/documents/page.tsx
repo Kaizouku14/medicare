@@ -31,7 +31,7 @@ export default async function DocumentsPage({ params }: Props) {
 
   const adminSupabase = createAdminClient();
   const signedUrls = new Map<string, string>();
-  const results = await Promise.all(
+  await Promise.all(
     documents.map((doc) =>
       adminSupabase.storage
         .from("patient-documents")

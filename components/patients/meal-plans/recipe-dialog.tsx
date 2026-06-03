@@ -8,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { MealRecipe } from "@/types/domain";
 

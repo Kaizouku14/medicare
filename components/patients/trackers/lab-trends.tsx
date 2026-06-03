@@ -5,7 +5,7 @@ import { Activity, TrendingUp, ArrowLeft } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { PatientDocument, DocumentAnalysis } from "@/types/domain";
+import type { PatientDocument } from "@/types/domain";
 
 const CHART_W = 600;
 const CHART_H = 200;

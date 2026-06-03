@@ -4,7 +4,7 @@ import {
   type DayMeal,
   type DocumentAnalysis,
 } from "@/types/domain";
-import { groqChat, type GroqMessage } from "@/lib/ai/groq-client";
+import { groqChat } from "@/lib/ai/groq-client";
 import {
   type MedicationBrief,
   type DocAbnormal,
