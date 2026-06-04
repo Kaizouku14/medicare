@@ -392,12 +392,13 @@ export function MealPlanGenerator({
         patientId={patient.id}
         onSelect={(food, subName) => {
           if (!plan) return;
+          const oldRec = plan.recommendations.find((r) => r.name === food);
           const updated = {
             ...plan,
             recommendations: plan.recommendations.map((r) =>
               r.name === food ? { ...r, name: subName } : r,
             ),
-            meals: replaceFoodInMeals(plan.meals, food, subName),
+            meals: replaceFoodInMeals(plan.meals, food, subName, plan.recommendations, oldRec?.foodId),
           };
           dispatch({ type: "SET_PLAN", plan: updated });
         }}
