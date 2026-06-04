@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function ChatPanelSkeleton() {
+function ChatPanelSkeleton() {
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex-1 space-y-4 p-4">

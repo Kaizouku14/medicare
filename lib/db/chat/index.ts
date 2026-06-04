@@ -5,7 +5,6 @@ export {
   getPatientSession,
   renameSession,
   getSessionMessages,
-  getSessionMessageCount,
   saveMessage,
   touchSession,
   deleteSession,

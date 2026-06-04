@@ -12,6 +12,7 @@ function toMedication(row: typeof medications.$inferSelect): Medication {
     dosage: row.dosage,
     frequency: row.frequency,
     route: row.route,
+    times: row.times,
     startDate: row.startDate,
     endDate: row.endDate,
     notes: row.notes,
@@ -26,6 +27,7 @@ export async function createMedication(
     dosage: string;
     frequency: string;
     route: string;
+    times?: string[];
     startDate: string;
     endDate?: string;
     notes?: string;
@@ -33,7 +35,7 @@ export async function createMedication(
 ) {
   const [row] = await db
     .insert(medications)
-    .values({ patientId, ...data, endDate: data.endDate ?? null, notes: data.notes ?? null })
+    .values({ patientId, ...data, endDate: data.endDate ?? null, notes: data.notes ?? null, times: data.times ?? [] })
     .returning();
   return toMedication(row);
 }
@@ -54,6 +56,7 @@ export async function updateMedication(
     dosage?: string;
     frequency?: string;
     route?: string;
+    times?: string[];
     startDate?: string;
     endDate?: string | null;
     notes?: string | null;

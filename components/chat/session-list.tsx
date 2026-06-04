@@ -224,8 +224,10 @@ export function SessionList({
       {/* Mobile sheet */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 sm:hidden">
-          <div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+          <button
+            type="button"
+            aria-label="Close conversations panel"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm cursor-default"
             onClick={() => setMobileOpen(false)}
           />
           <div className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[70vh] flex-col rounded-t-2xl border border-border/60 bg-card shadow-2xl animate-fade-in-up">

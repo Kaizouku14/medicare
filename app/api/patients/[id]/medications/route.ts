@@ -39,6 +39,7 @@ export async function POST(req: Request, { params }: Params) {
       dosage: body.dosage,
       frequency: body.frequency,
       route: body.route ?? "oral",
+      times: body.times ?? [],
       startDate: body.startDate,
       endDate: body.endDate,
       notes: body.notes,
@@ -52,9 +53,12 @@ export async function POST(req: Request, { params }: Params) {
 
 export async function PUT(req: Request, { params }: Params) {
   try {
-    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
+    const [{ user }, { id }, body] = await Promise.all([
+      requireAuth(),
+      params,
+      req.json(),
+    ]);
     await requirePatientAccess(user.id, id);
-    const body = await req.json();
     if (!body.medicationId) {
       return NextResponse.json({ error: "medicationId is required." }, { status: 400 });
     }
@@ -64,6 +68,7 @@ export async function PUT(req: Request, { params }: Params) {
       dosage: body.dosage,
       frequency: body.frequency,
       route: body.route,
+      times: body.times ?? [],
       startDate: body.startDate,
       endDate: body.endDate ?? null,
       notes: body.notes ?? null,

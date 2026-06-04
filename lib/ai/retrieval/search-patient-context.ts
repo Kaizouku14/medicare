@@ -72,15 +72,18 @@ export async function searchPatientContext(
 
     const rows = result as unknown as SearchRow[];
 
-    const results: SearchResult[] = rows
-      .filter((r) => r.relevance >= minRelevance)
-      .map((r) => ({
-        id: r.id,
-        sourceType: parseSourceType(r.source_type),
-        content: truncateContent(r.content),
-        refDate: r.ref_date,
-        relevance: r.relevance,
-      }));
+    const results: SearchResult[] = rows.reduce<SearchResult[]>((acc, r) => {
+      if (r.relevance >= minRelevance) {
+        acc.push({
+          id: r.id,
+          sourceType: parseSourceType(r.source_type),
+          content: truncateContent(r.content),
+          refDate: r.ref_date,
+          relevance: r.relevance,
+        });
+      }
+      return acc;
+    }, []);
 
     return deduplicate(results);
   } catch {

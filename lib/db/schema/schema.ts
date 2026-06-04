@@ -117,6 +117,7 @@ export const medications = pgTable("medications", {
   dosage: text("dosage").notNull(),
   frequency: text("frequency").notNull(),
   route: text("route").notNull().default("oral"),
+  times: text("times").array().notNull().default([]),
   startDate: text("start_date").notNull(),
   endDate: text("end_date"),
   notes: text("notes"),

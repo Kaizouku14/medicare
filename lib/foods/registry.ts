@@ -86,11 +86,11 @@ export function getFoodById(id: string): CanonicalFood | undefined {
   return foodById.get(id);
 }
 
-export function getFoodByName(name: string): CanonicalFood | undefined {
+function getFoodByName(name: string): CanonicalFood | undefined {
   return foodByName.get(name.trim().toLowerCase());
 }
 
-export function searchFoods(query: string): CanonicalFood[] {
+function searchFoods(query: string): CanonicalFood[] {
   const q = query.toLowerCase();
   return FOODS.filter((f) =>
     f.name.toLowerCase().includes(q) ||
@@ -99,7 +99,7 @@ export function searchFoods(query: string): CanonicalFood[] {
   );
 }
 
-export function getFoodsByCategory(category: CanonicalFood["category"]): CanonicalFood[] {
+function getFoodsByCategory(category: CanonicalFood["category"]): CanonicalFood[] {
   return FOODS.filter((f) => f.category === category);
 }
 

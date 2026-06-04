@@ -39,7 +39,7 @@ function isDayMealArray(v: unknown): v is DayMeal[] {
   );
 }
 
-export async function generateRecommendations(
+async function generateRecommendations(
   patient: Patient,
   labData?: {
     extractedValues: DocumentAnalysis["extractedValues"];
@@ -141,7 +141,7 @@ Return ONLY valid JSON. No markdown, no code fences, no explanation.`;
   return recommendations;
 }
 
-export async function generateMealPlan(
+async function generateMealPlan(
   patient: Patient,
   recommendations: FoodRecommendation[],
   medications?: MedicationBrief[],

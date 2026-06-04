@@ -97,7 +97,7 @@ export async function getSessionMessages(
   };
 }
 
-export async function getSessionMessageCount(sessionId: string) {
+async function getSessionMessageCount(sessionId: string) {
   const [row] = await db
     .select({ count: sql<number>`count(*)` })
     .from(chatMessages)
@@ -111,12 +111,10 @@ export async function saveMessage(
   role: "user" | "assistant",
   content: string,
 ) {
-  const [row] = await db
-    .insert(chatMessages)
-    .values({ sessionId, role, content })
-    .returning();
-
-  const session = await getSessionById(sessionId);
+  const [[row], session] = await Promise.all([
+    db.insert(chatMessages).values({ sessionId, role, content }).returning(),
+    getSessionById(sessionId),
+  ]);
   if (session?.patientId) {
     storeEmbeddingFireAndForget(session.patientId, "chat_message", row.id, content);
   }

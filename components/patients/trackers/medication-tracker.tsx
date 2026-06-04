@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useReducer } from "react";
-import { Pill, Plus, Trash2, Loader2, Pencil } from "lucide-react";
+import { Pill, Plus, Trash2, Loader2, Pencil, X, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,12 +21,28 @@ import {
 import { toast } from "sonner";
 import type { Medication } from "@/types/domain";
 
+function formatTime(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return time;
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
+type TimeEntry = { id: string; value: string };
+
+let _timeIdCounter = 0;
+function nextTimeId(): string {
+  return `t${++_timeIdCounter}`;
+}
+
 const initialFormState = {
   editingId: null as string | null,
   name: "",
   dosage: "",
   frequency: "",
   route: "oral",
+  times: [] as TimeEntry[],
   startDate: "",
   endDate: "",
   notes: "",
@@ -45,6 +61,10 @@ type FormAction =
         | "notes";
       value: string;
     }
+  | { type: "SET_TIMES"; value: TimeEntry[] }
+  | { type: "ADD_TIME" }
+  | { type: "REMOVE_TIME"; id: string }
+  | { type: "UPDATE_TIME"; id: string; value: string }
   | { type: "START_EDIT"; medication: Medication }
   | { type: "RESET" };
 
@@ -52,6 +72,20 @@ function formReducer(state: typeof initialFormState, action: FormAction) {
   switch (action.type) {
     case "SET_FIELD":
       return { ...state, [action.field]: action.value };
+    case "SET_TIMES":
+      return { ...state, times: action.value };
+    case "ADD_TIME":
+      return { ...state, times: [...state.times, { id: nextTimeId(), value: "" }] };
+    case "REMOVE_TIME":
+      return {
+        ...state,
+        times: state.times.filter((t) => t.id !== action.id),
+      };
+    case "UPDATE_TIME":
+      return {
+        ...state,
+        times: state.times.map((t) => (t.id === action.id ? { ...t, value: action.value } : t)),
+      };
     case "START_EDIT":
       return {
         editingId: action.medication.id,
@@ -59,6 +93,7 @@ function formReducer(state: typeof initialFormState, action: FormAction) {
         dosage: action.medication.dosage,
         frequency: action.medication.frequency,
         route: action.medication.route,
+        times: (action.medication.times ?? []).map((v) => ({ id: nextTimeId(), value: v })),
         startDate: action.medication.startDate,
         endDate: action.medication.endDate ?? "",
         notes: action.medication.notes ?? "",
@@ -97,12 +132,16 @@ export function MedicationTracker({
 
     setSaving(true);
     try {
+      const body = {
+        ...formState,
+        times: formState.times.flatMap((t) => (t.value ? [t.value] : [])),
+      };
       if (formState.editingId) {
-        const { editingId, ...formData } = formState;
+        const { editingId, times: _, ...rest } = body;
         const res = await fetch(`/api/patients/${patientId}/medications`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ medicationId: editingId, ...formData }),
+          body: JSON.stringify({ medicationId: editingId, ...rest }),
         });
         const data = (await res.json()) as {
           medication?: Medication;
@@ -117,12 +156,10 @@ export function MedicationTracker({
         );
         toast.success("Medication updated");
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { editingId: _, ...formData } = formState;
         const res = await fetch(`/api/patients/${patientId}/medications`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(body),
         });
         const data = (await res.json()) as {
           medication?: Medication;
@@ -192,7 +229,238 @@ export function MedicationTracker({
         </p>
       </div>
 
+      {/* Form at top */}
+      <div className="border-b border-border/40 px-5 py-3">
+        {showForm ? (
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <FieldGroup>
+                <div>
+                  <FieldLabel
+                    htmlFor="med-name"
+                    className="text-[10px] uppercase text-muted-foreground"
+                  >
+                    Name
+                  </FieldLabel>
+                  <Input
+                    id="med-name"
+                    value={formState.name}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_FIELD",
+                        field: "name",
+                        value: e.target.value,
+                      })
+                    }
+                    className="h-8 text-sm"
+                    placeholder="Metformin"
+                    required
+                  />
+                </div>
+                <div>
+                  <FieldLabel
+                    htmlFor="med-dosage"
+                    className="text-[10px] uppercase text-muted-foreground"
+                  >
+                    Dosage
+                  </FieldLabel>
+                  <Input
+                    id="med-dosage"
+                    value={formState.dosage}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_FIELD",
+                        field: "dosage",
+                        value: e.target.value,
+                      })
+                    }
+                    className="h-8 text-sm"
+                    placeholder="500mg"
+                    required
+                  />
+                </div>
+              </FieldGroup>
+              <FieldGroup>
+                <div>
+                  <FieldLabel
+                    htmlFor="med-frequency"
+                    className="text-[10px] uppercase text-muted-foreground"
+                  >
+                    Frequency
+                  </FieldLabel>
+                  <Input
+                    id="med-frequency"
+                    value={formState.frequency}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_FIELD",
+                        field: "frequency",
+                        value: e.target.value,
+                      })
+                    }
+                    className="h-8 text-sm"
+                    placeholder="Twice daily"
+                    required
+                  />
+                </div>
+                <div>
+                  <FieldLabel
+                    htmlFor="med-route"
+                    className="text-[10px] uppercase text-muted-foreground"
+                  >
+                    Route
+                  </FieldLabel>
+                  <Input
+                    id="med-route"
+                    value={formState.route}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_FIELD",
+                        field: "route",
+                        value: e.target.value,
+                      })
+                    }
+                    className="h-8 text-sm"
+                    placeholder="oral"
+                  />
+                </div>
+              </FieldGroup>
+            </div>
+
+            {/* Times */}
+            <div>
+              <FieldLabel className="text-[10px] uppercase text-muted-foreground">
+                Times
+              </FieldLabel>
+              <div className="mt-1 space-y-1.5">
+                {formState.times.map((entry) => (
+                  <div key={entry.id} className="flex items-center gap-1.5">
+                    <Input
+                      type="time"
+                      value={entry.value}
+                      onChange={(e) =>
+                        dispatch({ type: "UPDATE_TIME", id: entry.id, value: e.target.value })
+                      }
+                      className="h-8 w-36 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: "REMOVE_TIME", id: entry.id })}
+                      className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-1.5 h-7 gap-1 rounded-lg text-[10px]"
+                onClick={() => dispatch({ type: "ADD_TIME" })}
+              >
+                <Plus className="size-3" /> Add time
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel
+                  htmlFor="med-start"
+                  className="text-[10px] uppercase text-muted-foreground"
+                >
+                  Start date
+                </FieldLabel>
+                <Input
+                  id="med-start"
+                  type="date"
+                  value={formState.startDate}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "startDate",
+                      value: e.target.value,
+                    })
+                  }
+                  className="h-8 text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <FieldLabel
+                  htmlFor="med-end"
+                  className="text-[10px] uppercase text-muted-foreground"
+                >
+                  End date (optional)
+                </FieldLabel>
+                <Input
+                  id="med-end"
+                  type="date"
+                  value={formState.endDate}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "endDate",
+                      value: e.target.value,
+                    })
+                  }
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+            <Input
+              value={formState.notes}
+              onChange={(e) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "notes",
+                  value: e.target.value,
+                })
+              }
+              placeholder="Notes (optional)"
+              className="h-8 text-sm"
+            />
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                size="sm"
+                className="h-7 rounded-lg text-xs"
+                disabled={saving}
+              >
+                {saving && <Loader2 className="mr-1 size-3 animate-spin" />}
+                {formState.editingId ? "Update" : "Add"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 rounded-lg text-xs"
+                onClick={cancelForm}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-full gap-1.5 rounded-lg text-xs"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus className="size-3.5" /> Add medication
+          </Button>
+        )}
+      </div>
+
+      {/* Active medications */}
       <div className="divide-y divide-border/40">
+        {active.length === 0 && !showForm && (
+          <div className="px-5 py-6 text-center">
+            <p className="text-xs text-muted-foreground">No active medications.</p>
+          </div>
+        )}
         {active.map((med) => (
           <div
             key={med.id}
@@ -205,13 +473,22 @@ export function MedicationTracker({
               <p className="text-xs text-muted-foreground">
                 {med.dosage} &middot; {med.frequency}
               </p>
-              <div className="mt-1 flex gap-1.5">
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <Badge
                   variant="outline"
                   className="rounded-full text-[9px] font-medium"
                 >
                   {med.route}
                 </Badge>
+                {med.times.length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="rounded-full text-[9px] font-medium gap-1"
+                  >
+                    <Clock className="size-2.5" />
+                    {med.times.map((t) => formatTime(t)).join(", ")}
+                  </Badge>
+                )}
                 {med.notes && (
                   <span className="text-[10px] text-muted-foreground">
                     {med.notes}
@@ -317,192 +594,6 @@ export function MedicationTracker({
             </div>
           </details>
         )}
-
-        <div className="px-5 py-3">
-          {showForm ? (
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <FieldGroup>
-                  <div>
-                    <FieldLabel
-                      htmlFor="med-name"
-                      className="text-[10px] uppercase text-muted-foreground"
-                    >
-                      Name
-                    </FieldLabel>
-                    <Input
-                      id="med-name"
-                      value={formState.name}
-                      onChange={(e) =>
-                        dispatch({
-                          type: "SET_FIELD",
-                          field: "name",
-                          value: e.target.value,
-                        })
-                      }
-                      className="h-8 text-sm"
-                      placeholder="Metformin"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel
-                      htmlFor="med-dosage"
-                      className="text-[10px] uppercase text-muted-foreground"
-                    >
-                      Dosage
-                    </FieldLabel>
-                    <Input
-                      id="med-dosage"
-                      value={formState.dosage}
-                      onChange={(e) =>
-                        dispatch({
-                          type: "SET_FIELD",
-                          field: "dosage",
-                          value: e.target.value,
-                        })
-                      }
-                      className="h-8 text-sm"
-                      placeholder="500mg"
-                      required
-                    />
-                  </div>
-                </FieldGroup>
-                <FieldGroup>
-                  <div>
-                    <FieldLabel
-                      htmlFor="med-frequency"
-                      className="text-[10px] uppercase text-muted-foreground"
-                    >
-                      Frequency
-                    </FieldLabel>
-                    <Input
-                      id="med-frequency"
-                      value={formState.frequency}
-                      onChange={(e) =>
-                        dispatch({
-                          type: "SET_FIELD",
-                          field: "frequency",
-                          value: e.target.value,
-                        })
-                      }
-                      className="h-8 text-sm"
-                      placeholder="Twice daily"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel
-                      htmlFor="med-route"
-                      className="text-[10px] uppercase text-muted-foreground"
-                    >
-                      Route
-                    </FieldLabel>
-                    <Input
-                      id="med-route"
-                      value={formState.route}
-                      onChange={(e) =>
-                        dispatch({
-                          type: "SET_FIELD",
-                          field: "route",
-                          value: e.target.value,
-                        })
-                      }
-                      className="h-8 text-sm"
-                      placeholder="oral"
-                    />
-                  </div>
-                </FieldGroup>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <FieldLabel
-                    htmlFor="med-start"
-                    className="text-[10px] uppercase text-muted-foreground"
-                  >
-                    Start date
-                  </FieldLabel>
-                  <Input
-                    id="med-start"
-                    type="date"
-                    value={formState.startDate}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FIELD",
-                        field: "startDate",
-                        value: e.target.value,
-                      })
-                    }
-                    className="h-8 text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <FieldLabel
-                    htmlFor="med-end"
-                    className="text-[10px] uppercase text-muted-foreground"
-                  >
-                    End date (optional)
-                  </FieldLabel>
-                  <Input
-                    id="med-end"
-                    type="date"
-                    value={formState.endDate}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FIELD",
-                        field: "endDate",
-                        value: e.target.value,
-                      })
-                    }
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-              <Input
-                value={formState.notes}
-                onChange={(e) =>
-                  dispatch({
-                    type: "SET_FIELD",
-                    field: "notes",
-                    value: e.target.value,
-                  })
-                }
-                placeholder="Notes (optional)"
-                className="h-8 text-sm"
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="h-7 rounded-lg text-xs"
-                  disabled={saving}
-                >
-                  {saving && <Loader2 className="mr-1 size-3 animate-spin" />}
-                  {formState.editingId ? "Update" : "Add"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 rounded-lg text-xs"
-                  onClick={cancelForm}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-full gap-1.5 rounded-lg text-xs"
-              onClick={() => setShowForm(true)}
-            >
-              <Plus className="size-3.5" /> Add medication
-            </Button>
-          )}
-        </div>
       </div>
     </div>
   );

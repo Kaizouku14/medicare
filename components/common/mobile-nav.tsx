@@ -39,20 +39,21 @@ export function MobileNav({
   const touchStartX = useRef(0);
   const isDragging = useRef(false);
 
-  const close = useCallback(() => setOpen(false), []);
+  const closeRef = useRef<() => void>(() => setOpen(false));
+  closeRef.current = () => setOpen(false);
 
   const navigate = useCallback(
     (href: string) => {
-      close();
+      closeRef.current();
       router.push(href);
     },
-    [close, router],
+    [router],
   );
 
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") closeRef.current();
     };
     document.addEventListener("keydown", handleKey);
     document.body.style.overflow = "hidden";
@@ -60,7 +61,7 @@ export function MobileNav({
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
     };
-  }, [open, close]);
+  }, [open]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -84,10 +85,10 @@ export function MobileNav({
     if (rect.right - rect.left > 0 && rect.left < 0) {
       const translateX = Math.abs(rect.left);
       if (translateX > 60) {
-        close();
+        closeRef.current();
       }
     }
-  }, [close]);
+  }, []);
 
   const isPatientPage =
     pathname.startsWith("/dashboard/patients/") &&

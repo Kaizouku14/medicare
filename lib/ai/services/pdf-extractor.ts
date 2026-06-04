@@ -4,13 +4,15 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<string> {
   const data = new Uint8Array(buffer);
   const pdf = await getDocument({ data }).promise;
 
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
-    pages.push(text);
-  }
+  const pageData = await Promise.all(
+    Array.from({ length: pdf.numPages }, (_, i) => pdf.getPage(i + 1)),
+  );
+  const pagesContent = await Promise.all(
+    pageData.map((page) => page.getTextContent()),
+  );
+  const pages = pagesContent.map((content) =>
+    content.items.map((item) => ("str" in item ? item.str : "")).join(" "),
+  );
 
   const fullText = pages.join("\n\n").trim();
 

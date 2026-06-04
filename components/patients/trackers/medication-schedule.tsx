@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Medication } from "@/types/domain";
 
+function formatTime(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return time;
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
 function countDays(start: string, end?: string | null): number {
   const s = new Date(start);
   const e = end ? new Date(end) : new Date();
@@ -40,19 +48,27 @@ export function MedicationSchedule({
     );
   }
 
-  const frequencyGroups = active.reduce<Record<string, Medication[]>>(
-    (groups, med) => {
-      const key = med.frequency.toLowerCase();
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(med);
+  type MedEntry = { med: Medication; time: string };
+
+  const timeEntries = active.flatMap<MedEntry>((med) => {
+    if (med.times.length === 0) return [{ med, time: "Any time" }];
+    return med.times.map((t) => ({ med, time: t }));
+  });
+
+  const timeGroups = timeEntries.reduce<Record<string, MedEntry[]>>(
+    (groups, entry) => {
+      if (!groups[entry.time]) groups[entry.time] = [];
+      groups[entry.time].push(entry);
       return groups;
     },
     {},
   );
 
-  const frequencyOrder = [
-    ...new Set(active.map((m) => m.frequency.toLowerCase())),
-  ].toSorted();
+  const timeOrder = Object.keys(timeGroups).sort((a, b) => {
+    if (a === "Any time") return 1;
+    if (b === "Any time") return -1;
+    return a.localeCompare(b);
+  });
 
   return (
     <div className="space-y-6">
@@ -80,14 +96,14 @@ export function MedicationSchedule({
         </div>
       </div>
 
-      {/* By-frequency schedule */}
-      {frequencyOrder.length > 0 && (
+      {/* Timeline schedule */}
+      {timeOrder.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="size-4 text-muted-foreground" />
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Schedule by frequency
+                Daily timeline
               </p>
             </div>
             <Button
@@ -101,37 +117,59 @@ export function MedicationSchedule({
             </Button>
           </div>
 
-          <div className="space-y-3">
-            {frequencyOrder.map((freq) => {
-              const meds = frequencyGroups[freq];
-              return (
-                <div key={freq} className="rounded-xl border border-border/60 bg-card">
-                  <div className="border-b border-border/40 bg-muted/20 px-4 py-2.5">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      {freq} &middot; {meds.length} medication{meds.length !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  <div className="divide-y divide-border/30">
-                    {meds.map((med) => {
-                      const startDate = new Date(med.startDate);
-                      const endDate = med.endDate ? new Date(med.endDate) : null;
-                      const daysActive = countDays(med.startDate, med.endDate);
-                      const isStartingSoon = startDate > now;
-                      const isEndingSoon = endDate && endDate < cutoff;
+          <div className="relative">
+            {expanded &&
+              timeOrder.map((time) => {
+                const entries = timeGroups[time];
+                const isMorning = time < "12:00" && time !== "Any time";
+                const isAfternoon = time >= "12:00" && time < "18:00" && time !== "Any time";
+                const isEvening = time >= "18:00" && time !== "Any time";
+                const periodLabel = time !== "Any time" ? formatTime(time) : null;
 
-                      return (
-                        <div key={med.id} className="px-4 py-3">
-                          <div className="flex items-start justify-between gap-3">
+                return (
+                  <div key={time} className="relative flex gap-4 pb-6 last:pb-0">
+                    {/* Timeline line and dot */}
+                    <div className="flex flex-col items-center">
+                      <div className={`z-10 flex size-9 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold ${
+                        isMorning ? "border-amber-300 bg-amber-50 text-amber-700" :
+                        isAfternoon ? "border-orange-300 bg-orange-50 text-orange-700" :
+                        isEvening ? "border-indigo-300 bg-indigo-50 text-indigo-700" :
+                        "border-muted-300 bg-muted text-muted-foreground"
+                      }`}>
+                        {time === "Any time" ? "?" : periodLabel?.split(" ")[0] ?? ""}
+                      </div>
+                      <div className="mt-1 w-px flex-1 bg-border/50" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-semibold text-foreground">
+                          {periodLabel ?? "Any time"}
+                        </p>
+                        <span className="text-[10px] text-muted-foreground">
+                          &middot; {entries.length} med{entries.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      {entries.map(({ med, time: entryTime }) => {
+                        const startDate = new Date(med.startDate);
+                        const endDate = med.endDate ? new Date(med.endDate) : null;
+                        const daysActive = countDays(med.startDate, med.endDate);
+                        const isStartingSoon = startDate > now;
+                        const isEndingSoon = endDate && endDate < cutoff;
+
+                        return (
+                          <div key={`${med.id}-${entryTime}`} className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
                             <div className="flex items-start gap-3">
                               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                 <Pill className="size-4" />
                               </div>
-                              <div>
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <p className="text-sm font-semibold text-foreground">{med.name}</p>
                                   <Badge
                                     variant="outline"
-                                    className="rounded-full text-[9px] font-medium"
+                                    className="rounded-full text-[9px] font-medium shrink-0"
                                   >
                                     {med.dosage}
                                   </Badge>
@@ -170,13 +208,12 @@ export function MedicationSchedule({
                               </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       )}

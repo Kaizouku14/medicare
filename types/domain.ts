@@ -109,6 +109,7 @@ export type Medication = {
   dosage: string;
   frequency: string;
   route: string;
+  times: string[];
   startDate: string;
   endDate: string | null;
   notes: string | null;
