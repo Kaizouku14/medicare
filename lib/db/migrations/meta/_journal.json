@@ -50,6 +50,20 @@
       "when": 1780382111241,
       "tag": "0006_smart_zarek",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780383000000,
+      "tag": "0007_rag_search_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1780384000000,
+      "tag": "0008_pgvector",
+      "breakpoints": true
     }
   ]
 }

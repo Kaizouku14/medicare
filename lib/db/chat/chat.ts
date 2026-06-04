@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { chatMessages, chatSessions } from "@/lib/db/schema/schema";
 import type { ChatMessage, ChatSession } from "@/types/domain";
+import { storeEmbeddingFireAndForget } from "@/lib/ai/embeddings/store";
 
 function toSession(row: typeof chatSessions.$inferSelect): ChatSession {
   return {
@@ -114,6 +115,11 @@ export async function saveMessage(
     .insert(chatMessages)
     .values({ sessionId, role, content })
     .returning();
+
+  const session = await getSessionById(sessionId);
+  if (session?.patientId) {
+    storeEmbeddingFireAndForget(session.patientId, "chat_message", row.id, content);
+  }
 
   return toMessage(row);
 }

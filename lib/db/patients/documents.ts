@@ -6,6 +6,7 @@ import {
   type DocumentAnalysis,
   type PatientDocument,
 } from "@/types/domain";
+import { storeEmbeddingFireAndForget } from "@/lib/ai/embeddings/store";
 
 function toPatientDocument(
   row: typeof patientDocuments.$inferSelect,
@@ -53,6 +54,11 @@ export async function updateDocumentAnalysis(
     })
     .where(eq(patientDocuments.id, documentId))
     .returning();
+
+  if (row) {
+    const content = `${row.fileName}. Summary: ${analysis.summary}. Findings: ${analysis.findings}`;
+    storeEmbeddingFireAndForget(row.patientId, "document_analysis", row.id, content);
+  }
 
   return row ? toPatientDocument(row) : null;
 }

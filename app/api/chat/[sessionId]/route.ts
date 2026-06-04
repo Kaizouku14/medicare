@@ -99,7 +99,7 @@ export async function POST(req: Request, { params }: Params) {
     await renameSession(sessionId, title);
   }
 
-  const systemPrompt = await buildSystemPrompt(user.id, session.patientId);
+  const systemPrompt = await buildSystemPrompt(user.id, session.patientId, userText);
 
   // Limit context to last 30 messages
   const contextMessages = existingMessages.slice(-30);

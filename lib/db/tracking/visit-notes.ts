@@ -3,6 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { visitNotes } from "@/lib/db/schema/schema";
 import type { VisitNote } from "@/types/domain";
+import { storeEmbeddingFireAndForget } from "@/lib/ai/embeddings/store";
 
 function toVisitNote(row: typeof visitNotes.$inferSelect): VisitNote {
   return {
@@ -23,6 +24,9 @@ export async function createVisitNote(
     .insert(visitNotes)
     .values({ patientId, ...data })
     .returning();
+
+  storeEmbeddingFireAndForget(patientId, "visit_note", row.id, data.notes);
+
   return toVisitNote(row);
 }
 
@@ -44,6 +48,11 @@ export async function updateVisitNote(
     .set(data)
     .where(eq(visitNotes.id, noteId))
     .returning();
+
+  if (row && data.notes) {
+    storeEmbeddingFireAndForget(row.patientId, "visit_note", row.id, data.notes);
+  }
+
   return row ? toVisitNote(row) : null;
 }
 

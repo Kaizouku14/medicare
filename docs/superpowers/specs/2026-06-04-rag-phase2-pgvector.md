@@ -42,9 +42,7 @@ CREATE INDEX idx_patient_embeddings_patient
 ON patient_embeddings (patient_id);
 ```
 
-Vector dimension: **768** — Groq's `nomic-embed-text-v1.5` embedding model output.
-
-> **Note:** If Groq's embeddings endpoint is unavailable in your plan, the fallback is OpenAI's `text-embedding-3-small` (512 dimensions) — requires an `OPENAI_API_KEY` in `.env`. The vector index dimension can be adjusted per provider.
+Vector dimension: **384** — Hugging Face `sentence-transformers/all-MiniLM-L6-v2` (free tier).
 
 Rationale for separate table:
 - No schema changes to 3 existing tables
@@ -60,10 +58,10 @@ Rationale for separate table:
 async function generateEmbedding(text: string): Promise<number[]>
 ```
 
-- Calls Groq's embeddings API endpoint
-- Truncates input to 8k tokens (Groq limit)
-- Returns 768-dimension vector
-- Caches per content hash to avoid regeneration
+- Calls Hugging Face Inference API (`all-MiniLM-L6-v2`)
+- Requires free `HF_API_KEY` from huggingface.co/settings/tokens
+- Truncates input to 4k characters
+- Returns 384-dimension vector
 
 ### 3.3 When to Generate Embeddings
 
@@ -101,7 +99,7 @@ Existing records need embeddings. A `lib/scripts/backfill-embeddings.ts` script:
 | File | Change | Type |
 |---|---|---|
 | `lib/db/migrations/0008_pgvector.sql` | Enable vector, create table + indexes | New |
-| `lib/ai/embeddings/groq-embed.ts` | Groq embeddings client | New |
+| `lib/ai/embeddings/groq-embed.ts` | Hugging Face embeddings client | New |
 | `lib/ai/retrieval/search-patient-context.ts` | Add vector search + hybrid merge | Modify |
 | `lib/db/tracking/visit-notes.ts` | Generate embedding on create/update | Modify |
 | `lib/db/patients/documents.ts` | Generate embedding on analysis save | Modify |
@@ -114,13 +112,22 @@ Existing records need embeddings. A `lib/scripts/backfill-embeddings.ts` script:
 |---|---|
 | Embedding API fails | Log warning, don't block primary operation |
 | Vector search fails | Fall back to keyword-only |
-| Query text > 8k tokens | Truncate before sending to embeddings API |
+| Query text > 4k chars | Truncate before sending to embeddings API |
 | Missing pgvector extension | Return 500 with clear error message |
 | Backfill interrupted | Idempotent — safe to re-run |
 
-## 6. Testing
+## 6. Configuration
 
-1. **Unit** — `groq-embed.test.ts`: mock API, verify vector shape
+Add to `.env`:
+```
+HF_API_KEY=hf_your_token_here
+```
+
+Get a free token at https://huggingface.co/settings/tokens
+
+## 7. Testing
+
+1. **Unit** — `groq-embed.test.ts`: mock API, verify vector shape (384 dims)
 2. **Unit** — `search-patient-context.test.ts`: mock both branches, verify hybrid merge
 3. **Integration** — store embedding, search, verify result returned
 4. **Regression** — Phase 1 keyword search still works if vector search fails
