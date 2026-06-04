@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -27,7 +28,6 @@ type UpdateValues = z.infer<typeof updateSchema>;
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -59,8 +59,6 @@ export default function UpdatePasswordPage() {
   }, []);
 
   async function onSubmit(values: UpdateValues) {
-    setError(null);
-
     const res = await fetch("/api/auth/update-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -69,10 +67,11 @@ export default function UpdatePasswordPage() {
 
     const data = (await res.json()) as { error?: string };
     if (!res.ok) {
-      setError(data.error ?? "Unable to update password.");
+      toast.error(data.error ?? "Unable to update password.");
       return;
     }
 
+    toast.success("Password updated successfully.");
     setDone(true);
 
     setTimeout(() => {
@@ -136,12 +135,6 @@ export default function UpdatePasswordPage() {
             )}
           />
         </FieldGroup>
-
-        {error && (
-          <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
 
         <Button
           className="w-full h-10 rounded-full"

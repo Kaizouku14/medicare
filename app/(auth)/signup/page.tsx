@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,6 @@ type SignupValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
 
   const {
     control,
@@ -42,8 +41,6 @@ export default function SignupPage() {
   });
 
   async function onSubmit(values: SignupValues) {
-    setError(null);
-
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -52,7 +49,7 @@ export default function SignupPage() {
 
     const data = (await res.json()) as { error?: string };
     if (!res.ok) {
-      setError(data.error ?? "Unable to create account.");
+      toast.error(data.error ?? "Unable to create account.");
       return;
     }
 
@@ -142,12 +139,6 @@ export default function SignupPage() {
             )}
           />
         </FieldGroup>
-
-        {error && (
-          <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
 
         <Button className="w-full h-10 rounded-full" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating..." : "Create account"}

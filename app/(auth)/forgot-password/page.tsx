@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Mail } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,6 @@ const forgotSchema = z.object({
 type ForgotValues = z.infer<typeof forgotSchema>;
 
 export default function ForgotPasswordPage() {
-  const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
   const {
@@ -37,8 +37,6 @@ export default function ForgotPasswordPage() {
   });
 
   async function onSubmit(values: ForgotValues) {
-    setError(null);
-
     const res = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -47,10 +45,11 @@ export default function ForgotPasswordPage() {
 
     const data = (await res.json()) as { error?: string };
     if (!res.ok) {
-      setError(data.error ?? "Unable to send reset email.");
+      toast.error(data.error ?? "Unable to send reset email.");
       return;
     }
 
+    toast.success("Reset link sent! Check your email.");
     setSent(true);
   }
 
@@ -124,12 +123,6 @@ export default function ForgotPasswordPage() {
             )}
           />
         </FieldGroup>
-
-        {error && (
-          <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
 
         <Button
           className="w-full h-10 rounded-full"

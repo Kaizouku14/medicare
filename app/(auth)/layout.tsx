@@ -1,5 +1,6 @@
 import { Heart } from "lucide-react";
 import Link from "next/link";
+import { Toaster } from "sonner";
 
 export default function AuthLayout({
   children,
@@ -28,12 +29,12 @@ export default function AuthLayout({
 
       <Link
         href="/"
-        className="animate-fade-in-up group absolute left-6 top-6 flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors hover:bg-muted"
+        className="animate-fade-in-up group absolute md:left-6 left-0 top-6 flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors hover:bg-muted"
       >
         <span className="flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-primary/80 text-sm font-bold text-primary-foreground shadow-xs transition-transform group-hover:scale-105">
           M
         </span>
-        <span className="hidden text-sm font-semibold text-foreground sm:inline">
+        <span className="text-sm font-semibold text-foreground sm:inline">
           MediCare AI
         </span>
       </Link>
@@ -54,6 +55,18 @@ export default function AuthLayout({
         </span>
         Supporting Filipino families with compassion
       </p>
+
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            borderRadius: "0.75rem",
+            border: "1px solid var(--border)",
+            background: "var(--card)",
+            color: "var(--card-foreground)",
+          },
+        }}
+      />
     </main>
   );
 }

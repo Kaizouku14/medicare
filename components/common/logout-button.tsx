@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LogOut, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export function LogoutButton() {
     setLoading(true);
     const supabase = createClient();
     await supabase.auth.signOut();
+    toast.success("Signed out successfully.");
     router.replace("/login");
     router.refresh();
   }

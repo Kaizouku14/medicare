@@ -17,7 +17,12 @@ type PopupState = {
 type PopupAction =
   | { type: "TOGGLE_OPEN" }
   | { type: "LOAD_START" }
-  | { type: "LOAD_DONE"; sessionId: string; messages: ChatMessage[]; hasMore: boolean }
+  | {
+      type: "LOAD_DONE";
+      sessionId: string;
+      messages: ChatMessage[];
+      hasMore: boolean;
+    }
   | { type: "LOAD_ERROR" }
   | { type: "CLOSE" };
 
@@ -28,7 +33,14 @@ function popupReducer(state: PopupState, action: PopupAction): PopupState {
     case "LOAD_START":
       return { ...state, loading: true };
     case "LOAD_DONE":
-      return { ...state, loading: false, open: true, sessionId: action.sessionId, initialMessages: action.messages, hasMore: action.hasMore };
+      return {
+        ...state,
+        loading: false,
+        open: true,
+        sessionId: action.sessionId,
+        initialMessages: action.messages,
+        hasMore: action.hasMore,
+      };
     case "LOAD_ERROR":
       return { ...state, loading: false };
     case "CLOSE":
@@ -36,11 +48,7 @@ function popupReducer(state: PopupState, action: PopupAction): PopupState {
   }
 }
 
-export function PatientChatPopup({
-  patientId,
-}: {
-  patientId: string;
-}) {
+export function PatientChatPopup({ patientId }: { patientId: string }) {
   const [state, dispatch] = useReducer(popupReducer, {
     open: false,
     sessionId: null,
@@ -62,7 +70,12 @@ export function PatientChatPopup({
         messages: ChatMessage[];
         hasMore: boolean;
       };
-      dispatch({ type: "LOAD_DONE", sessionId: data.session.id, messages: data.messages, hasMore: data.hasMore });
+      dispatch({
+        type: "LOAD_DONE",
+        sessionId: data.session.id,
+        messages: data.messages,
+        hasMore: data.hasMore,
+      });
     } catch {
       dispatch({ type: "LOAD_ERROR" });
     }
@@ -70,7 +83,8 @@ export function PatientChatPopup({
 
   return (
     <>
-      <button type="button"
+      <button
+        type="button"
         onClick={initChat}
         disabled={state.loading}
         className="fixed bottom-5 right-5 z-50 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-70"
@@ -85,7 +99,7 @@ export function PatientChatPopup({
       </button>
 
       {state.open && state.sessionId && (
-        <div className="fixed bottom-20 right-5 z-50 flex w-90 max-h-[calc(100vh-8rem)] flex-col rounded-xl border border-border/60 bg-card shadow-2xl">
+        <div className="fixed bottom-20 right-4 sm:right-5 z-50 flex w-82 sm:w-90 max-h-[calc(100vh-8rem)] flex-col rounded-xl border border-border/60 bg-card shadow-2xl">
           <div className="flex shrink-0 items-center justify-between rounded-t-xl border-b border-border/60 bg-muted/30 px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="flex size-7 items-center justify-center rounded-full bg-primary/10">

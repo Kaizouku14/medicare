@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,6 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
 
   const {
     control,
@@ -39,8 +38,6 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: LoginValues) {
-    setError(null);
-
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -49,7 +46,7 @@ export default function LoginPage() {
 
     const data = (await res.json()) as { error?: string };
     if (!res.ok) {
-      setError(data.error ?? "Unable to login.");
+      toast.error(data.error ?? "Unable to login.");
       return;
     }
 
@@ -125,12 +122,6 @@ export default function LoginPage() {
             )}
           />
         </FieldGroup>
-
-        {error && (
-          <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
 
         <Button
           className="w-full h-10 rounded-full"
