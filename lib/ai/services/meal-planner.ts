@@ -195,7 +195,7 @@ Return a JSON object with a single key "meals" whose value is an array of exactl
   - "prepTime": Estimated prep time (e.g. "15 mins", "30 mins")
 
 Example format:
-{"meals": [{"day": "Monday", "breakfast": "Chicken Adobo", "lunch": "Sinigang na Hipon", "dinner": "Tinolang Manok", "snacks": ["Banana", "Saging"], "totalCost": 120, "recipes": {"breakfast": {"ingredients": ["1 cup rice", "2 eggs"], "instructions": "Cook rice. Fry eggs. Serve together.", "prepTime": "15 mins"}}}]}
+{"meals": [{"day": "Monday", "breakfast": "Chicken Adobo", "lunch": "Sinigang na Hipon", "dinner": "Tinolang Manok", "snacks": ["Banana", "Saging"], "totalCost": 120, "recipes": {"breakfast": {"ingredients": ["1 cup rice", "2 eggs"], "instructions": "Cook rice. Fry eggs. Serve together.", "prepTime": "15 mins"}, "lunch": {"ingredients": ["1 pc tilapia", "2 cups water", "1 pc onion"], "instructions": "Boil water. Add onion and fish. Simmer.", "prepTime": "20 mins"}, "dinner": {"ingredients": ["1 cup rice", "2 eggs"], "instructions": "Cook rice. Fry eggs. Serve together.", "prepTime": "15 mins"}, "snack-0": {"ingredients": ["1 banana"], "instructions": "Peel and serve.", "prepTime": "2 mins"}}}]}
 
 Return ONLY valid JSON. No markdown, no code fences, no explanation.`;
 
@@ -300,7 +300,7 @@ Return a JSON object with two keys:
 If a food is not in the reference list, use "other" as foodId and set name to the food name.
 
 Example:
-{"recommendations": [{"foodId": "tofu", "name": "Tofu", "description": "High-protein soy product", "estimatedCost": 15, "nutrients": "Protein, calcium, iron", "reason": "Suitable for diabetes management"}], "meals": [{"day": "Monday", "breakfast": "Chicken Adobo", "lunch": "Sinigang na Hipon", "dinner": "Tinolang Manok", "snacks": ["Banana"], "totalCost": 120, "recipes": {"breakfast": {"ingredients": ["1 cup rice", "2 eggs"], "instructions": "Cook rice. Fry eggs.", "prepTime": "15 mins"}}}]}
+{"recommendations": [{"foodId": "tofu", "name": "Tofu", "description": "High-protein soy product", "estimatedCost": 15, "nutrients": "Protein, calcium, iron", "reason": "Suitable for diabetes management"}], "meals": [{"day": "Monday", "breakfast": "Chicken Adobo", "lunch": "Sinigang na Hipon", "dinner": "Tinolang Manok", "snacks": ["Banana"], "totalCost": 120, "recipes": {"breakfast": {"ingredients": ["1 cup rice", "2 eggs"], "instructions": "Cook rice. Fry eggs.", "prepTime": "15 mins"}, "lunch": {"ingredients": ["1 pc tilapia", "2 cups water", "1 pc onion"], "instructions": "Boil water. Add onion and fish. Simmer.", "prepTime": "20 mins"}, "dinner": {"ingredients": ["1 cup rice", "2 eggs"], "instructions": "Cook rice. Fry eggs.", "prepTime": "15 mins"}, "snack-0": {"ingredients": ["1 banana"], "instructions": "Peel and serve.", "prepTime": "2 mins"}}}]}
 
 Return ONLY valid JSON. No markdown, no code fences, no explanation.`;
 
