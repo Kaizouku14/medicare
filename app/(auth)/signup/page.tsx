@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ export default function SignupPage() {
       return;
     }
 
+    toast.success("Account created! Welcome to MediCare AI.");
     router.replace("/dashboard");
     router.refresh();
   }
@@ -141,7 +143,11 @@ export default function SignupPage() {
         </FieldGroup>
 
         <Button className="w-full h-10 rounded-full" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create account"}
+          {isSubmitting ? (
+            <><Loader2 className="mr-2 size-4 animate-spin" />Creating...</>
+          ) : (
+            "Create account"
+          )}
         </Button>
       </form>
 

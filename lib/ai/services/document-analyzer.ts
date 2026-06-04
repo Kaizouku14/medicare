@@ -1,5 +1,6 @@
 import { type DocumentAnalysis } from "@/types/domain";
-import { groqVision } from "@/lib/ai/groq-client";
+import { groqVision, groqChat } from "@/lib/ai/groq-client";
+import { extractPdfText } from "@/lib/ai/services/pdf-extractor";
 
 const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 const FALLBACK_MODEL = "meta-llama/llama-4-maverick-17b-128e-instruct";
@@ -45,9 +46,43 @@ const USER_PROMPT = `Analyze this medical document. Return a JSON object with th
 For non-lab documents (CT scans, ECGs), extractedValues may be empty.
 Return ONLY valid JSON. No markdown, no explanation.`;
 
+const PDF_USER_PROMPT = `Analyze this medical document text. Return a JSON object with this exact structure:
+{
+  "documentType": "lab-results" | "ct-scan" | "ecg" | "other",
+  "summary": "2-3 sentence plain-English summary of what this document shows",
+  "findings": "Detailed clinical findings from the document",
+  "extractedValues": [
+    {
+      "name": "Test name (e.g. Creatinine, HDL, Glucose)",
+      "value": "The numeric or textual result value",
+      "unit": "Unit of measurement (e.g. mg/dL, mmol/L, %)",
+      "referenceRange": "Reference range from the document (e.g. 0.6-1.2)",
+      "isAbnormal": true or false,
+      "interpretation": "Brief note on what this means"
+    }
+  ],
+  "concerns": ["List of clinical concerns based on abnormal values"],
+  "relevantDiagnoses": ["Conditions implied by these results"],
+  "dietaryConsiderations": "How these results affect dietary recommendations"
+}
+
+For non-lab documents (CT scans, ECGs), extractedValues may be empty.
+Return ONLY valid JSON. No markdown, no explanation.`;
+
 const GROQ_BASE64_LIMIT = 4 * 1024 * 1024;
 
 export async function analyzeDocument(
+  buffer: ArrayBuffer,
+  mimeType: string,
+): Promise<DocumentAnalysis> {
+  if (mimeType === "application/pdf") {
+    return analyzePdfDocument(buffer);
+  }
+
+  return analyzeImageDocument(buffer, mimeType);
+}
+
+async function analyzeImageDocument(
   imageBuffer: ArrayBuffer,
   mimeType: string,
 ): Promise<DocumentAnalysis> {
@@ -70,6 +105,30 @@ export async function analyzeDocument(
   }
 
   const content = await groqVision(SYSTEM_PROMPT, USER_PROMPT, base64, mimeType, FALLBACK_MODEL);
+  const parsed = JSON.parse(content);
+  if (!isDocumentAnalysis(parsed)) {
+    throw new Error(
+      `Response missing required fields. Keys: ${Object.keys(parsed).join(", ")}`,
+    );
+  }
+  return parsed;
+}
+
+async function analyzePdfDocument(buffer: ArrayBuffer): Promise<DocumentAnalysis> {
+  const text = await extractPdfText(buffer);
+
+  const content = await groqChat(
+    [
+      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: `${PDF_USER_PROMPT}\n\nDocument text:\n${text.slice(0, 15000)}`,
+      },
+    ],
+    "llama-3.3-70b-versatile",
+    true,
+  );
+
   const parsed = JSON.parse(content);
   if (!isDocumentAnalysis(parsed)) {
     throw new Error(

@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Nutrients } from "./nutrients";
-import type { MealPlan, MealRecipe } from "@/types/domain";
+import type { MealPlan, MealRecipe, FoodRecommendation } from "@/types/domain";
 
 function formatCurrency(n: number) {
   return `₱${n.toLocaleString()}`;
@@ -33,7 +33,7 @@ export function MealPlanView({
   plan: MealPlan;
   onEdit: () => void;
   onViewRecipe: (name: string, recipe: MealRecipe) => void;
-  onSubstitute: (foodName: string) => void;
+  onSubstitute: (food: FoodRecommendation) => void;
 }) {
   return (
     <>
@@ -109,7 +109,7 @@ export function MealPlanView({
                 variant="ghost"
                 size="sm"
                 className="mt-2 h-7 gap-1 rounded-lg text-[10px] text-muted-foreground md:opacity-0 transition-all hover:text-foreground md:group-hover:opacity-100"
-                onClick={() => onSubstitute(food.name)}
+                onClick={() => onSubstitute(food)}
               >
                 <RefreshCw className="size-3" />
                 Substitute

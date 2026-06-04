@@ -38,6 +38,7 @@ type MealPlanState = {
   plan: MealPlan | null;
   editingPlan: boolean;
   generating: boolean;
+  generationMessage: string;
   error: string | null;
   confirmOpen: boolean;
   substituting: string | null;
@@ -50,7 +51,7 @@ type MealPlanState = {
 type MealPlanAction =
   | { type: "SET_PLAN"; plan: MealPlan | null }
   | { type: "SET_EDITING"; editing: boolean }
-  | { type: "SET_GENERATING"; generating: boolean }
+  | { type: "SET_GENERATING"; generating: boolean; message?: string }
   | { type: "SET_ERROR"; error: string | null }
   | { type: "SET_CONFIRM_OPEN"; open: boolean }
   | { type: "SET_SUBSTITUTING"; food: string | null }
@@ -70,7 +71,7 @@ function mealPlanReducer(
     case "SET_EDITING":
       return { ...state, editingPlan: action.editing };
     case "SET_GENERATING":
-      return { ...state, generating: action.generating };
+      return { ...state, generating: action.generating, generationMessage: action.message ?? "" };
     case "SET_ERROR":
       return { ...state, error: action.error };
     case "SET_CONFIRM_OPEN":
@@ -101,13 +102,21 @@ function replaceFoodInMeals(
   meals: DayMeal[],
   oldName: string,
   newName: string,
+  recommendations: FoodRecommendation[],
+  oldFoodId?: string,
 ): DayMeal[] {
+  const matchName = oldFoodId
+    ? (name: string) => {
+        const entry = recommendations.find((r) => r.foodId === oldFoodId);
+        return entry ? entry.name === name : name === oldName;
+      }
+    : (name: string) => name === oldName;
   return meals.map((day) => ({
     ...day,
-    breakfast: day.breakfast === oldName ? newName : day.breakfast,
-    lunch: day.lunch === oldName ? newName : day.lunch,
-    dinner: day.dinner === oldName ? newName : day.dinner,
-    snacks: day.snacks.map((s) => (s === oldName ? newName : s)),
+    breakfast: matchName(day.breakfast) ? newName : day.breakfast,
+    lunch: matchName(day.lunch) ? newName : day.lunch,
+    dinner: matchName(day.dinner) ? newName : day.dinner,
+    snacks: day.snacks.map((s) => (matchName(s) ? newName : s)),
   }));
 }
 
@@ -124,6 +133,7 @@ export function MealPlanGenerator({
     plan: existingPlan,
     editingPlan: false,
     generating: false,
+    generationMessage: "",
     error: null,
     confirmOpen: false,
     substituting: null,
@@ -136,6 +146,7 @@ export function MealPlanGenerator({
   const {
     plan,
     generating,
+    generationMessage,
     error,
     confirmOpen,
     editingPlan,
@@ -147,7 +158,7 @@ export function MealPlanGenerator({
   } = state;
 
   async function generate() {
-    dispatch({ type: "SET_GENERATING", generating: true });
+    dispatch({ type: "SET_GENERATING", generating: true, message: "Starting..." });
     dispatch({ type: "SET_ERROR", error: null });
     dispatch({ type: "SET_CONFIRM_OPEN", open: false });
 
@@ -155,8 +166,8 @@ export function MealPlanGenerator({
       method: "POST",
     });
 
-    const data = (await res.json()) as { plan?: MealPlan; error?: string };
     if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: "Failed to generate meal plan." }));
       toast.error(data.error ?? "Failed to generate meal plan.");
       dispatch({
         type: "SET_ERROR",
@@ -166,13 +177,54 @@ export function MealPlanGenerator({
       return;
     }
 
-    toast.success("Meal plan generated successfully");
-    dispatch({ type: "SET_PLAN", plan: data.plan ?? null });
-    dispatch({ type: "SET_GENERATING", generating: false });
+    if (!res.body) {
+      dispatch({ type: "SET_GENERATING", generating: false });
+      toast.error("Failed to generate meal plan.");
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.error) {
+              toast.error(event.error);
+              dispatch({ type: "SET_ERROR", error: event.error });
+              break;
+            }
+            if (event.message) {
+              dispatch({ type: "SET_GENERATING", generating: true, message: event.message });
+            }
+            if (event.plan) {
+              dispatch({ type: "SET_PLAN", plan: event.plan });
+              toast.success("Meal plan generated successfully");
+            }
+          } catch {
+            // skip malformed events
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+      dispatch({ type: "SET_GENERATING", generating: false });
+    }
   }
 
-  async function handleSubstitute(foodName: string) {
-    dispatch({ type: "SET_SUBSTITUTING", food: foodName });
+  async function handleSubstitute(food: FoodRecommendation) {
+    dispatch({ type: "SET_SUBSTITUTING", food: food.name });
     dispatch({ type: "SET_SUBS_LOADING", loading: true });
     dispatch({ type: "SET_SUBSTITUTES", substitutes: null });
     try {
@@ -181,7 +233,7 @@ export function MealPlanGenerator({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ foodName }),
+          body: JSON.stringify({ foodName: food.name, foodId: food.foodId }),
         },
       );
       const data = await res.json();
@@ -251,7 +303,7 @@ export function MealPlanGenerator({
               <div className="h-full w-1/2 animate-shimmer rounded-full bg-linear-to-r from-transparent via-primary/40 to-transparent" />
             </div>
             <span className="shrink-0 text-xs font-medium text-muted-foreground animate-pulse">
-              Analyzing profile…
+              {generationMessage || "Starting..."}
             </span>
           </div>
         )}
@@ -419,6 +471,7 @@ function SubstituteDialog({
                   className="w-full rounded-xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/20"
                   onClick={async () => {
                     if (!plan || !substituting) return;
+                    const oldRec = plan.recommendations.find((r) => r.name === substituting || r.foodId === substituting);
                     onSelect(substituting, sub.name);
                     onClose();
                     try {
@@ -428,7 +481,7 @@ function SubstituteDialog({
                         body: JSON.stringify({
                           planId: plan.id,
                           recommendations: plan.recommendations.map((r) =>
-                            r.name === substituting
+                            (oldRec?.foodId && r.foodId === oldRec.foodId) || r.name === substituting
                               ? { ...sub, name: sub.name }
                               : r,
                           ),
@@ -436,6 +489,8 @@ function SubstituteDialog({
                             plan.meals,
                             substituting,
                             sub.name,
+                            plan.recommendations,
+                            oldRec?.foodId,
                           ),
                         }),
                       });
@@ -480,6 +535,7 @@ function SubstituteDialog({
               onClick={async () => {
                 if (!plan || !substituting || !manualSub.trim()) return;
                 const newName = manualSub.trim();
+                const oldRec = plan.recommendations.find((r) => r.name === substituting || r.foodId === substituting);
                 onSelect(substituting, newName);
                 onClose();
                 onManualSubChange("");
@@ -490,12 +546,16 @@ function SubstituteDialog({
                     body: JSON.stringify({
                       planId: plan.id,
                       recommendations: plan.recommendations.map((r) =>
-                        r.name === substituting ? { ...r, name: newName } : r,
+                        (oldRec?.foodId && r.foodId === oldRec.foodId) || r.name === substituting
+                          ? { ...r, name: newName }
+                          : r,
                       ),
                       meals: replaceFoodInMeals(
                         plan.meals,
                         substituting,
                         newName,
+                        plan.recommendations,
+                        oldRec?.foodId,
                       ),
                     }),
                   });

@@ -12,7 +12,7 @@ import { analyzeDocument } from "@/lib/ai/services/document-analyzer";
 
 export const maxDuration = 30;
 
-const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "application/pdf"]);
 const MAX_SIZE = 10 * 1024 * 1024;
 
 type Params = {
@@ -63,7 +63,7 @@ export async function POST(req: Request, { params }: Params) {
 
     if (!ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json(
-        { error: "Only PNG, JPEG, and WebP images are accepted." },
+        { error: "Only PNG, JPEG, WebP images and PDFs are accepted." },
         { status: 415 },
       );
     }

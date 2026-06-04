@@ -13,6 +13,7 @@ import {
   touchSession,
 } from "@/lib/db/chat";
 import { buildSystemPrompt } from "@/lib/ai/prompts/chat-prompt";
+import { summarizeConversation } from "@/lib/ai/services/conversation-summary";
 
 type Params = {
   params: Promise<{ sessionId: string }>;
@@ -90,7 +91,7 @@ export async function POST(req: Request, { params }: Params) {
 
   await saveMessage(sessionId, "user", userText);
 
-  const { messages: existingMessages } = await getSessionMessages(sessionId, 0, 30);
+  const { messages: existingMessages } = await getSessionMessages(sessionId, 0, 100);
 
   // Auto-title from first message
   if (existingMessages.length === 1) {
@@ -99,10 +100,20 @@ export async function POST(req: Request, { params }: Params) {
     await renameSession(sessionId, title);
   }
 
-  const systemPrompt = await buildSystemPrompt(user.id, session.patientId, userText);
+  let systemPrompt = await buildSystemPrompt(user.id, session.patientId, userText);
 
-  // Limit context to last 30 messages
-  const contextMessages = existingMessages.slice(-30);
+  const MAX_CONTEXT = 50;
+  let contextMessages = existingMessages;
+  if (existingMessages.length > MAX_CONTEXT) {
+    const overflow = existingMessages.slice(0, existingMessages.length - MAX_CONTEXT);
+    try {
+      const summary = await summarizeConversation(overflow);
+      systemPrompt += `\n\nEarlier conversation summary:\n${summary}`;
+    } catch {
+      // summarization failure is non-critical
+    }
+    contextMessages = existingMessages.slice(-MAX_CONTEXT);
+  }
 
   const result = streamText({
     model: groq("meta-llama/llama-4-scout-17b-16e-instruct"),
@@ -112,7 +123,7 @@ export async function POST(req: Request, { params }: Params) {
       content: m.content,
     })),
     temperature: 0.7,
-    maxOutputTokens: 200,
+    maxOutputTokens: 1024,
     onFinish: async (event) => {
       try {
         await saveMessage(sessionId, "assistant", event.text);

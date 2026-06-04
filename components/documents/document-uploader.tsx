@@ -10,7 +10,7 @@ import type { DocumentAnalysis } from "@/types/domain";
 
 const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
 const MAX_FILES = 10;
-const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "application/pdf"]);
 
 type UploadState = {
   uploading: boolean;
@@ -168,7 +168,7 @@ export function DocumentUploader({
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 rounded-lg bg-muted/50 px-3 sm:px-4 py-2">
                 <Files className="size-3.5 text-muted-foreground shrink-0" />
                 <span className="text-[11px] text-muted-foreground text-center sm:text-left leading-relaxed">
-                  PNG, JPEG, WebP &middot; Max 3 MB &middot; Up to {MAX_FILES} files
+                  PNG, JPEG, WebP, PDF &middot; Max 3 MB &middot; Up to {MAX_FILES} files
                 </span>
               </div>
             </>
@@ -177,7 +177,7 @@ export function DocumentUploader({
         <input
           ref={inputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/png,image/jpeg,image/webp,application/pdf"
           multiple
           className="hidden"
           disabled={state.uploading}

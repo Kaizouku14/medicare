@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ export default function LoginPage() {
       return;
     }
 
+    toast.success("Welcome back!");
     router.replace("/dashboard");
     router.refresh();
   }
@@ -128,7 +130,11 @@ export default function LoginPage() {
           type="submit"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Signing in..." : "Sign in"}
+          {isSubmitting ? (
+            <><Loader2 className="mr-2 size-4 animate-spin" />Signing in...</>
+          ) : (
+            "Sign in"
+          )}
         </Button>
       </form>
 

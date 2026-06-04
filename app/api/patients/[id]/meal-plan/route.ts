@@ -5,9 +5,9 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getLatestMealPlan, saveMealPlan, deleteMealPlan } from "@/lib/db/meal-plans";
 import { buildPatientContext } from "@/lib/db/patients/context";
 import {
-  generateRecommendations,
-  generateMealPlan,
+  generateFullMealPlan,
 } from "@/lib/ai/services/meal-planner";
+import { sseJson, sseError } from "@/lib/sse";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -35,45 +35,65 @@ export async function POST(request: Request, { params }: Params) {
     }
     const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
-    const context = await buildPatientContext(user.id, patient.id);
 
-    const labData = context.latestDocument
-      ? {
-          extractedValues: context.latestDocument.extractedValues,
-          concerns: context.latestDocument.concerns,
-          dietaryConsiderations: context.latestDocument.dietaryConsiderations,
+    const enc = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          controller.enqueue(enc.encode(sseJson({ step: "context", message: "Building patient context..." })));
+
+          const context = await buildPatientContext(user.id, patient.id);
+
+          const labData = context.latestDocument
+            ? {
+                extractedValues: context.latestDocument.extractedValues,
+                concerns: context.latestDocument.concerns,
+                dietaryConsiderations: context.latestDocument.dietaryConsiderations,
+              }
+            : undefined;
+
+          const medsOrUndefined = context.activeMedications.length > 0 ? context.activeMedications : undefined;
+          const abnormalOrUndefined = context.allAbnormalValues.length > 0 ? context.allAbnormalValues : undefined;
+
+          controller.enqueue(enc.encode(sseJson({ step: "generating", message: "Generating food recommendations and meal plan..." })));
+
+          const { recommendations, meals } = await generateFullMealPlan(
+            patient, labData, medsOrUndefined, abnormalOrUndefined,
+          );
+
+          controller.enqueue(enc.encode(sseJson({ step: "saving", message: "Saving meal plan..." })));
+
+          const now = new Date();
+          const dayOfWeek = now.getDay();
+          const monday = new Date(now);
+          monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+          const weekStart = monday.toISOString().split("T")[0];
+
+          const totalDailyCost = Math.round(
+            meals.reduce((sum, day) => sum + day.totalCost, 0) / meals.length,
+          );
+
+          const plan = await saveMealPlan(
+            patient.id,
+            weekStart,
+            recommendations,
+            meals,
+            totalDailyCost,
+          );
+
+          controller.enqueue(enc.encode(sseJson({ step: "done", plan })));
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Unable to generate meal plan.";
+          controller.enqueue(enc.encode(sseError(message)));
+        } finally {
+          controller.close();
         }
-      : undefined;
+      },
+    });
 
-    const medsOrUndefined = context.activeMedications.length > 0 ? context.activeMedications : undefined;
-    const abnormalOrUndefined = context.allAbnormalValues.length > 0 ? context.allAbnormalValues : undefined;
-
-    const recommendations = await generateRecommendations(
-      patient, labData, medsOrUndefined, abnormalOrUndefined,
-    );
-    const meals = await generateMealPlan(
-      patient, recommendations, medsOrUndefined, abnormalOrUndefined,
-    );
-
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
-    const weekStart = monday.toISOString().split("T")[0];
-
-    const totalDailyCost = Math.round(
-      meals.reduce((sum, day) => sum + day.totalCost, 0) / meals.length,
-    );
-
-    const plan = await saveMealPlan(
-      patient.id,
-      weekStart,
-      recommendations,
-      meals,
-      totalDailyCost,
-    );
-
-    return NextResponse.json({ plan }, { status: 201 });
+    return new Response(stream, {
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+    });
   } catch (error) {
     return handleApiError(error, "Unable to generate meal plan.");
   }

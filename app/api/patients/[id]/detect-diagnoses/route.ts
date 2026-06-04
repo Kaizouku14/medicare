@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
 import { groqChat } from "@/lib/ai/groq-client";
 import { updatePatientDiagnoses } from "@/lib/db/patients";
+import { rateLimit } from "@/lib/rate-limit";
 import type { DocumentAnalysis } from "@/types/domain";
 
 type Params = {
@@ -11,6 +12,13 @@ type Params = {
 
 export async function POST(req: Request, { params }: Params) {
   try {
+    const { allowed } = await rateLimit("diagnoses", { request: req, limit: 5, windowMs: 60000 });
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment." },
+        { status: 429 },
+      );
+    }
     const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
 

@@ -1,6 +1,7 @@
 minimumReleaseAge: 7
 # trustPolicy: no-downgrade
 allowBuilds:
+  canvas: set this to true or false
   esbuild: true
   msgpackr-extract: true
   msw: true

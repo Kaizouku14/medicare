@@ -33,6 +33,7 @@ export type CreatePatientInput = {
 export type Nutrients = Record<string, string>;
 
 export type FoodRecommendation = {
+  foodId?: string;
   name: string;
   description: string;
   estimatedCost: number;

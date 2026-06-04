@@ -9,6 +9,7 @@ import {
   type MedicationBrief,
   type DocAbnormal,
 } from "@/lib/db/patients/context";
+import { FOOD_REFERENCE_LIST } from "@/lib/foods/registry";
 
 const JSON_MODEL = "llama-3.3-70b-versatile";
 
@@ -229,4 +230,113 @@ Return ONLY valid JSON. No markdown, no code fences, no explanation.`;
   }
 
   return meals;
+}
+
+export async function generateFullMealPlan(
+  patient: Patient,
+  labData?: {
+    extractedValues: DocumentAnalysis["extractedValues"];
+    concerns: DocumentAnalysis["concerns"];
+    dietaryConsiderations: DocumentAnalysis["dietaryConsiderations"];
+  },
+  medications?: MedicationBrief[],
+  allAbnormalValues?: DocAbnormal[],
+): Promise<{ recommendations: FoodRecommendation[]; meals: DayMeal[] }> {
+  let labSection = "";
+  if (labData) {
+    labSection = `
+Latest lab values:
+${JSON.stringify(labData.extractedValues, null, 2)}
+
+Clinical concerns from lab results:
+${labData.concerns.map((c) => `- ${c}`).join("\n")}
+
+Dietary considerations from lab results:
+${labData.dietaryConsiderations}
+`;
+  }
+
+  let medSection = "";
+  if (medications && medications.length > 0) {
+    medSection = `\n\nActive Medications:\n${medications.map((m) => `- ${m.name} ${m.dosage} — ${m.frequency}`).join("\n")}`;
+  }
+
+  let abnormalSection = "";
+  if (allAbnormalValues && allAbnormalValues.length > 0) {
+    abnormalSection = `\n\nAll Lab Results — Abnormal Values:\n${allAbnormalValues.map((doc) => `- ${doc.fileName}:\n${doc.values.map((v) => `  - ${v.name}: ${v.value} ${v.unit} (ref: ${v.referenceRange}) — ${v.interpretation}`).join("\n")}`).join("\n")}`;
+  }
+
+  const dailyBudget = Math.round(patient.monthlyBudgetPhp / 30);
+
+  const foodRef = JSON.stringify(FOOD_REFERENCE_LIST);
+
+  const prompt = `You are a Filipino clinical nutritionist and meal planner. Create a meal plan for a patient with the following profile:
+
+- Name: ${patient.name}
+- Age: ${patient.age}
+- Height: ${patient.heightCm}
+- Weight: ${patient.weightKg ? `${patient.weightKg} kg` : "Not specified"}
+- BMI: ${patient.heightCm && patient.weightKg ? `${patient.weightKg / (patient.heightCm / 100) ** 2}` : "Not specified"}
+- Diagnoses: ${patient.diagnoses.join(", ")}
+- Feeding method: ${patient.feedingMethod}
+- Allergies: ${patient.allergies.join(", ") || "None"}
+- Intolerances: ${patient.intolerances.join(", ") || "None"}
+- Daily budget: ₱${dailyBudget} (monthly: ₱${patient.monthlyBudgetPhp})
+${labSection}${medSection}${abnormalSection}
+
+Food reference list (use these foodId values when recommending foods):
+${foodRef}
+
+Step 1 — Food Recommendations:
+Recommend 8 affordable, nutritious foods from the food reference list. Consider medical conditions, feeding method, budget, allergies, intolerances, medications, and lab abnormalities. Use Filipino ingredients.
+
+Step 2 — 7-Day Meal Plan:
+Create a 7-day meal plan using ONLY the foods from Step 1. Each day has breakfast, lunch, dinner, and 1-2 snacks. Total daily cost must stay within ₱${dailyBudget}. Meals must be texture-appropriate for ${patient.feedingMethod} feeding. Vary across the week.
+
+Return a JSON object with two keys:
+- "recommendations": array of exactly 8 objects, each with: "foodId" (string from the food reference list), "name", "description", "estimatedCost" (number), "nutrients" (string), "reason"
+- "meals": array of exactly 7 objects (Monday to Sunday), each with: "day", "breakfast", "lunch", "dinner", "snacks" (array), "totalCost" (number), "recipes" (object)
+
+If a food is not in the reference list, use "other" as foodId and set name to the food name.
+
+Example:
+{"recommendations": [{"foodId": "tofu", "name": "Tofu", "description": "High-protein soy product", "estimatedCost": 15, "nutrients": "Protein, calcium, iron", "reason": "Suitable for diabetes management"}], "meals": [{"day": "Monday", "breakfast": "Chicken Adobo", "lunch": "Sinigang na Hipon", "dinner": "Tinolang Manok", "snacks": ["Banana"], "totalCost": 120, "recipes": {"breakfast": {"ingredients": ["1 cup rice", "2 eggs"], "instructions": "Cook rice. Fry eggs.", "prepTime": "15 mins"}}}]}
+
+Return ONLY valid JSON. No markdown, no code fences, no explanation.`;
+
+  const content = await groqChat(
+    [
+      {
+        role: "system",
+        content:
+          "You are a Filipino clinical nutritionist. Always respond with valid JSON inside a JSON object. No markdown, no code fences.",
+      },
+      { role: "user", content: prompt },
+    ],
+    JSON_MODEL,
+    true,
+  );
+
+  const parsed = JSON.parse(content);
+  const recommendations = isFoodRecArray(parsed.recommendations)
+    ? parsed.recommendations
+    : isFoodRecArray(parsed.items)
+      ? parsed.items
+      : null;
+
+  const meals = isDayMealArray(parsed.meals)
+    ? parsed.meals
+    : isDayMealArray(parsed.mealPlan)
+      ? parsed.mealPlan
+      : isDayMealArray(parsed.plan)
+        ? parsed.plan
+        : null;
+
+  if (!recommendations || !meals) {
+    throw new Error(
+      `AI response missing recommendations or meals.\nKeys: ${Object.keys(parsed).join(", ")}\nPreview: ${JSON.stringify(parsed).slice(0, 300)}`,
+    );
+  }
+
+  return { recommendations, meals };
 }

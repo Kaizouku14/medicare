@@ -76,7 +76,7 @@ export async function renameSession(sessionId: string, title: string) {
 export async function getSessionMessages(
   sessionId: string,
   offset = 0,
-  limit = 30,
+  limit = 100,
 ) {
   const rows = await db
     .select()

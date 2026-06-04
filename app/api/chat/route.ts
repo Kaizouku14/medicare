@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     system: systemPrompt,
     messages: [{ role: "user", content: message }],
     temperature: 0.7,
-    maxOutputTokens: 200,
+    maxOutputTokens: 1024,
     onFinish: async (event) => {
       try {
         await saveMessage(session.id, "assistant", event.text);
