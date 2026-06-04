@@ -22,7 +22,7 @@ export function PageHeader({
             {label}
           </span>
         </div>
-        <h1 className="mt-3 font-serif text-4xl font-medium tracking-tight text-foreground">
+        <h1 className="mt-3 font-serif text-2xl sm:text-4xl font-medium tracking-tight text-foreground">
           {title}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">

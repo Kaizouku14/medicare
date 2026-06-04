@@ -25,16 +25,16 @@ export default async function ChatPage() {
   const activeHasMore = chatData.hasMore;
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-primary/15 to-primary/5 ring-1 ring-primary/20">
-          <Bot className="size-5 text-primary" />
+    <div className="flex h-[calc(100dvh-8rem)] flex-col sm:h-[calc(100vh-8rem)]">
+      <div className="mb-4 sm:mb-4 mb-3 flex items-center gap-3">
+        <div className="flex size-9 sm:size-10 items-center justify-center rounded-xl bg-linear-to-br from-primary/15 to-primary/5 ring-1 ring-primary/20 shrink-0">
+          <Bot className="size-4 sm:size-5 text-primary" />
         </div>
-        <div>
-          <h1 className="font-serif text-xl font-medium text-foreground">
+        <div className="min-w-0">
+          <h1 className="font-serif text-lg sm:text-xl font-medium text-foreground truncate">
             Caregiver Chat
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground truncate">
             Ask anything about patient care, medications, or nutrition
           </p>
         </div>

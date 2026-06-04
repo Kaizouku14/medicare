@@ -290,7 +290,7 @@ export function GlobalChatClient({
   }
 
   return (
-    <div className="flex flex-1 gap-4">
+    <div className="flex flex-1 flex-col sm:flex-row gap-3 sm:gap-4 min-h-0">
       <SessionList
         sessions={state.sessions}
         activeId={state.activeId}

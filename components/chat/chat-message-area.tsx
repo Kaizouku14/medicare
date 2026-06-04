@@ -39,9 +39,9 @@ export function ChatMessageArea({
           className="flex-1"
         />
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-end px-6 py-4">
+        <div className="flex flex-1 flex-col items-center justify-end px-4 sm:px-6 py-4">
           <div className="w-full max-w-md text-center">
-            <p className="mb-6 text-sm text-muted-foreground">
+            <p className="mb-4 sm:mb-6 text-sm text-muted-foreground">
               Start a new conversation
             </p>
             <div className="flex gap-2">
@@ -57,17 +57,17 @@ export function ChatMessageArea({
                 }}
                 placeholder="Type your question..."
                 disabled={creating}
-                className="h-10 text-sm"
+                className="h-10 sm:h-10 text-sm"
               />
               <Button
                 type="button"
-                size="sm"
+                size="default"
                 onClick={() => {
                   const t = newInput.trim();
                   if (t && !creating) onCreateSessionAndSend(t);
                 }}
                 disabled={creating || !newInput.trim()}
-                className="h-10 shrink-0 rounded-lg px-4"
+                className="h-10 shrink-0 rounded-lg px-4 min-w-[2.5rem]"
               >
                 {creating ? (
                   <Loader2 className="size-4 animate-spin" />

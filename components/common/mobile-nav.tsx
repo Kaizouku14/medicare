@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { Menu, X, Home, Plus, HeartPulse, ChevronRight, Bot } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -34,9 +33,21 @@ export function MobileNav({
   recentPatients: RecentPatient[];
 }) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   const pathname = usePathname();
+  const panelRef = useRef<HTMLElement>(null);
+  const touchStartX = useRef(0);
+  const isDragging = useRef(false);
 
   const close = useCallback(() => setOpen(false), []);
+
+  const navigate = useCallback(
+    (href: string) => {
+      close();
+      router.push(href);
+    },
+    [close, router],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -50,6 +61,33 @@ export function MobileNav({
       document.body.style.overflow = "";
     };
   }, [open, close]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    isDragging.current = true;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    const diff = e.touches[0].clientX - touchStartX.current;
+    if (diff < 0 && panelRef.current) {
+      panelRef.current.style.transform = `translateX(${Math.max(diff, -120)}px)`;
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (!panelRef.current) return;
+    const rect = panelRef.current.getBoundingClientRect();
+    panelRef.current.style.transform = "";
+    if (rect.right - rect.left > 0 && rect.left < 0) {
+      const translateX = Math.abs(rect.left);
+      if (translateX > 60) {
+        close();
+      }
+    }
+  }, [close]);
 
   const isPatientPage =
     pathname.startsWith("/dashboard/patients/") &&
@@ -81,25 +119,39 @@ export function MobileNav({
       )}
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-dvh w-72 flex-col border-r border-border/60 bg-card shadow-2xl transition-transform duration-300 ease-out md:hidden ${
+        ref={panelRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className={`fixed left-0 top-0 z-50 flex h-dvh w-72 max-w-[85vw] flex-col border-r border-border/60 bg-card shadow-2xl transition-transform duration-300 ease-out md:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-border/40 px-5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-primary to-primary/80 text-base font-bold text-primary-foreground shadow-xs">
-            M
-          </span>
-          <div>
-            <p className="font-serif text-base font-medium leading-tight text-foreground">
-              MediCare AI
-            </p>
-            <p className="text-xs leading-tight text-muted-foreground">
-              Care Management
-            </p>
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-border/40 px-4 sm:px-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary to-primary/80 text-base font-bold text-primary-foreground shadow-xs">
+              M
+            </span>
+            <div className="min-w-0">
+              <p className="font-serif text-base font-medium leading-tight text-foreground truncate">
+                MediCare AI
+              </p>
+              <p className="text-xs leading-tight text-muted-foreground truncate">
+                Care Management
+              </p>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={close}
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Close navigation"
+          >
+            <X className="size-4" />
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-4 pt-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-3 pt-6 pb-8">
           <div className="mb-4 flex items-center gap-2 px-3">
             <div className="flex size-5 items-center justify-center rounded-md bg-primary/10">
               <HeartPulse className="size-3 text-primary" />
@@ -112,11 +164,11 @@ export function MobileNav({
             const Icon = link.icon;
             const isActive = pathname === link.href;
             return (
-              <Link
+              <button
                 key={link.href}
-                href={link.href}
-                onClick={close}
-                className={`group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                type="button"
+                onClick={() => navigate(link.href)}
+                className={`group relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-all active:scale-[0.98] ${
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -127,7 +179,7 @@ export function MobileNav({
                 )}
                 <Icon className="size-4 shrink-0" />
                 {link.label}
-              </Link>
+              </button>
             );
           })}
 
@@ -147,30 +199,30 @@ export function MobileNav({
                     isPatientPage &&
                     pathname.includes(`/dashboard/patients/${p.id}`);
                   return (
-                    <Link
+                    <button
                       key={p.id}
-                      href={`/dashboard/patients/${p.id}`}
-                      onClick={close}
-                      className={`group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                      type="button"
+                      onClick={() => navigate(`/dashboard/patients/${p.id}`)}
+                      className={`group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all active:scale-[0.98] ${
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
-                      <Avatar className="size-6 rounded-md">
+                      <Avatar className="size-6 rounded-md shrink-0">
                         <AvatarFallback className="rounded-md text-[9px] font-bold bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
                           {getInitials(p.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="flex-1 truncate">{p.name}</span>
-                      <ChevronRight className="size-3 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0" />
-                    </Link>
+                      <span className="flex-1 truncate text-left">{p.name}</span>
+                      <ChevronRight className="size-3 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0 shrink-0" />
+                    </button>
                   );
                 })}
               </div>
             </>
           )}
-        </nav>
+        </div>
       </aside>
     </>
   );

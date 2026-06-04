@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer } from "react";
+import { useReducer, type ReactNode } from "react";
 import { FileText, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -187,7 +187,7 @@ export function DocumentList({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
+        <div className="flex items-center justify-center gap-1.5 pt-2 sm:gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -197,17 +197,33 @@ export function DocumentList({
           >
             <ChevronLeft className="size-4" />
           </Button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Button
-              key={p}
-              variant={p === state.page ? "default" : "outline"}
-              size="sm"
-              onClick={() => dispatch({ type: "GO_TO_PAGE", page: p })}
-              className="h-8 min-w-8 rounded-lg px-2 text-xs font-medium"
-            >
-              {p}
-            </Button>
-          ))}
+          {(() => {
+            const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+            const visible = totalPages <= 5
+              ? pages
+              : pages.filter((p) => p === 1 || p === totalPages || Math.abs(p - state.page) <= 1);
+            const result: ReactNode[] = [];
+            for (let i = 0; i < visible.length; i++) {
+              if (i > 0 && visible[i - 1] !== visible[i] - 1) {
+                result.push(<span key={`e-${i}`} className="px-1 text-xs text-muted-foreground">...</span>);
+              }
+              result.push(
+                <Button
+                  key={visible[i]}
+                  variant={visible[i] === state.page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => dispatch({ type: "GO_TO_PAGE", page: visible[i] })}
+                  className="h-8 min-w-8 rounded-lg px-2 text-xs font-medium max-sm:hidden"
+                >
+                  {visible[i]}
+                </Button>,
+              );
+            }
+            return result;
+          })()}
+          <span className="flex sm:hidden text-xs text-muted-foreground px-2">
+            {state.page} / {totalPages}
+          </span>
           <Button
             variant="outline"
             size="sm"

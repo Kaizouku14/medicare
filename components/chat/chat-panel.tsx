@@ -85,9 +85,9 @@ export function ChatPanel({
   }
 
   return (
-    <div className={`flex flex-col ${className}`}>
+    <div className={`flex flex-col min-h-0 ${className}`}>
       <ScrollArea
-        className={`flex-1 px-4 py-4 ${patientPanel ? "h-80" : "max-h-[calc(100vh-240px)]"}`}
+        className={`flex-1 px-3 sm:px-4 py-3 sm:py-4 ${patientPanel ? "h-80" : "min-h-0"}`}
       >
         <div className="space-y-4">
           {hasMoreEarlier && (
@@ -169,20 +169,20 @@ export function ChatPanel({
 
       <form
         onSubmit={onSubmit}
-        className="flex gap-2 border-t border-border/60 px-4 py-3"
+        className="flex gap-2 border-t border-border/60 px-3 sm:px-4 py-3"
       >
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your question..."
           disabled={isLoading}
-          className="h-9 text-sm"
+          className="h-10 sm:h-9 text-sm"
         />
         <Button
           type="submit"
           size="sm"
           disabled={isLoading || !input.trim()}
-          className="h-9 shrink-0 rounded-lg px-3"
+          className="h-10 sm:h-9 shrink-0 rounded-lg px-3 min-w-[2.5rem]"
         >
           {isLoading ? (
             <Loader2 className="size-4 animate-spin" />

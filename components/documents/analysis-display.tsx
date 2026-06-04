@@ -101,7 +101,7 @@ export function AnalysisDisplay({
               Extracted Values
             </p>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
             {analysis.extractedValues.map((v, i) => (
               <div
                 key={v.name}

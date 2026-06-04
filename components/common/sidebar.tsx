@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useCallback } from "react";
 import { Home, Plus, HeartPulse, ChevronRight, Bot } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -32,7 +32,15 @@ export function Sidebar({
 }: {
   recentPatients: RecentPatient[];
 }) {
+  const router = useRouter();
   const pathname = usePathname();
+
+  const navigate = useCallback(
+    (href: string) => {
+      router.push(href);
+    },
+    [router],
+  );
 
   const isPatientPage =
     pathname.startsWith("/dashboard/patients/") &&
@@ -53,10 +61,11 @@ export function Sidebar({
         const Icon = link.icon;
         const isActive = pathname === link.href;
         return (
-          <Link
+          <button
             key={link.href}
-            href={link.href}
-            className={`group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+            type="button"
+            onClick={() => navigate(link.href)}
+            className={`group relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
               isActive
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -67,7 +76,7 @@ export function Sidebar({
             )}
             <Icon className="size-4 shrink-0" />
             {link.label}
-          </Link>
+          </button>
         );
       })}
 
@@ -87,23 +96,24 @@ export function Sidebar({
                 isPatientPage &&
                 pathname.includes(`/dashboard/patients/${p.id}`);
               return (
-                <Link
+                <button
                   key={p.id}
-                  href={`/dashboard/patients/${p.id}`}
-                  className={`group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                  type="button"
+                  onClick={() => navigate(`/dashboard/patients/${p.id}`)}
+                  className={`group flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
                     isActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  <Avatar className="size-6 rounded-md">
+                  <Avatar className="size-6 rounded-md shrink-0">
                     <AvatarFallback className="rounded-md text-[9px] font-bold bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
                       {getInitials(p.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="truncate flex-1">{p.name}</span>
-                  <ChevronRight className="size-3 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0" />
-                </Link>
+                  <span className="truncate flex-1 text-left">{p.name}</span>
+                  <ChevronRight className="size-3 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0 shrink-0" />
+                </button>
               );
             })}
           </div>

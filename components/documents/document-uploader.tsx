@@ -126,14 +126,14 @@ export function DocumentUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={state.uploading}
-        className="group relative w-full overflow-hidden rounded-2xl border-2 border-dashed border-border/70 bg-linear-to-br from-card via-card to-secondary/5 p-8 text-left transition-all hover:border-primary/30 hover:bg-secondary/10"
+        className="group relative w-full overflow-hidden rounded-2xl border-2 border-dashed border-border/70 bg-linear-to-br from-card via-card to-secondary/5 p-5 sm:p-8 text-left transition-all hover:border-primary/30 hover:bg-secondary/10"
       >
         <div className="absolute -right-8 -top-8 size-28 rounded-full bg-primary/5 blur-2xl transition-all group-hover:scale-150" />
         <div className="relative flex flex-col items-center gap-3 text-center">
           {state.uploading ? (
             <>
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
-                <Loader2 className="size-6 animate-spin text-primary" />
+              <div className="flex size-12 sm:size-14 items-center justify-center rounded-2xl bg-primary/10">
+                <Loader2 className="size-5 sm:size-6 animate-spin text-primary" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">
@@ -143,7 +143,7 @@ export function DocumentUploader({
                   This may take 10–30 seconds per file
                 </p>
               </div>
-              <div className="mt-1 h-1 w-48 overflow-hidden rounded-full bg-primary/10">
+              <div className="mt-1 h-1 w-36 sm:w-48 overflow-hidden rounded-full bg-primary/10">
                 <div
                   className="h-full rounded-full bg-linear-to-r from-transparent via-primary/40 to-transparent transition-all"
                   style={{
@@ -154,8 +154,8 @@ export function DocumentUploader({
             </>
           ) : (
             <>
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 ring-1 ring-primary/20 transition-transform group-hover:scale-105">
-                <Upload className="size-6 text-primary" />
+              <div className="flex size-12 sm:size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 ring-1 ring-primary/20 transition-transform group-hover:scale-105">
+                <Upload className="size-5 sm:size-6 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">
@@ -165,9 +165,9 @@ export function DocumentUploader({
                   Lab results, CT scans, or ECG reports
                 </p>
               </div>
-              <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-2">
-                <Files className="size-3.5 text-muted-foreground" />
-                <span className="text-[11px] text-muted-foreground">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 rounded-lg bg-muted/50 px-3 sm:px-4 py-2">
+                <Files className="size-3.5 text-muted-foreground shrink-0" />
+                <span className="text-[11px] text-muted-foreground text-center sm:text-left leading-relaxed">
                   PNG, JPEG, WebP &middot; Max 3 MB &middot; Up to {MAX_FILES} files
                 </span>
               </div>

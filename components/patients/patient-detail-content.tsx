@@ -48,7 +48,7 @@ function bmiCategory(bmi: number): { label: string; color: string } {
 
 export function PatientDetailContent({ patient }: { patient: Patient }) {
   return (
-    <div className="animate-fade-in p-4 max-w-7xl mx-auto space-y-6">
+    <div className="animate-fade-in sm:p-4 p-0 max-w-7xl mx-auto space-y-6">
       <Link
         href="/dashboard"
         className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
@@ -102,7 +102,7 @@ function PatientProfileCard({ patient }: { patient: Patient }) {
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-2 w-full sm:w-auto justify-end pt-1">
+        <div className="flex shrink-0 gap-2 w-full sm:w-auto justify-end max-md:justify-start pt-1">
           <Button
             asChild
             variant="outline"

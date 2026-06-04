@@ -60,15 +60,17 @@ export default async function MealPlanPage({ params }: Props) {
         />
 
         {/* Patient context bar */}
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border/60 bg-card px-5 py-3.5">
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="mt-6 flex flex-col gap-2 rounded-xl border border-border/60 bg-card px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:px-5 sm:py-3.5">
+          <span className="inline-flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Diagnoses:</span>{" "}
-            {patient.diagnoses.map((d) => d.replace(/-/g, " ")).join(", ")}
+            <span className="break-words">
+              {patient.diagnoses.map((d) => d.replace(/-/g, " ")).join(", ")}
+            </span>
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
-          <span className="inline-flex items-center text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Budget:</span>{" "}
-            <PhilippinePeso className="size-3" />
+            <PhilippinePeso className="size-3 shrink-0" />
             {patient.monthlyBudgetPhp.toLocaleString()}/mo
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />

@@ -108,7 +108,7 @@ export function MealPlanView({
               <Button
                 variant="ghost"
                 size="sm"
-                className="mt-2 h-7 gap-1 rounded-lg text-[10px] text-muted-foreground opacity-0 transition-all hover:text-foreground group-hover:opacity-100"
+                className="mt-2 h-7 gap-1 rounded-lg text-[10px] text-muted-foreground md:opacity-0 transition-all hover:text-foreground md:group-hover:opacity-100"
                 onClick={() => onSubstitute(food.name)}
               >
                 <RefreshCw className="size-3" />
@@ -246,8 +246,8 @@ export function MealPlanView({
                                   }
                                   className="flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary"
                                 >
-                                  <ChefHat className="size-2.5" />{" "}
-                                  {snack} recipe
+                                  <ChefHat className="size-2.5" /> {snack}{" "}
+                                  recipe
                                 </button>
                               ) : null;
                             })}
