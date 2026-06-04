@@ -27,9 +27,7 @@ type LabSeries = {
 };
 
 function parseRange(range: string): { low: number; high: number } | null {
-  const match = range.match(
-    /(\d+(?:\.\d+)?)\s*[-–—to]+\s*(\d+(?:\.\d+)?)/,
-  );
+  const match = range.match(/(\d+(?:\.\d+)?)\s*[-–—to]+\s*(\d+(?:\.\d+)?)/);
   if (match) {
     return { low: Number(match[1]), high: Number(match[2]) };
   }
@@ -49,11 +47,7 @@ function parseValue(v: string): number | null {
   return isNaN(n) ? null : n;
 }
 
-export function LabTrends({
-  documents,
-}: {
-  documents: PatientDocument[];
-}) {
+export function LabTrends({ documents }: { documents: PatientDocument[] }) {
   const [selectedLab, setSelectedLab] = useState<string | null>(null);
 
   const series = useMemo(() => {
@@ -125,7 +119,10 @@ export function LabTrends({
             <h2 className="font-serif text-xl font-medium text-foreground">
               {activeLab.name}
             </h2>
-            <Badge variant="outline" className="rounded-full text-[10px] font-medium">
+            <Badge
+              variant="outline"
+              className="rounded-full text-[10px] font-medium"
+            >
               {activeLab.unit}
             </Badge>
           </div>
@@ -146,11 +143,13 @@ export function LabTrends({
               key={entry.date}
               className={`flex items-center justify-between rounded-lg px-4 py-2.5 ${
                 entry.isAbnormal
-                  ? "bg-red-50/50 border border-red-200/60"
+                  ? "bg-red-50/50 border border-red-200/60  doc-badge-abnormal"
                   : "bg-emerald-50/50 border border-emerald-200/60"
               }`}
             >
-              <span className="text-xs text-muted-foreground">{entry.date}</span>
+              <span className="text-xs text-muted-foreground">
+                {entry.date}
+              </span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-foreground">
                   {entry.value}
@@ -159,7 +158,7 @@ export function LabTrends({
                   variant="outline"
                   className={`rounded-full text-[10px] font-medium ${
                     entry.isAbnormal
-                      ? "border-red-300 text-red-700"
+                      ? "border-red-300 text-red-700 dark:text-red-300"
                       : "border-emerald-300 text-emerald-700"
                   }`}
                 >
@@ -300,7 +299,9 @@ function LabChart({ lab }: { lab: LabSeries }) {
 
   const rangeLowY = y(range.low);
   const rangeHighY = y(range.high);
-  const linePath = values.map((v, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(v)}`).join(" ");
+  const linePath = values
+    .map((v, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(v)}`)
+    .join(" ");
 
   return (
     <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="w-full max-h-56">
@@ -333,7 +334,9 @@ function LabChart({ lab }: { lab: LabSeries }) {
           key={e.date}
           x={x(i)}
           y={CHART_H - 5}
-          textAnchor={i === 0 ? "start" : i === values.length - 1 ? "end" : "middle"}
+          textAnchor={
+            i === 0 ? "start" : i === values.length - 1 ? "end" : "middle"
+          }
           className="fill-muted-foreground text-[9px]"
         >
           {e.date}

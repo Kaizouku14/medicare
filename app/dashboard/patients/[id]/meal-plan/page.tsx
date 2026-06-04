@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Sparkles, CalendarDays } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  CalendarDays,
+  PhilippinePeso,
+  FlaskConical,
+} from "lucide-react";
 
 import { PageHeader } from "@/components/common/page-header";
 import { MealPlanGenerator } from "@/components/patients/meal-plans/meal-plan-generator";
@@ -42,7 +48,7 @@ export default async function MealPlanPage({ params }: Props) {
         className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3 transition-transform group-hover:-translate-x-0.5" />
-        {patient.name} Â· Profile
+        {patient.name} · Profile
       </Link>
 
       <div className="mt-6">
@@ -60,8 +66,9 @@ export default async function MealPlanPage({ params }: Props) {
             {patient.diagnoses.map((d) => d.replace(/-/g, " ")).join(", ")}
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Budget:</span> â‚±
+          <span className="inline-flex items-center text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">Budget:</span>{" "}
+            <PhilippinePeso className="size-3" />
             {patient.monthlyBudgetPhp.toLocaleString()}/mo
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
@@ -73,7 +80,9 @@ export default async function MealPlanPage({ params }: Props) {
             <>
               <span className="hidden size-1 rounded-full bg-border sm:inline" />
               <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600">
-                <span className="flex size-3 items-center justify-center rounded-full bg-emerald-100 text-[8px] font-bold text-emerald-700">âœ“</span>
+                <span className="flex size-4 items-center justify-center rounded-full bg-emerald-100 text-[8px] font-bold text-emerald-700">
+                  <FlaskConical className="size-3" />
+                </span>
                 Lab data from{" "}
                 {new Date(latestDoc.analyzedAt!).toLocaleDateString("en-PH", {
                   month: "short",
@@ -87,7 +96,8 @@ export default async function MealPlanPage({ params }: Props) {
               <span className="hidden size-1 rounded-full bg-border sm:inline" />
               <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CalendarDays className="size-3" />
-                {pastPlans.length} past {pastPlans.length === 1 ? "plan" : "plans"}
+                {pastPlans.length} past{" "}
+                {pastPlans.length === 1 ? "plan" : "plans"}
               </span>
             </>
           )}
@@ -96,7 +106,11 @@ export default async function MealPlanPage({ params }: Props) {
         {/* Two-column layout */}
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <MealPlanGenerator patient={patient} latestDoc={latestDoc} existingPlan={existingPlan} />
+            <MealPlanGenerator
+              patient={patient}
+              latestDoc={latestDoc}
+              existingPlan={existingPlan}
+            />
           </div>
 
           {pastPlans.length > 0 && (

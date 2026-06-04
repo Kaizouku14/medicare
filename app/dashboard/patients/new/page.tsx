@@ -23,7 +23,9 @@ export default function NewPatientPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-serif text-2xl font-medium">New Patient</CardTitle>
+          <CardTitle className="font-serif text-2xl font-medium">
+            New Patient
+          </CardTitle>
           <CardDescription>
             Add profile details, conditions, and care constraints.
           </CardDescription>

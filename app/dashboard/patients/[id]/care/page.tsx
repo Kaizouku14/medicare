@@ -16,7 +16,9 @@ type Props = {
 
 export default async function CarePage({ params }: Props) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { id } = await params;
@@ -29,7 +31,7 @@ export default async function CarePage({ params }: Props) {
   ]);
 
   const activeCount = medications.filter(
-    (m) => !m.endDate || m.endDate >= new Date().toISOString().split("T")[0]
+    (m) => !m.endDate || m.endDate >= new Date().toISOString().split("T")[0],
   ).length;
 
   return (
@@ -39,7 +41,7 @@ export default async function CarePage({ params }: Props) {
         className="group inline-flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3 transition-transform group-hover:-translate-x-0.5" />
-        {patient.name} Â· Profile
+        {patient.name} · Profile
       </Link>
 
       <div className="mt-6">
@@ -57,12 +59,16 @@ export default async function CarePage({ params }: Props) {
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Active medications:</span>{" "}
+            <span className="font-semibold text-foreground">
+              Active medications:
+            </span>{" "}
             {activeCount}
           </span>
           <span className="hidden size-1 rounded-full bg-border sm:inline" />
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Visits logged:</span>{" "}
+            <span className="font-semibold text-foreground">
+              Visits logged:
+            </span>{" "}
             {visits.length}
           </span>
         </div>
@@ -80,10 +86,7 @@ export default async function CarePage({ params }: Props) {
               View full medication schedule &rarr;
             </Link>
           </div>
-          <VisitNotes
-            patientId={patient.id}
-            initialVisits={visits}
-          />
+          <VisitNotes patientId={patient.id} initialVisits={visits} />
         </div>
       </div>
     </div>

@@ -13,10 +13,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -124,20 +121,42 @@ export function ExpenseTracker({
         const res = await fetch(`/api/patients/${patientId}/expenses`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ expenseId: form.editingId, amount: amountNum, note: form.note || null }),
+          body: JSON.stringify({
+            expenseId: form.editingId,
+            amount: amountNum,
+            note: form.note || null,
+          }),
         });
-        const data = (await res.json()) as { expense?: Expense; error?: string };
-        if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
-        setExpenses((prev) => prev.map((e) => e.id === form.editingId ? data.expense! : e));
+        const data = (await res.json()) as {
+          expense?: Expense;
+          error?: string;
+        };
+        if (!res.ok) {
+          toast.error(data.error ?? "Failed.");
+          return;
+        }
+        setExpenses((prev) =>
+          prev.map((e) => (e.id === form.editingId ? data.expense! : e)),
+        );
         toast.success("Expense updated");
       } else {
         const res = await fetch(`/api/patients/${patientId}/expenses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ date: today, amount: amountNum, note: form.note || undefined }),
+          body: JSON.stringify({
+            date: today,
+            amount: amountNum,
+            note: form.note || undefined,
+          }),
         });
-        const data = (await res.json()) as { expense?: Expense; error?: string };
-        if (!res.ok) { toast.error(data.error ?? "Failed."); return; }
+        const data = (await res.json()) as {
+          expense?: Expense;
+          error?: string;
+        };
+        if (!res.ok) {
+          toast.error(data.error ?? "Failed.");
+          return;
+        }
         setExpenses((prev) => [data.expense!, ...prev]);
         toast.success("Expense logged");
       }
@@ -156,10 +175,16 @@ export function ExpenseTracker({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ expenseId }),
       });
-      if (!res.ok) { const d = await res.json() as { error?: string }; toast.error(d.error ?? "Failed."); return; }
+      if (!res.ok) {
+        const d = (await res.json()) as { error?: string };
+        toast.error(d.error ?? "Failed.");
+        return;
+      }
       setExpenses((prev) => prev.filter((e) => e.id !== expenseId));
       toast.success("Expense deleted");
-    } catch { toast.error("Network error."); }
+    } catch {
+      toast.error("Network error.");
+    }
   }
 
   function startEdit(expense: Expense) {
@@ -185,11 +210,17 @@ export function ExpenseTracker({
         {/* Today */}
         <div className="flex items-center justify-between px-5 py-4">
           <div>
-            <p className="text-xs font-medium text-foreground">Today&apos;s budget</p>
-            <p className="text-[11px] text-muted-foreground">{formatCurrency(dailyBudget)} / day</p>
+            <p className="text-xs font-medium text-foreground">
+              Today&apos;s budget
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              {formatCurrency(dailyBudget)} / day
+            </p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-bold text-foreground">{formatCurrency(todayTotal)}</p>
+            <p className="text-sm font-bold text-foreground">
+              {formatCurrency(todayTotal)}
+            </p>
             <div className="flex items-center gap-1">
               {remaining >= 0 ? (
                 <TrendingDown className="size-3 text-emerald-500" />
@@ -201,7 +232,9 @@ export function ExpenseTracker({
                   remaining >= 0 ? "text-emerald-600" : "text-red-600"
                 }`}
               >
-                {remaining >= 0 ? `${formatCurrency(remaining)} left` : `${formatCurrency(Math.abs(remaining))} over`}
+                {remaining >= 0
+                  ? `${formatCurrency(remaining)} left`
+                  : `${formatCurrency(Math.abs(remaining))} over`}
               </span>
             </div>
           </div>
@@ -229,29 +262,51 @@ export function ExpenseTracker({
         {/* Recent expenses list with edit/delete */}
         <div className="divide-y divide-border/30">
           {expenses.slice(0, 10).map((exp) => (
-            <div key={exp.id} className="flex items-center justify-between px-5 py-2.5">
+            <div
+              key={exp.id}
+              className="flex items-center justify-between px-5 py-2.5"
+            >
               <div>
-                <p className="text-xs font-medium text-foreground">{formatCurrency(exp.amount)}</p>
-                <p className="text-[10px] text-muted-foreground">{exp.date}{exp.note ? ` · ${exp.note}` : ""}</p>
+                <p className="text-xs font-medium text-foreground">
+                  {formatCurrency(exp.amount)}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {exp.date}
+                  {exp.note ? ` · ${exp.note}` : ""}
+                </p>
               </div>
               <div className="flex gap-1">
-                <button type="button" onClick={() => startEdit(exp)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+                <button
+                  type="button"
+                  onClick={() => startEdit(exp)}
+                  className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
                   <Pencil className="size-3" />
                 </button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button type="button" className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600">
+                    <button
+                      type="button"
+                      className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                    >
                       <Trash2 className="size-3" />
                     </button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete expense?</AlertDialogTitle>
-                      <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                      <AlertDialogDescription>
+                        This action cannot be undone.
+                      </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction variant="destructive" onClick={() => handleDelete(exp.id)}>Delete</AlertDialogAction>
+                      <AlertDialogAction
+                        variant="destructive"
+                        onClick={() => handleDelete(exp.id)}
+                      >
+                        Delete
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -267,7 +322,10 @@ export function ExpenseTracker({
               <FieldGroup>
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <FieldLabel htmlFor="expense-amount" className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <FieldLabel
+                      htmlFor="expense-amount"
+                      className="text-[10px] uppercase tracking-wider text-muted-foreground"
+                    >
                       Amount (₱)
                     </FieldLabel>
                     <Input
@@ -276,20 +334,27 @@ export function ExpenseTracker({
                       step="0.01"
                       min="0"
                       value={form.amount}
-                      onChange={(e) => dispatch({ type: "SET_AMOUNT", value: e.target.value })}
+                      onChange={(e) =>
+                        dispatch({ type: "SET_AMOUNT", value: e.target.value })
+                      }
                       placeholder="150"
                       className="h-8 text-sm"
                       required
                     />
                   </div>
-                  <div className="flex-[2]">
-                    <FieldLabel htmlFor="expense-note" className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className="flex-2">
+                    <FieldLabel
+                      htmlFor="expense-note"
+                      className="text-[10px] uppercase tracking-wider text-muted-foreground"
+                    >
                       Note (optional)
                     </FieldLabel>
                     <Input
                       id="expense-note"
                       value={form.note}
-                      onChange={(e) => dispatch({ type: "SET_NOTE", value: e.target.value })}
+                      onChange={(e) =>
+                        dispatch({ type: "SET_NOTE", value: e.target.value })
+                      }
                       placeholder="Groceries"
                       className="h-8 text-sm"
                     />
