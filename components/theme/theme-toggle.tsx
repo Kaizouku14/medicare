@@ -1,10 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        className="relative flex size-9 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+        aria-label="Toggle theme"
+      >
+        <Sun className="size-4" />
+      </button>
+    );
+  }
 
   return (
     <button

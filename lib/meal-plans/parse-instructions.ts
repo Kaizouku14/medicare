@@ -11,8 +11,8 @@ export function parseInstructions(instructions: string): string[] {
 
   return instructions
     .split(". ")
-    .filter(Boolean)
-    .map((s) => s.replace(/^\d+\s*/, "").trim())
-    .filter(Boolean)
-    .map((s) => (s.endsWith(".") ? s : `${s}.`));
+    .flatMap((s) => {
+      const t = s.replace(/^\d+\s*/, "").trim();
+      return t ? (t.endsWith(".") ? [t] : [`${t}.`]) : [];
+    });
 }
