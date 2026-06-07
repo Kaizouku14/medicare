@@ -1,20 +1,16 @@
 "use client";
 
 import { useReducer } from "react";
-import {
-  Sparkles,
-  Loader2,
-  AlertCircle,
-  RotateCcw,
-  PhilippinePeso,
-} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { MealPlanEditor } from "./meal-plan-editor";
 import { MealPlanView } from "./mealplan-view";
 import { RecipeDialog } from "./recipe-dialog";
+import { SubstituteDialog } from "./substitute-dialog";
+import { GenerateCard } from "./generate-card";
+import { readSSEStream } from "@/lib/sse";
+import { replaceFoodInMeals } from "@/lib/meal-plans/replace-food";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +26,6 @@ import type {
   Patient,
   PatientDocument,
   FoodRecommendation,
-  DayMeal,
   MealRecipe,
 } from "@/types/domain";
 
@@ -96,28 +91,6 @@ function mealPlanReducer(
     default:
       return state;
   }
-}
-
-function replaceFoodInMeals(
-  meals: DayMeal[],
-  oldName: string,
-  newName: string,
-  recommendations: FoodRecommendation[],
-  oldFoodId?: string,
-): DayMeal[] {
-  const matchName = oldFoodId
-    ? (name: string) => {
-        const entry = recommendations.find((r) => r.foodId === oldFoodId);
-        return entry ? entry.name === name : name === oldName;
-      }
-    : (name: string) => name === oldName;
-  return meals.map((day) => ({
-    ...day,
-    breakfast: matchName(day.breakfast) ? newName : day.breakfast,
-    lunch: matchName(day.lunch) ? newName : day.lunch,
-    dinner: matchName(day.dinner) ? newName : day.dinner,
-    snacks: day.snacks.map((s) => (matchName(s) ? newName : s)),
-  }));
 }
 
 export function MealPlanGenerator({
@@ -186,39 +159,22 @@ export function MealPlanGenerator({
     }
 
     const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
 
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const event = JSON.parse(line.slice(6));
-            if (event.error) {
-              toast.error(event.error);
-              dispatch({ type: "SET_ERROR", error: event.error });
-              break;
-            }
-            if (event.message) {
-              dispatch({ type: "SET_GENERATING", generating: true, message: event.message });
-            }
-            if (event.plan) {
-              dispatch({ type: "SET_PLAN", plan: event.plan });
-              toast.success("Meal plan generated successfully");
-            }
-          } catch {
-            // skip malformed events
-          }
+      await readSSEStream(reader, (event) => {
+        if (event.error) {
+          toast.error(event.error as string);
+          dispatch({ type: "SET_ERROR", error: event.error as string });
+          return;
         }
-      }
+        if (event.message) {
+          dispatch({ type: "SET_GENERATING", generating: true, message: event.message as string });
+        }
+        if (event.plan) {
+          dispatch({ type: "SET_PLAN", plan: event.plan as MealPlan });
+          toast.success("Meal plan generated successfully");
+        }
+      });
     } finally {
       reader.releaseLock();
       dispatch({ type: "SET_GENERATING", generating: false });
@@ -252,64 +208,17 @@ export function MealPlanGenerator({
 
   return (
     <div className="space-y-8">
-      {/* Generate button area */}
-      <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/70 bg-linear-to-br from-card via-card to-secondary/10 p-8">
-        <div className="absolute -right-12 -top-12 size-40 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-8 -left-8 size-24 rounded-full bg-secondary/20 blur-2xl" />
-
-        <div className="relative flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-primary/15 to-primary/5 ring-1 ring-primary/20">
-            <Sparkles className="size-6 text-primary" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              {plan ? "Meal plan generated" : "Ready to generate"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {plan
-                ? "Regenerate to get updated recommendations based on the latest profile"
-                : `AI will analyze ${patient.name}'s clinical profile${latestDoc ? " and latest lab results" : ""} to create a personalized weekly plan`}
-            </p>
-          </div>
-          <Button
-            onClick={() => {
-              if (plan) dispatch({ type: "SET_CONFIRM_OPEN", open: true });
-              else generate();
-            }}
-            disabled={generating}
-            size="lg"
-            className="h-10 w-full shrink-0 rounded-xl px-6 text-sm font-semibold shadow-xs sm:w-auto"
-          >
-            {generating ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Generating…
-              </>
-            ) : plan ? (
-              <>
-                <RotateCcw className="mr-2 size-4" />
-                Regenerate
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 size-4" />
-                Generate Plan
-              </>
-            )}
-          </Button>
-        </div>
-
-        {generating && (
-          <div className="relative mt-5 flex items-center gap-2.5">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/10">
-              <div className="h-full w-1/2 animate-shimmer rounded-full bg-linear-to-r from-transparent via-primary/40 to-transparent" />
-            </div>
-            <span className="shrink-0 text-xs font-medium text-muted-foreground animate-pulse">
-              {generationMessage || "Starting..."}
-            </span>
-          </div>
-        )}
-      </div>
+      <GenerateCard
+        hasPlan={!!plan}
+        generating={generating}
+        generationMessage={generationMessage}
+        patientName={patient.name}
+        hasLatestDoc={!!latestDoc}
+        onGenerate={() => {
+          if (plan) dispatch({ type: "SET_CONFIRM_OPEN", open: true });
+          else generate();
+        }}
+      />
 
       {error && (
         <Alert
@@ -418,169 +327,7 @@ export function MealPlanGenerator({
         onManualSubChange={(v) =>
           dispatch({ type: "SET_MANUAL_SUB", value: v })
         }
-        onLoadingChange={(loading) =>
-          dispatch({ type: "SET_SUBS_LOADING", loading })
-        }
       />
     </div>
-  );
-}
-
-function SubstituteDialog({
-  open,
-  substituting,
-  subsLoading,
-  substitutes,
-  manualSub,
-  plan,
-  patientId,
-  onSelect,
-  onClose,
-  onManualSubChange,
-}: {
-  open: boolean;
-  substituting: string | null;
-  subsLoading: boolean;
-  substitutes: FoodRecommendation[] | null;
-  manualSub: string;
-  plan: MealPlan | null;
-  patientId: string;
-  onSelect: (food: string, sub: FoodRecommendation | string) => void;
-  onClose: () => void;
-  onManualSubChange: (v: string) => void;
-  onLoadingChange: (loading: boolean) => void;
-}) {
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        if (!o) onClose();
-      }}
-    >
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="font-serif text-lg font-medium">
-            Substitute: {substituting}
-          </DialogTitle>
-          <DialogDescription>
-            Choose an AI-suggested alternative or type your own
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3">
-          {subsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">
-                Finding alternatives...
-              </span>
-            </div>
-          ) : substitutes ? (
-            <div className="space-y-2">
-              {substitutes.map((sub) => (
-                <button
-                  key={sub.name}
-                  type="button"
-                  className="w-full rounded-xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/20"
-                    onClick={async () => {
-                      if (!plan || !substituting) return;
-                      const oldRec = plan.recommendations.find((r) => r.name === substituting || r.foodId === substituting);
-                      onSelect(substituting, sub);
-                      onClose();
-                    try {
-                      await fetch(`/api/patients/${patientId}/meal-plan/edit`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          planId: plan.id,
-                          recommendations: plan.recommendations.map((r) =>
-                            (oldRec?.foodId && r.foodId === oldRec.foodId) || r.name === substituting
-                              ? { ...sub, name: sub.name }
-                              : r,
-                          ),
-                          meals: replaceFoodInMeals(
-                            plan.meals,
-                            substituting,
-                            sub.name,
-                            plan.recommendations,
-                            oldRec?.foodId,
-                          ),
-                        }),
-                      });
-                    } catch {}
-                    toast.success(`Replaced with ${sub.name}`);
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-foreground">
-                      {sub.name}
-                    </p>
-                    <Badge
-                      variant="secondary"
-                      className="rounded-full text-xs font-medium flex items-center gap-1"
-                    >
-                      <PhilippinePeso className="size-2.5" />
-                      {sub.estimatedCost}
-                    </Badge>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {sub.description}
-                  </p>
-                  <p className="mt-0.5 text-[10px] italic text-muted-foreground/70">
-                    {sub.reason}
-                  </p>
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="flex gap-2">
-            <Input
-              value={manualSub}
-              onChange={(e) => onManualSubChange(e.target.value)}
-              placeholder="Or type your own substitute..."
-              className="h-9 text-sm"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 shrink-0 text-xs"
-              onClick={async () => {
-                if (!plan || !substituting || !manualSub.trim()) return;
-                const newName = manualSub.trim();
-                const oldRec = plan.recommendations.find((r) => r.name === substituting || r.foodId === substituting);
-                onSelect(substituting, newName);
-                onClose();
-                onManualSubChange("");
-                try {
-                  await fetch(`/api/patients/${patientId}/meal-plan/edit`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      planId: plan.id,
-                      recommendations: plan.recommendations.map((r) =>
-                        (oldRec?.foodId && r.foodId === oldRec.foodId) || r.name === substituting
-                          ? { ...r, name: newName }
-                          : r,
-                      ),
-                      meals: replaceFoodInMeals(
-                        plan.meals,
-                        substituting,
-                        newName,
-                        plan.recommendations,
-                        oldRec?.foodId,
-                      ),
-                    }),
-                  });
-                } catch {}
-                toast.success(`Replaced with ${newName}`);
-              }}
-            >
-              Apply
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }

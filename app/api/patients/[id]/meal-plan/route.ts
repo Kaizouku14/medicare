@@ -33,10 +33,13 @@ export async function POST(request: Request, { params }: Params) {
         { status: 429 },
       );
     }
-    const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
+    const [{ user }, { id }, body] = await Promise.all([
+      requireAuth(),
+      params,
+      request.json().catch(() => ({}) as Record<string, string>),
+    ]);
     const patient = await requirePatientAccess(user.id, id);
-
-    const { clientDate } = await request.json().catch(() => ({}) as Record<string, string>);
+    const clientDate = (body as Record<string, string> | undefined)?.clientDate;
 
     const enc = new TextEncoder();
     const stream = new ReadableStream({

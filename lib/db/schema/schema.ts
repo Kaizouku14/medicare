@@ -10,7 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const feedingMethodEnum = pgEnum("feeding_method", [
+const feedingMethodEnum = pgEnum("feeding_method", [
   "oral",
   "ngt-soft",
   "ngt-pureed",

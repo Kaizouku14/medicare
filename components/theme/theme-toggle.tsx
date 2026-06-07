@@ -12,6 +12,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="relative flex size-9 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
       aria-label="Toggle theme"
+      suppressHydrationWarning
     >
       <Sun
         className={`size-4 transition-all duration-300 ${
@@ -19,6 +20,7 @@ export function ThemeToggle() {
             ? "scale-0 opacity-0"
             : "scale-100 opacity-100"
         }`}
+        suppressHydrationWarning
       />
       <Moon
         className={`absolute size-4 transition-all duration-300 ${
@@ -26,6 +28,7 @@ export function ThemeToggle() {
             ? "scale-100 opacity-100"
             : "scale-0 opacity-0"
         }`}
+        suppressHydrationWarning
       />
     </button>
   );

@@ -1,4 +1,4 @@
-export const FEEDING_METHOD_PROFILES = {
+const FEEDING_METHOD_PROFILES = {
   oral: {
     label: "Oral",
     texture:
@@ -22,7 +22,7 @@ export const FEEDING_METHOD_PROFILES = {
   },
 } as const;
 
-export type FeedingMethodProfile =
+type FeedingMethodProfile =
   (typeof FEEDING_METHOD_PROFILES)[keyof typeof FEEDING_METHOD_PROFILES];
 
 export function getFeedingMethodProfile(

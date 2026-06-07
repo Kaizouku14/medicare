@@ -82,9 +82,9 @@ export function MealPlanEditor({
       if (field === "nutrients" && typeof next[index].nutrients === "object" && typeof value === "string") {
         const obj: Record<string, string> = {};
         for (const part of value.split(" | ")) {
-          const sep = part.indexOf(": ");
-          if (sep !== -1) {
-            obj[part.slice(0, sep).trim()] = part.slice(sep + 2).trim();
+          const [key, ...rest] = part.split(": ");
+          if (rest.length > 0) {
+            obj[key.trim()] = rest.join(": ").trim();
           }
         }
         next[index] = { ...next[index], nutrients: Object.keys(obj).length > 0 ? obj : value };

@@ -1,33 +1,11 @@
 "use client";
 
 import { useState, useReducer } from "react";
-import { Pill, Plus, Trash2, Loader2, Pencil, X, Clock } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Pill } from "lucide-react";
 import { toast } from "sonner";
 import type { Medication } from "@/types/domain";
-
-function formatTime(time: string): string {
-  const [h, m] = time.split(":").map(Number);
-  if (isNaN(h) || isNaN(m)) return time;
-  const period = h >= 12 ? "PM" : "AM";
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour12}:${m.toString().padStart(2, "0")} ${period}`;
-}
+import MedicationForm from "./medication-form";
+import MedicationRow from "./medication-row";
 
 type TimeEntry = { id: string; value: string };
 
@@ -48,19 +26,8 @@ const initialFormState = {
   notes: "",
 };
 
-type FormAction =
-  | {
-      type: "SET_FIELD";
-      field:
-        | "name"
-        | "dosage"
-        | "frequency"
-        | "route"
-        | "startDate"
-        | "endDate"
-        | "notes";
-      value: string;
-    }
+export type FormAction =
+  | { type: "SET_FIELD"; field: "name" | "dosage" | "frequency" | "route" | "startDate" | "endDate" | "notes"; value: string }
   | { type: "SET_TIMES"; value: TimeEntry[] }
   | { type: "ADD_TIME" }
   | { type: "REMOVE_TIME"; id: string }
@@ -77,15 +44,9 @@ function formReducer(state: typeof initialFormState, action: FormAction) {
     case "ADD_TIME":
       return { ...state, times: [...state.times, { id: nextTimeId(), value: "" }] };
     case "REMOVE_TIME":
-      return {
-        ...state,
-        times: state.times.filter((t) => t.id !== action.id),
-      };
+      return { ...state, times: state.times.filter((t) => t.id !== action.id) };
     case "UPDATE_TIME":
-      return {
-        ...state,
-        times: state.times.map((t) => (t.id === action.id ? { ...t, value: action.value } : t)),
-      };
+      return { ...state, times: state.times.map((t) => (t.id === action.id ? { ...t, value: action.value } : t)) };
     case "START_EDIT":
       return {
         editingId: action.medication.id,
@@ -229,229 +190,15 @@ export function MedicationTracker({
         </p>
       </div>
 
-      {/* Form at top */}
       <div className="border-b border-border/40 px-5 py-3">
-        {showForm ? (
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <FieldGroup>
-                <div>
-                  <FieldLabel
-                    htmlFor="med-name"
-                    className="text-[10px] uppercase text-muted-foreground"
-                  >
-                    Name
-                  </FieldLabel>
-                  <Input
-                    id="med-name"
-                    value={formState.name}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FIELD",
-                        field: "name",
-                        value: e.target.value,
-                      })
-                    }
-                    className="h-8 text-sm"
-                    placeholder="Metformin"
-                    required
-                  />
-                </div>
-                <div>
-                  <FieldLabel
-                    htmlFor="med-dosage"
-                    className="text-[10px] uppercase text-muted-foreground"
-                  >
-                    Dosage
-                  </FieldLabel>
-                  <Input
-                    id="med-dosage"
-                    value={formState.dosage}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FIELD",
-                        field: "dosage",
-                        value: e.target.value,
-                      })
-                    }
-                    className="h-8 text-sm"
-                    placeholder="500mg"
-                    required
-                  />
-                </div>
-              </FieldGroup>
-              <FieldGroup>
-                <div>
-                  <FieldLabel
-                    htmlFor="med-frequency"
-                    className="text-[10px] uppercase text-muted-foreground"
-                  >
-                    Frequency
-                  </FieldLabel>
-                  <Input
-                    id="med-frequency"
-                    value={formState.frequency}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FIELD",
-                        field: "frequency",
-                        value: e.target.value,
-                      })
-                    }
-                    className="h-8 text-sm"
-                    placeholder="Twice daily"
-                    required
-                  />
-                </div>
-                <div>
-                  <FieldLabel
-                    htmlFor="med-route"
-                    className="text-[10px] uppercase text-muted-foreground"
-                  >
-                    Route
-                  </FieldLabel>
-                  <Input
-                    id="med-route"
-                    value={formState.route}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_FIELD",
-                        field: "route",
-                        value: e.target.value,
-                      })
-                    }
-                    className="h-8 text-sm"
-                    placeholder="oral"
-                  />
-                </div>
-              </FieldGroup>
-            </div>
-
-            {/* Times */}
-            <div>
-              <FieldLabel className="text-[10px] uppercase text-muted-foreground">
-                Times
-              </FieldLabel>
-              <div className="mt-1 space-y-1.5">
-                {formState.times.map((entry) => (
-                  <div key={entry.id} className="flex items-center gap-1.5">
-                    <Input
-                      type="time"
-                      value={entry.value}
-                      onChange={(e) =>
-                        dispatch({ type: "UPDATE_TIME", id: entry.id, value: e.target.value })
-                      }
-                      className="h-8 w-36 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => dispatch({ type: "REMOVE_TIME", id: entry.id })}
-                      className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-1.5 h-7 gap-1 rounded-lg text-[10px]"
-                onClick={() => dispatch({ type: "ADD_TIME" })}
-              >
-                <Plus className="size-3" /> Add time
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel
-                  htmlFor="med-start"
-                  className="text-[10px] uppercase text-muted-foreground"
-                >
-                  Start date
-                </FieldLabel>
-                <Input
-                  id="med-start"
-                  type="date"
-                  value={formState.startDate}
-                  onChange={(e) =>
-                    dispatch({
-                      type: "SET_FIELD",
-                      field: "startDate",
-                      value: e.target.value,
-                    })
-                  }
-                  className="h-8 text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  htmlFor="med-end"
-                  className="text-[10px] uppercase text-muted-foreground"
-                >
-                  End date (optional)
-                </FieldLabel>
-                <Input
-                  id="med-end"
-                  type="date"
-                  value={formState.endDate}
-                  onChange={(e) =>
-                    dispatch({
-                      type: "SET_FIELD",
-                      field: "endDate",
-                      value: e.target.value,
-                    })
-                  }
-                  className="h-8 text-sm"
-                />
-              </div>
-            </div>
-            <Input
-              value={formState.notes}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "notes",
-                  value: e.target.value,
-                })
-              }
-              placeholder="Notes (optional)"
-              className="h-8 text-sm"
-            />
-            <div className="flex gap-2">
-              <Button
-                type="submit"
-                size="sm"
-                className="h-7 rounded-lg text-xs"
-                disabled={saving}
-              >
-                {saving && <Loader2 className="mr-1 size-3 animate-spin" />}
-                {formState.editingId ? "Update" : "Add"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 rounded-lg text-xs"
-                onClick={cancelForm}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-full gap-1.5 rounded-lg text-xs"
-            onClick={() => setShowForm(true)}
-          >
-            <Plus className="size-3.5" /> Add medication
-          </Button>
-        )}
+        <MedicationForm
+          form={{ ...formState, showForm }}
+          saving={saving}
+          dispatch={dispatch}
+          onSubmit={handleSubmit}
+          onAdd={() => setShowForm(true)}
+          onCancel={cancelForm}
+        />
       </div>
 
       {/* Active medications */}
@@ -462,77 +209,12 @@ export function MedicationTracker({
           </div>
         )}
         {active.map((med) => (
-          <div
+          <MedicationRow
             key={med.id}
-            className="flex items-start justify-between px-5 py-3"
-          >
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                {med.name}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {med.dosage} &middot; {med.frequency}
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                <Badge
-                  variant="outline"
-                  className="rounded-full text-[9px] font-medium"
-                >
-                  {med.route}
-                </Badge>
-                {med.times.length > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="rounded-full text-[9px] font-medium gap-1"
-                  >
-                    <Clock className="size-2.5" />
-                    {med.times.map((t) => formatTime(t)).join(", ")}
-                  </Badge>
-                )}
-                {med.notes && (
-                  <span className="text-[10px] text-muted-foreground">
-                    {med.notes}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => startEdit(med)}
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <Pencil className="size-3.5" />
-              </button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button
-                    type="button"
-                    className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete medication?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      onClick={() => handleDelete(med.id)}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
+            medication={med}
+            onEdit={() => startEdit(med)}
+            onDelete={handleDelete}
+          />
         ))}
 
         {past.length > 0 && (
@@ -542,54 +224,13 @@ export function MedicationTracker({
             </summary>
             <div className="mt-2 space-y-2">
               {past.map((med) => (
-                <div key={med.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-foreground">
-                      {med.name}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {med.dosage} &middot; ended {med.endDate}
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(med)}
-                      className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      <Pencil className="size-3" />
-                    </button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          type="button"
-                          className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="size-3" />
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Delete medication?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            variant="destructive"
-                            onClick={() => handleDelete(med.id)}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
+                <MedicationRow
+                  key={med.id}
+                  medication={med}
+                  onEdit={() => startEdit(med)}
+                  onDelete={handleDelete}
+                  showEndDate
+                />
               ))}
             </div>
           </details>
