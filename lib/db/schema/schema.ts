@@ -160,7 +160,7 @@ export const mealPlans = pgTable("meal_plans", {
   weekStart: text("week_start").notNull(),
   recommendations: jsonb("recommendations").notNull(),
   meals: jsonb("meals").notNull(),
-  totalDailyCost: numeric("total_daily_cost", { precision: 10, scale: 2 }),
+  averageDailyCost: numeric("total_daily_cost", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

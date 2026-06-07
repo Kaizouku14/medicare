@@ -168,7 +168,7 @@ function PatientStat({
           {label}
         </p>
         <p
-          className={`text-sm font-bold text-foreground${capitalize ? " capitalize" : ""}`}
+          className={`text-sm font-bold truncate w-22 text-foreground${capitalize ? " capitalize" : ""}`}
         >
           {value}
         </p>
@@ -233,14 +233,14 @@ function PatientOverviewGrid({ patient }: { patient: Patient }) {
           icon={<DollarSign className="size-5" />}
           title="Expense Tracking"
           description={`\u20B1${patient.monthlyBudgetPhp.toLocaleString()}/mo budget \u00B7 Track daily spending`}
-          iconClass="bg-emerald-50 text-emerald-600"
+          iconClass="bg-primary/8 text-primary"
         />
         <PatientNavCard
           href={`/dashboard/patients/${patient.id}/meal-plan`}
           icon={<UtensilsCrossed className="size-5" />}
           title="Meal Plan"
           description="Generate AI-powered weekly meal plans"
-          iconClass="bg-primary text-primary-foreground"
+          iconClass="bg-primary/8 text-primary"
         />
         <PatientNavCard
           href={`/dashboard/patients/${patient.id}/care`}

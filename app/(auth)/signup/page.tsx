@@ -21,9 +21,7 @@ import {
 const signupSchema = z.object({
   name: z.string().min(1, "Name is required."),
   email: z.email("Enter a valid email address."),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
 type SignupValues = z.infer<typeof signupSchema>;
@@ -54,14 +52,16 @@ export default function SignupPage() {
       return;
     }
 
-    toast.success("Account created! Welcome to MediCare AI.");
     router.replace("/dashboard");
     router.refresh();
+    toast.success("Account created! Welcome to MediCare AI.");
   }
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-medium tracking-tight">Create your account</h1>
+      <h1 className="font-serif text-2xl font-medium tracking-tight">
+        Create your account
+      </h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Start building personalized care plans for your family.
       </p>
@@ -142,9 +142,16 @@ export default function SignupPage() {
           />
         </FieldGroup>
 
-        <Button className="w-full h-10 rounded-full" type="submit" disabled={isSubmitting}>
+        <Button
+          className="w-full h-10 rounded-full"
+          type="submit"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? (
-            <><Loader2 className="mr-2 size-4 animate-spin" />Creating...</>
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Creating...
+            </>
           ) : (
             "Create account"
           )}
@@ -153,7 +160,10 @@ export default function SignupPage() {
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
         Already have an account?{" "}
-        <Link className="font-medium text-foreground underline underline-offset-2 hover:text-primary" href="/login">
+        <Link
+          className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+          href="/login"
+        >
           Sign in
         </Link>
       </p>

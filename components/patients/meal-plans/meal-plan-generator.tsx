@@ -164,6 +164,8 @@ export function MealPlanGenerator({
 
     const res = await fetch(`/api/patients/${patient.id}/meal-plan`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientDate: new Date().toISOString().split("T")[0] }),
     });
 
     if (!res.ok) {
@@ -390,15 +392,25 @@ export function MealPlanGenerator({
         manualSub={manualSub}
         plan={plan}
         patientId={patient.id}
-        onSelect={(food, subName) => {
+        onSelect={(food, sub) => {
           if (!plan) return;
           const oldRec = plan.recommendations.find((r) => r.name === food);
           const updated = {
             ...plan,
             recommendations: plan.recommendations.map((r) =>
-              r.name === food ? { ...r, name: subName } : r,
+              r.name === food
+                ? typeof sub === "string"
+                  ? { ...r, name: sub, foodId: "other" }
+                  : { ...r, ...sub }
+                : r,
             ),
-            meals: replaceFoodInMeals(plan.meals, food, subName, plan.recommendations, oldRec?.foodId),
+            meals: replaceFoodInMeals(
+              plan.meals,
+              food,
+              typeof sub === "string" ? sub : sub.name,
+              plan.recommendations,
+              oldRec?.foodId,
+            ),
           };
           dispatch({ type: "SET_PLAN", plan: updated });
         }}
@@ -433,7 +445,7 @@ function SubstituteDialog({
   manualSub: string;
   plan: MealPlan | null;
   patientId: string;
-  onSelect: (food: string, subName: string) => void;
+  onSelect: (food: string, sub: FoodRecommendation | string) => void;
   onClose: () => void;
   onManualSubChange: (v: string) => void;
   onLoadingChange: (loading: boolean) => void;
@@ -470,11 +482,11 @@ function SubstituteDialog({
                   key={sub.name}
                   type="button"
                   className="w-full rounded-xl border border-border/60 bg-card p-3 text-left transition-all hover:border-primary/20"
-                  onClick={async () => {
-                    if (!plan || !substituting) return;
-                    const oldRec = plan.recommendations.find((r) => r.name === substituting || r.foodId === substituting);
-                    onSelect(substituting, sub.name);
-                    onClose();
+                    onClick={async () => {
+                      if (!plan || !substituting) return;
+                      const oldRec = plan.recommendations.find((r) => r.name === substituting || r.foodId === substituting);
+                      onSelect(substituting, sub);
+                      onClose();
                     try {
                       await fetch(`/api/patients/${patientId}/meal-plan/edit`, {
                         method: "PUT",

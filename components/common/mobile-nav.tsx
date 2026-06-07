@@ -40,7 +40,9 @@ export function MobileNav({
   const isDragging = useRef(false);
 
   const closeRef = useRef<() => void>(() => setOpen(false));
-  closeRef.current = () => setOpen(false);
+  useEffect(() => {
+    closeRef.current = () => setOpen(false);
+  }, []);
 
   const navigate = useCallback(
     (href: string) => {
@@ -114,7 +116,7 @@ export function MobileNav({
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
-          onClick={close}
+          onClick={() => setOpen(false)}
           aria-hidden="true"
         />
       )}
@@ -144,7 +146,7 @@ export function MobileNav({
           </div>
           <button
             type="button"
-            onClick={close}
+            onClick={() => setOpen(false)}
             className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Close navigation"
           >

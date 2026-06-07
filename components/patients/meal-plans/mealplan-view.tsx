@@ -48,12 +48,12 @@ export function MealPlanView({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {plan.totalDailyCost && (
+            {plan.averageDailyCost && (
               <Badge
                 variant="outline"
                 className="rounded-full px-3 py-1 text-xs font-semibold"
               >
-                ~{formatCurrency(plan.totalDailyCost)} / day
+                ~{formatCurrency(plan.averageDailyCost)} / day
               </Badge>
             )}
             <Button

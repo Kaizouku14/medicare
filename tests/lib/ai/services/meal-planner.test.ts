@@ -1,38 +1,8 @@
 import { describe, it, expect } from "vitest";
-
-// isFoodRecArray and isDayMealArray are not exported — test via generateRecommendations/generateMealPlan
-// We test the type guards indirectly by checking the internal validation paths.
-
-// Since the functions are private, we verify the validation logic by importing
-// and testing through the module's side-effect-free behaviors.
-
-// Helper to test the guard logic directly by replicating the checks.
-function isFoodRecArray(v: unknown): v is Array<{ name: string; description: string; estimatedCost: number; nutrients: string | Record<string, string>; reason: string }> {
-  return (
-    Array.isArray(v) &&
-    v.length > 0 &&
-    typeof v[0]?.name === "string" &&
-    typeof v[0]?.description === "string" &&
-    typeof v[0]?.estimatedCost === "number" &&
-    (typeof v[0]?.nutrients === "string" || typeof v[0]?.nutrients === "object") &&
-    typeof v[0]?.reason === "string"
-  );
-}
-
-function isDayMealArray(v: unknown): v is Array<{ day: string; breakfast: string; lunch: string; dinner: string; snacks: string[]; totalCost: number }> {
-  return (
-    Array.isArray(v) &&
-    v.length > 0 &&
-    typeof v[0]?.day === "string" &&
-    typeof v[0]?.breakfast === "string" &&
-    typeof v[0]?.lunch === "string" &&
-    typeof v[0]?.dinner === "string" &&
-    Array.isArray(v[0]?.snacks) &&
-    typeof v[0]?.totalCost === "number"
-  );
-}
+import { isFoodRecArray, isDayMealArray } from "@/lib/ai/services/meal-planner";
 
 const validFoodRec = {
+  foodId: "oatmeal",
   name: "Oatmeal",
   description: "Steel-cut oats",
   estimatedCost: 25,

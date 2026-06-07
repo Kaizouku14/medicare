@@ -137,7 +137,7 @@ export function MedicationTracker({
         times: formState.times.flatMap((t) => (t.value ? [t.value] : [])),
       };
       if (formState.editingId) {
-        const { editingId, times: _, ...rest } = body;
+        const { editingId, ...rest } = body;
         const res = await fetch(`/api/patients/${patientId}/medications`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

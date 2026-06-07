@@ -51,9 +51,9 @@ export default function LoginPage() {
       return;
     }
 
-    toast.success("Welcome back!");
     router.replace("/dashboard");
     router.refresh();
+    toast.success("Welcome back!");
   }
 
   return (
@@ -131,7 +131,10 @@ export default function LoginPage() {
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <><Loader2 className="mr-2 size-4 animate-spin" />Signing in...</>
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Signing in...
+            </>
           ) : (
             "Sign in"
           )}

@@ -4,6 +4,8 @@ import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
 import { groqChat } from "@/lib/ai/groq-client";
 import { rateLimit } from "@/lib/rate-limit";
 import { getFoodById, FOOD_REFERENCE_LIST } from "@/lib/foods/registry";
+import { getFeedingMethodProfile } from "@/lib/foods/feeding-methods";
+import { JSON_MODEL } from "@/lib/ai/models";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -44,7 +46,7 @@ export async function POST(req: Request, { params }: Params) {
           content: `Suggest 2-3 affordable substitutes for "${foodName}" for this patient:
 
 - Diagnoses: ${patient.diagnoses.join(", ")}
-- Feeding method: ${patient.feedingMethod}
+- Feeding method: ${patient.feedingMethod} — ${getFeedingMethodProfile(patient.feedingMethod).texture}
 - Allergies: ${patient.allergies.join(", ") || "None"}
 - Intolerances: ${patient.intolerances.join(", ") || "None"}
 - Daily budget: ₱${Math.round(patient.monthlyBudgetPhp / 30)}
@@ -62,7 +64,7 @@ Example: {"substitutes": [{"foodId": "tofu", "name": "Tofu", "description": "Hig
 Return ONLY valid JSON. No markdown, no code fences.`,
         },
       ],
-      "llama-3.3-70b-versatile",
+      JSON_MODEL,
       true,
     );
 

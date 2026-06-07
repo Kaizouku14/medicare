@@ -11,7 +11,7 @@ export function toMealPlan(row: typeof mealPlans.$inferSelect): MealPlan {
     weekStart: row.weekStart,
     recommendations: row.recommendations as FoodRecommendation[],
     meals: row.meals as DayMeal[],
-    totalDailyCost: row.totalDailyCost ? Number(row.totalDailyCost) : null,
+    averageDailyCost: row.averageDailyCost ? Number(row.averageDailyCost) : null,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -21,7 +21,7 @@ export async function saveMealPlan(
   weekStart: string,
   recommendations: FoodRecommendation[],
   meals: DayMeal[],
-  totalDailyCost: number | null,
+  averageDailyCost: number | null,
 ) {
   const [row] = await db
     .insert(mealPlans)
@@ -30,7 +30,15 @@ export async function saveMealPlan(
       weekStart,
       recommendations,
       meals,
-      totalDailyCost: totalDailyCost?.toString() ?? null,
+      averageDailyCost: averageDailyCost?.toString() ?? null,
+    })
+    .onConflictDoUpdate({
+      target: [mealPlans.patientId, mealPlans.weekStart],
+      set: {
+        recommendations,
+        meals,
+        averageDailyCost: averageDailyCost?.toString() ?? null,
+      },
     })
     .returning();
 

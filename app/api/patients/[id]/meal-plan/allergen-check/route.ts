@@ -4,6 +4,8 @@ import { requireAuth, requirePatientAccess, handleApiError } from "@/lib/auth";
 import { groqChat } from "@/lib/ai/groq-client";
 import { getLatestMealPlan } from "@/lib/db/meal-plans";
 import { rateLimit } from "@/lib/rate-limit";
+import { checkAllergens } from "@/lib/meal-plans/allergen-check";
+import { JSON_MODEL } from "@/lib/ai/models";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -25,6 +27,12 @@ export async function POST(req: Request, { params }: Params) {
     const plan = await getLatestMealPlan(patient.id);
     if (!plan) {
       return NextResponse.json({ error: "No meal plan found." }, { status: 404 });
+    }
+
+    const local = checkAllergens(patient.allergies, patient.intolerances, plan.recommendations, plan.meals);
+
+    if (local.hasIssues) {
+      return NextResponse.json(local);
     }
 
     const content = await groqChat(
@@ -61,7 +69,7 @@ Example: {"hasIssues": true, "concerns": [{"food": "Ginataang Manok", "allergen"
 Return ONLY valid JSON. No markdown, no code fences.`,
         },
       ],
-      "llama-3.3-70b-versatile",
+      JSON_MODEL,
       true,
     );
 

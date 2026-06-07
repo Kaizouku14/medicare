@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import type { MealRecipe } from "@/types/domain";
+import { parseInstructions } from "@/lib/meal-plans/parse-instructions";
 
 export function RecipeDialog({
   mealName,
@@ -59,12 +60,12 @@ export function RecipeDialog({
               Instructions
             </p>
             <ol className="space-y-2">
-              {recipe.instructions.split(". ").filter(Boolean).map((step, i) => (
+              {parseInstructions(recipe.instructions).map((step, i) => (
                 <li key={step} className="flex items-start gap-2 text-sm text-foreground/85">
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                     {i + 1}
                   </span>
-                  {step}{!step.endsWith(".") ? "." : ""}
+                  {step}
                 </li>
               ))}
             </ol>

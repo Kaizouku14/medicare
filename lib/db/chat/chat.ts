@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { chatMessages, chatSessions } from "@/lib/db/schema/schema";
@@ -95,15 +95,6 @@ export async function getSessionMessages(
     messages: rows.map(toMessage).reverse(),
     hasMore,
   };
-}
-
-async function getSessionMessageCount(sessionId: string) {
-  const [row] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(chatMessages)
-    .where(eq(chatMessages.sessionId, sessionId));
-
-  return Number(row?.count ?? 0);
 }
 
 export async function saveMessage(

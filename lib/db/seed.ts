@@ -111,6 +111,7 @@ async function seed() {
 
   const recommendations: FoodRecommendation[] = [
     {
+      foodId: "oatmeal",
       name: "Oatmeal",
       description: "Steel-cut oats with low-fat milk",
       estimatedCost: 25,
@@ -118,6 +119,7 @@ async function seed() {
       reason: "Low glycemic index helps manage blood sugar",
     },
     {
+      foodId: "fish-bangus",
       name: "Grilled Fish",
       description: "Dagupan-style grilled bangus",
       estimatedCost: 80,
@@ -191,7 +193,7 @@ async function seed() {
       weekStart: "2026-06-01",
       recommendations,
       meals,
-      totalDailyCost: "202",
+      averageDailyCost: "202",
     },
   ]).onConflictDoNothing();
 

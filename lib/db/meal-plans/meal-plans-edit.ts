@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { mealPlans } from "@/lib/db/schema/schema";
@@ -6,10 +6,11 @@ import type { FoodRecommendation, DayMeal } from "@/types/domain";
 
 export async function updateMealPlan(
   planId: string,
+  patientId: string,
   data: {
     recommendations: FoodRecommendation[];
     meals: DayMeal[];
-    totalDailyCost: number | null;
+    averageDailyCost: number | null;
   },
 ) {
   const [row] = await db
@@ -17,9 +18,9 @@ export async function updateMealPlan(
     .set({
       recommendations: data.recommendations,
       meals: data.meals,
-      totalDailyCost: data.totalDailyCost?.toString() ?? null,
+      averageDailyCost: data.averageDailyCost?.toString() ?? null,
     })
-    .where(eq(mealPlans.id, planId))
+    .where(and(eq(mealPlans.id, planId), eq(mealPlans.patientId, patientId)))
     .returning();
 
   return row ?? null;

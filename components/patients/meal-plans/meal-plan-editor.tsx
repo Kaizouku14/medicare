@@ -79,7 +79,18 @@ export function MealPlanEditor({
   function updateRec(index: number, field: string, value: string | number) {
     setRecommendations((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
+      if (field === "nutrients" && typeof next[index].nutrients === "object" && typeof value === "string") {
+        const obj: Record<string, string> = {};
+        for (const part of value.split(" | ")) {
+          const sep = part.indexOf(": ");
+          if (sep !== -1) {
+            obj[part.slice(0, sep).trim()] = part.slice(sep + 2).trim();
+          }
+        }
+        next[index] = { ...next[index], nutrients: Object.keys(obj).length > 0 ? obj : value };
+      } else {
+        next[index] = { ...next[index], [field]: value };
+      }
       return next;
     });
   }

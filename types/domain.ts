@@ -33,7 +33,7 @@ export type CreatePatientInput = {
 export type Nutrients = Record<string, string>;
 
 export type FoodRecommendation = {
-  foodId?: string;
+  foodId: string;
   name: string;
   description: string;
   estimatedCost: number;
@@ -140,7 +140,7 @@ export type MealPlan = {
   weekStart: string;
   recommendations: FoodRecommendation[];
   meals: DayMeal[];
-  totalDailyCost: number | null;
+  averageDailyCost: number | null;
   createdAt: string;
 };
 

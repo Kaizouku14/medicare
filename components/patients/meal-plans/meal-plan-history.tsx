@@ -87,9 +87,9 @@ function PlanDetailDialog({
           </DialogTitle>
           <DialogDescription>
             Generated {formatDateTime(plan.createdAt)}
-            {plan.totalDailyCost && (
+            {plan.averageDailyCost && (
               <span className="ml-2">
-                &middot; ~{formatCurrency(plan.totalDailyCost)} / day
+                &middot; ~{formatCurrency(plan.averageDailyCost)} / day
               </span>
             )}
           </DialogDescription>
@@ -286,7 +286,7 @@ export function MealPlanHistory({ patientId, pastPlans }: { patientId: string; p
                     variant="outline"
                     className="rounded-full text-[10px] font-semibold"
                   >
-                    ~{formatCurrency(plan.totalDailyCost ?? 0)}/day
+                    ~{formatCurrency(plan.averageDailyCost ?? 0)}/day
                   </Badge>
                   <div className="flex size-6 items-center justify-center rounded-md bg-muted/50 text-muted-foreground">
                     <CalendarDays className="size-3" />

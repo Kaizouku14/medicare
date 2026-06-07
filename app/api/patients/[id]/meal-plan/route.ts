@@ -36,6 +36,8 @@ export async function POST(request: Request, { params }: Params) {
     const [{ user }, { id }] = await Promise.all([requireAuth(), params]);
     const patient = await requirePatientAccess(user.id, id);
 
+    const { clientDate } = await request.json().catch(() => ({}) as Record<string, string>);
+
     const enc = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -63,13 +65,13 @@ export async function POST(request: Request, { params }: Params) {
 
           controller.enqueue(enc.encode(sseJson({ step: "saving", message: "Saving meal plan..." })));
 
-          const now = new Date();
+          const now = new Date((clientDate ?? new Date().toISOString().split("T")[0]) + "T00:00:00");
           const dayOfWeek = now.getDay();
           const monday = new Date(now);
           monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
           const weekStart = monday.toISOString().split("T")[0];
 
-          const totalDailyCost = Math.round(
+          const averageDailyCost = Math.round(
             meals.reduce((sum, day) => sum + day.totalCost, 0) / meals.length,
           );
 
@@ -78,7 +80,7 @@ export async function POST(request: Request, { params }: Params) {
             weekStart,
             recommendations,
             meals,
-            totalDailyCost,
+            averageDailyCost,
           );
 
           controller.enqueue(enc.encode(sseJson({ step: "done", plan })));

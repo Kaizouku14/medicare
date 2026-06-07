@@ -127,7 +127,7 @@ export async function buildPatientContext(
       ? {
           weekStart: mealPlan.weekStart,
           foodNames: mealPlan.recommendations.map((r) => r.name),
-          dailyCost: mealPlan.totalDailyCost,
+          dailyCost: mealPlan.averageDailyCost,
         }
       : null,
     allAbnormalValues,

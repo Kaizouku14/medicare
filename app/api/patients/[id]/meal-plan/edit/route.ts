@@ -35,14 +35,14 @@ export async function PUT(req: Request, { params }: Params) {
       );
     }
 
-    const totalDailyCost = Math.round(
+    const averageDailyCost = Math.round(
       body.meals.reduce((sum, day) => sum + day.totalCost, 0) / body.meals.length,
     );
 
-    const updated = await updateMealPlan(body.planId, {
+    const updated = await updateMealPlan(body.planId, patient.id, {
       recommendations: body.recommendations,
       meals: body.meals,
-      totalDailyCost,
+      averageDailyCost,
     });
 
     if (!updated) {
